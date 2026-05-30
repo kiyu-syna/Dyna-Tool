@@ -1,0 +1,26 @@
+{% extends "admin/base.html" %}
+{% block title %}Đăng nhập — DynaTool Admin{% endblock %}
+{% block body %}
+<div class="login-wrap">
+  <div class="login-card">
+    <h1>DynaTool Admin</h1>
+    <p class="sub">Quản lý license, đơn hàng &amp; webhook</p>
+
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/admin/login">
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <input id="username" name="username" type="text" required autofocus autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary">Đăng nhập</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,265 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard — DynaTool Admin{% endblock %}
+{% block body %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="logo">⚡ DynaTool Admin</div>
+    <a href="/admin/?tab=overview" class="nav-link {% if tab == 'overview' %}active{% endif %}">📊 Tổng quan</a>
+    <a href="/admin/?tab=subscriptions" class="nav-link {% if tab == 'subscriptions' %}active{% endif %}">👤 Tài khoản / License</a>
+    <a href="/admin/?tab=orders" class="nav-link {% if tab == 'orders' %}active{% endif %}">🧾 Đơn hàng</a>
+    <a href="/admin/?tab=webhooks" class="nav-link {% if tab == 'webhooks' %}active{% endif %}">🔔 Webhook logs</a>
+    <a href="/admin/?tab=users" class="nav-link {% if tab == 'users' %}active{% endif %}">🔐 Người dùng App</a>
+    <hr style="border:none;border-top:1px solid var(--border);margin:20px 0">
+    <a href="/admin/logout" class="nav-link">🚪 Đăng xuất</a>
+    <a href="/docs" class="nav-link" target="_blank">📄 API Docs</a>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h2>
+        {% if tab == 'overview' %}Tổng quan
+        {% elif tab == 'subscriptions' %}Quản lý tài khoản
+        {% elif tab == 'orders' %}Đơn hàng
+        {% elif tab == 'users' %}Người dùng đăng ký App
+        {% else %}Webhook logs{% endif %}
+      </h2>
+      <span class="muted">MongoDB · dynatool</span>
+    </div>
+
+    {% if msg == 'extended' %}
+    <div class="alert alert-success">Đã gia hạn / cấp license thành công.</div>
+    {% elif msg == 'revoked' %}
+    <div class="alert alert-success">Đã thu hồi license.</div>
+    {% elif msg == 'deleted' %}
+    <div class="alert alert-success">Đã xóa webhook log.</div>
+    {% elif msg == 'user_deleted' %}
+    <div class="alert alert-success">Đã xóa tài khoản người dùng.</div>
+    {% elif msg and msg.startswith('error:') %}
+    <div class="alert alert-error">{{ msg[6:] }}</div>
+    {% endif %}
+
+    <div class="stats">
+      <div class="stat-card green">
+        <div class="label">License đang hoạt động</div>
+        <div class="value">{{ stats.active_subscriptions }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Tổng tài khoản</div>
+        <div class="value">{{ stats.total_subscriptions }}</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">Doanh thu (đã TT)</div>
+        <div class="value" style="font-size:1.1rem">{{ "{:,.0f}".format(stats.total_revenue) }}đ</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Đơn chờ TT</div>
+        <div class="value">{{ stats.pending_orders }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Đơn đã TT</div>
+        <div class="value">{{ stats.paid_orders }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Webhook logs</div>
+        <div class="value">{{ stats.webhook_logs }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">User đăng ký App</div>
+        <div class="value">{{ stats.total_users }}</div>
+      </div>
+    </div>
+
+    {% if tab == 'subscriptions' or tab == 'overview' %}
+    <div class="panel">
+      <h3>➕ Cấp / gia hạn license thủ công</h3>
+      <form class="grant-form" method="post" action="/admin/subscriptions/extend">
+        <div class="form-group" style="margin:0">
+          <label>Tên đăng nhập</label>
+          <input name="username" placeholder="VD: testuser" required>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Số ngày</label>
+          <select name="days" required>
+            {% for d, p in plans.items() %}
+            <option value="{{ d }}">{{ d }} ngày — {{ "{:,.0f}".format(p.price) }}đ</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Tên gói (tuỳ chọn)</label>
+          <input name="plan_name" placeholder="Gói 30 ngày">
+        </div>
+        <button type="submit" class="btn btn-gold">Cấp license</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h3>👤 Danh sách tài khoản (subscriptions)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Gói</th>
+            <th>Hết hạn</th>
+            <th>Còn lại</th>
+            <th>Trạng thái</th>
+            <th>Đơn cuối</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in subscriptions %}
+          <tr>
+            <td class="mono">{{ s.username or s.machine_id }}</td>
+            <td>{{ s.plan_name or '—' }}</td>
+            <td class="muted">{{ s.expires_at[:10] if s.expires_at else '—' }}</td>
+            <td>{{ s.days_remaining }} ngày</td>
+            <td>
+              {% if s.is_active %}
+              <span class="badge badge-active">Active</span>
+              {% else %}
+              <span class="badge badge-inactive">Hết hạn</span>
+              {% endif %}
+            </td>
+            <td class="mono">{{ s.last_order_id or '—' }}</td>
+            <td class="actions">
+              <form method="post" action="/admin/subscriptions/revoke" style="display:inline"
+                    onsubmit="return confirm('Thu hồi license {{ s.username or s.machine_id }}?')">
+                <input type="hidden" name="username" value="{{ s.username or s.machine_id }}">
+                <button type="submit" class="btn btn-sm btn-danger">Thu hồi</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="muted">Chưa có tài khoản nào.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if tab == 'orders' or tab == 'overview' %}
+    <div class="panel">
+      <h3>🧾 Đơn hàng</h3>
+      <div class="filter-bar">
+        <span class="muted">Lọc:</span>
+        <a href="/admin/?tab=orders" class="btn btn-sm btn-ghost">Tất cả</a>
+        <a href="/admin/?tab=orders&order_status=pending" class="btn btn-sm btn-ghost">Pending</a>
+        <a href="/admin/?tab=orders&order_status=paid" class="btn btn-sm btn-ghost">Paid</a>
+        <a href="/admin/?tab=orders&order_status=expired" class="btn btn-sm btn-ghost">Expired</a>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Username</th>
+            <th>Gói</th>
+            <th>Số tiền</th>
+            <th>Trạng thái</th>
+            <th>Tạo lúc</th>
+            <th>Thanh toán</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td class="mono">{{ o.order_id }}</td>
+            <td class="mono">{{ o.username or o.machine_id or '—' }}</td>
+            <td>{{ o.plan_name }}</td>
+            <td>{{ "{:,.0f}".format(o.amount) }}đ</td>
+            <td>
+              {% if o.status == 'paid' %}
+              <span class="badge badge-paid">paid</span>
+              {% elif o.status == 'pending' %}
+              <span class="badge badge-pending">pending</span>
+              {% else %}
+              <span class="badge badge-inactive">{{ o.status }}</span>
+              {% endif %}
+            </td>
+            <td class="muted">{{ o.created_at[:16] if o.created_at else '—' }}</td>
+            <td class="muted">{{ o.paid_at[:16] if o.paid_at else '—' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7" class="muted">Chưa có đơn hàng.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if tab == 'users' %}
+    <div class="panel">
+      <h3>🔐 Tài khoản đăng ký từ DynaTool App</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Số điện thoại</th>
+            <th>Machine ID</th>
+            <th>Đăng ký</th>
+            <th>Đăng nhập cuối</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+          <tr>
+            <td class="mono">{{ u.username }}</td>
+            <td>{{ u.phone }}</td>
+            <td class="mono">{{ u.machine_id or '—' }}</td>
+            <td class="muted">{{ u.created_at[:10] if u.created_at else '—' }}</td>
+            <td class="muted">{{ u.last_login_at[:16] if u.last_login_at else '—' }}</td>
+            <td>
+              <form method="post" action="/admin/users/delete" style="display:inline"
+                    onsubmit="return confirm('Xóa user {{ u.username }}?')">
+                <input type="hidden" name="username" value="{{ u.username }}">
+                <button type="submit" class="btn btn-sm btn-danger">Xóa</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="muted">Chưa có user nào đăng ký.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    {% if tab == 'webhooks' %}
+    <div class="panel">
+      <h3>🔔 Nhật ký webhook (100 gần nhất)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Nhận lúc</th>
+            <th>Nội dung (payload)</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in webhooks %}
+          <tr>
+            <td class="mono truncate">{{ w.reference_code }}</td>
+            <td class="muted">{{ w.received_at[:16] if w.received_at else '—' }}</td>
+            <td class="truncate muted">
+              {% if w.payload and w.payload.content %}{{ w.payload.content }}{% else %}—{% endif %}
+            </td>
+            <td>
+              <form method="post" action="/admin/webhooks/delete" style="display:inline"
+                    onsubmit="return confirm('Xóa log này?')">
+                <input type="hidden" name="reference_code" value="{{ w.reference_code }}">
+                <button type="submit" class="btn btn-sm btn-ghost">Xóa</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4" class="muted">Chưa có webhook log.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}
