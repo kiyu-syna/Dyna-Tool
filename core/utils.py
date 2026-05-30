@@ -1,7 +1,7 @@
 import re, ctypes, os, random, sys, unicodedata
 from datetime import datetime
 from rich.console import Console
-import config
+import core.config as config
 import pygetwindow as gw
 from deep_translator import GoogleTranslator # Import thư viện dịch
 
@@ -27,18 +27,23 @@ def normalize_column_name(text):
     return text.replace(" ", "")
 
 import logging
+from logging.handlers import RotatingFileHandler
 from rich.logging import RichHandler
 
 console = Console()
 
 # Cấu hình Logging tập trung
+log_dir = os.path.join(config.BASE_DIR, "logs")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, "system.log")
+
 logging.basicConfig(
     level="INFO",
     format="%(message)s",
     datefmt="[%X]",
     handlers=[
         RichHandler(rich_tracebacks=True, markup=True, console=console),
-        logging.FileHandler(os.path.join(config.BASE_DIR, "system.log"), encoding="utf-8")
+        RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8")
     ]
 )
 logger = logging.getLogger("rich")

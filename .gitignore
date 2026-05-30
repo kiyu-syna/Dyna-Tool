@@ -1,3 +1,17 @@
-build/
-dist/
+# Local secrets / runtime
+settings.json
+auth.json
+license.json
+license_meomeo.json
+service_account.json
+telegram_mapping.json
+state.json
+stats.json
+system.log
+logs/
+
+# Build / env
 .venv/
+dist/
+build/
+__pycache__/
