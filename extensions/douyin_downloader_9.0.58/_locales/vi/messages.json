@@ -1,0 +1,611 @@
+{
+   "DESC": {
+      "message": "sự miêu tả"
+   },
+   "DOWN": {
+      "message": "Tải xuống"
+   },
+   "DSEL": {
+      "message": "Bầu cử ngược lại"
+   },
+   "EXELeftTitle": {
+      "message": "sự quản lý"
+   },
+   "EXERightTitle": {
+      "message": "quét"
+   },
+   "EXETitle": {
+      "message": "AIX Downloader"
+   },
+   "EXT": {
+      "message": "định dạng"
+   },
+   "ORDER": {
+      "message": "Sắp xếp"
+   },
+   "SELA": {
+      "message": "chọn tất cả"
+   },
+   "SORT": {
+      "message": "thể loại"
+   },
+   "URL": {
+      "message": "URL"
+   },
+   "YouTubeVideoError": {
+      "message": "Do các chính sách và hạn chế của cửa hàng Google và Chrome, tải xuống video không hoạt động trên trang web YouTube hoặc bất kỳ video YouTube nào khác được nhúng trong các trang web khác."
+   },
+   "about": {
+      "message": "trong khoảng"
+   },
+   "aboutDesc": {
+      "message": "trình tải xuống thông minh AIX có thể thực hiện hiệu quả việc quản lý tải xuống, tìm kiếm và tải xuống hình ảnh, video, âm thanh và nội dung khác của trang web. Đồng thời, nó mở rộng và tích hợp các tập lệnh thông minh từ nhiều trang web để nhanh chóng trích xuất nội dung bạn muốn."
+   },
+   "aboutHeaderDesc": {
+      "message": "Trình tải xuống thông minh tốt nhất"
+   },
+   "aboutOp": {
+      "message": "Giới thiệu"
+   },
+   "add": {
+      "message": "Thêm vào"
+   },
+   "addDir": {
+      "message": "Thêm thư mục"
+   },
+   "addDownloadLink": {
+      "message": "Thêm liên kết để tải xuống"
+   },
+   "all": {
+      "message": "Tất cả"
+   },
+   "analyzing": {
+      "message": "Đang phân tích"
+   },
+   "audio": {
+      "message": "Âm thanh"
+   },
+   "auto": {
+      "message": "tự động"
+   },
+   "big": {
+      "message": "Lớn"
+   },
+   "bigAudioFirst": {
+      "message": "Ưu tiên lớn"
+   },
+   "bigFileFirst": {
+      "message": "Ưu tiên lớn"
+   },
+   "bigPictureFirst": {
+      "message": "Ưu tiên lớn"
+   },
+   "bigVideoFirst": {
+      "message": "Ưu tiên lớn"
+   },
+   "bugs": {
+      "message": "vấn đề"
+   },
+   "bugsDesc1": {
+      "message": "Nếu bạn tìm thấy một vấn đề, bạn có thể ngay lập tức "
+   },
+   "bugsDesc2": {
+      "message": " liên hệ chúng tôi "
+   },
+   "bugsDesc3": {
+      "message": "."
+   },
+   "cacheTitle": {
+      "message": "Trong bộ nhớ cache của video, vui lòng không làm mới hoặc đóng trang chứa video!"
+   },
+   "cancel": {
+      "message": "hủy bỏ"
+   },
+   "checkNetworkConnection": {
+      "message": "Mạng bất thường, kiểm tra mạng hoặc proxy"
+   },
+   "choosePicture": {
+      "message": "hình ảnh bình luận"
+   },
+   "clearAll": {
+      "message": "xóa danh sách"
+   },
+   "clearCeleted": {
+      "message": "Xóa đã xóa"
+   },
+   "clearDownloadRecords": {
+      "message": "Xóa lịch sử tải về"
+   },
+   "clearDownloaded": {
+      "message": "Xóa đã tải xuống"
+   },
+   "clearWronged": {
+      "message": "Dọn dẹp không thành công"
+   },
+   "completed": {
+      "message": "Đã hoàn thành"
+   },
+   "confirm": {
+      "message": "Vâng"
+   },
+   "confirmClear": {
+      "message": "Xác nhận trống？"
+   },
+   "confirmDeletion": {
+      "message": "xác nhận xóa "
+   },
+   "contactUs": {
+      "message": "Vui lòng liên hệ với chúng tôi nếu bạn có bất kỳ vấn đề nào"
+   },
+   "continue": {
+      "message": "tiếp tục"
+   },
+   "copyFailed": {
+      "message": "Sao chép không thành công"
+   },
+   "copyLink": {
+      "message": "Sao chép liên kết tệp"
+   },
+   "copySuccess": {
+      "message": "Sao chép thành công"
+   },
+   "customFormat": {
+      "message": "Định dạng tùy chỉnh"
+   },
+   "deSelect": {
+      "message": "thay đổi"
+   },
+   "default_title": {
+      "message": "trình tải xuống thông minh AIX(Hình ảnh / Video / Nhạc / Tài liệu) Đối với"
+   },
+   "delete": {
+      "message": "xóa bỏ"
+   },
+   "deleted": {
+      "message": "Đã bị xóa"
+   },
+   "description": {
+      "message": "AIX Smart Downloader có thể tìm kiếm và tải xuống hình ảnh, video, âm thanh và nội dung web khác một cách hiệu quả."
+   },
+   "details": {
+      "message": "Chi tiết"
+   },
+   "domainDuplicated": {
+      "message": "Tên miền không được lặp lại"
+   },
+   "download": {
+      "message": "tải về"
+   },
+   "downloadAllImgUsingDM": {
+      "message": "Tải xuống tất cả các hình ảnh"
+   },
+   "downloadButtonOff": {
+      "message": "Tắt"
+   },
+   "downloadButtonOn": {
+      "message": "Bật"
+   },
+   "downloadButtonTip": {
+      "message": "Nút tải"
+   },
+   "downloadCommentImage": {
+      "message": "Tải xuống hình ảnh bình luận"
+   },
+   "downloadHasBeenCancelled": {
+      "message": "Đã hủy tải xuống"
+   },
+   "downloadUsingDM": {
+      "message": "Tải xuống bằng AIX"
+   },
+   "download_simple": {
+      "message": "Down"
+   },
+   "downloading": {
+      "message": "tải xuống"
+   },
+   "dragDownloadDesc": {
+      "message": "Ảnh sẽ tải xong"
+   },
+   "dragDownloadTitle": {
+      "message": "Kéo vào đây để tải xuống"
+   },
+   "dupImgLinkNaming": {
+      "message": "Tên liên kết hình ảnh trùng lặp"
+   },
+   "edit": {
+      "message": "biên tập"
+   },
+   "email": {
+      "message": "hộp thư"
+   },
+   "enableBoxSelect": {
+      "message": "Bật lựa chọn hộp kéo ảnh"
+   },
+   "enableContextMenu": {
+      "message": "Nhấp chuột phải để bật \"Tải xuống DM\""
+   },
+   "enableHotKey": {
+      "message": "Lối tắt trích xuất trang mới"
+   },
+   "enableOriginalBar": {
+      "message": "Bật thanh tải xuống gốc của Chrome"
+   },
+   "enableRouter": {
+      "message": "Mở phân loại tệp"
+   },
+   "enableSmartScripts": {
+      "message": "Mở tập lệnh thông minh"
+   },
+   "enabledDragDownload": {
+      "message": "Mở tải xuống kéo và thả"
+   },
+   "example": {
+      "message": "thí dụ"
+   },
+   "exitSetting": {
+      "message": "Thoát cài đặt"
+   },
+   "expImgLink": {
+      "message": "Xuất liên kết hình ảnh"
+   },
+   "exportRule": {
+      "message": "export"
+   },
+   "fAlert": {
+      "message": "Vui lòng kiểm tra xem định dạng email của bạn có đúng không, \nThông báo phản hồi phải có ít nhất 5 ký tự."
+   },
+   "fDesc": {
+      "message": "Vui lòng liên hệ với chúng tôi để phản hồi hoặc cần trợ giúp"
+   },
+   "fEmail": {
+      "message": "hộp thư của bạn"
+   },
+   "fMessage": {
+      "message": "Viết tin nhắn của bạn"
+   },
+   "fName": {
+      "message": "tên của bạn"
+   },
+   "fSend": {
+      "message": "gửi đi"
+   },
+   "fSendFormat": {
+      "message": "Hình ảnh tải lên phải ở định dạng hình ảnh"
+   },
+   "fSendPicture": {
+      "message": "Bạn chỉ có thể tải lên tối đa hai hình ảnh"
+   },
+   "fSuccess": {
+      "message": "Cảm ơn phản hồi của bạn"
+   },
+   "fSupport": {
+      "message": "Bạn cũng có thể đưa ra đánh giá tốt hoặc cung cấp các đề xuất hỗ trợ trong cửa hàng trực tuyến "
+   },
+   "fText": {
+      "message": "Vui lòng viết ra câu hỏi hoặc đề xuất của bạn"
+   },
+   "fTitle": {
+      "message": "AIX Downloader"
+   },
+   "fTouch": {
+      "message": "liên hệ chúng tôi"
+   },
+   "fUploadImage": {
+      "message": "tải lên hình ảnh"
+   },
+   "fUuploadbutton": {
+      "message": "Tải lên hình ảnh"
+   },
+   "fWebstore": {
+      "message": "Đi đến"
+   },
+   "feedback": {
+      "message": "Phản hồi"
+   },
+   "file": {
+      "message": "Tài liệu"
+   },
+   "fileDeExist": {
+      "message": "tập tin không tồn tại"
+   },
+   "fileHasBeenDeleted": {
+      "message": "Tệp đã bị xóa"
+   },
+   "filter": {
+      "message": "bộ lọc"
+   },
+   "folder": {
+      "message": "thư mục"
+   },
+   "folderDuplicated": {
+      "message": "Thư mục không thể được lặp lại"
+   },
+   "formatError": {
+      "message": "format error"
+   },
+   "go": {
+      "message": "Đạt được"
+   },
+   "group": {
+      "message": "nhóm trao đổi"
+   },
+   "height": {
+      "message": "H"
+   },
+   "help": {
+      "message": "Cứu giúp"
+   },
+   "hotKeyRemind": {
+      "message": "Vui lòng nhập phím tắt trực tiếp trên bàn phím"
+   },
+   "imgFilter": {
+      "message": "Lọc hình ảnh"
+   },
+   "imgFilterDesc": {
+      "message": "Bật chức năng này sẽ lọc ra những hình ảnh bạn không muốn trích xuất từ ​​trang web"
+   },
+   "imgFilterDesc2": {
+      "message": "Ví dụ: \nTên miền \"*\", Cụm từ thông dụng \".*?\", Nghĩa là lọc tất cả hình ảnh của tất cả các trang web. (Tên miền được đặt thành \"*\" hoặc không được điền nghĩa là tất cả các trang web đều được lọc) \nTên miền \"www.example.com\", Biểu thức chính quy \"abc\", có nghĩa là để lọc hình ảnh có chứa “abc” trong liên kết hình ảnh trong tên miền “www.example.com”."
+   },
+   "imgFilterReg": {
+      "message": "Biểu hiện thông thường"
+   },
+   "imgFilterTitle": {
+      "message": "Bật tính năng lọc hình ảnh"
+   },
+   "imgFilterYm": {
+      "message": "tên miền"
+   },
+   "importRule": {
+      "message": "import"
+   },
+   "maxHeight": {
+      "message": "chiều cao tối đa"
+   },
+   "maxWidth": {
+      "message": "Chiều rộng tối đa"
+   },
+   "minHeight": {
+      "message": "Chiều cao tối thiểu"
+   },
+   "minWidth": {
+      "message": "Chiều rộng tối thiểu"
+   },
+   "more": {
+      "message": "Thêm"
+   },
+   "name": {
+      "message": "Tên"
+   },
+   "newDownloadTask": {
+      "message": "Nhiệm vụ mới"
+   },
+   "newTabTip": {
+      "message": "Nó không phải là thuận tiện để lọc, xin vui lòng bấm vào đây!"
+   },
+   "noAudio": {
+      "message": "Không nhận được âm thanh? Bấm chơi để thử"
+   },
+   "noData": {
+      "message": "Không có dữ liệu"
+   },
+   "noVideo": {
+      "message": "Bạn không nhận được video? Bấm chơi để thử"
+   },
+   "notice": {
+      "message": "Thông báo"
+   },
+   "notifEnabledTip": {
+      "message": "Cài đặt thành công và nó sẽ có hiệu lực sau khi khởi động lại. Bạn có muốn khởi động lại ngay bây giờ không?"
+   },
+   "notificationAfterFinished": {
+      "message": "Lời nhắc hoàn tất tải xuống"
+   },
+   "notifications_fail_title": {
+      "message": "Tải thất bại"
+   },
+   "notifications_open_dir": {
+      "message": "Xem thư mục"
+   },
+   "notifications_open_file": {
+      "message": "Mở tệp"
+   },
+   "notifications_success_title": {
+      "message": "Đã tải xong"
+   },
+   "officialwebsite": {
+      "message": "Trang web chính thức"
+   },
+   "oldVersion": {
+      "message": "Sử dụng phiên bản cũ"
+   },
+   "opExpPage": {
+      "message": "Xuất thông tin trang"
+   },
+   "opMoreImgSel": {
+      "message": "Hiển thị thêm các tùy chọn hình ảnh theo mặc định"
+   },
+   "opSaveImgSize": {
+      "message": "Nhớ kích thước bộ lọc hình ảnh"
+   },
+   "opWebpToJpg": {
+      "message": "WEBP sang JPG"
+   },
+   "open": {
+      "message": "mở tệp tin"
+   },
+   "openDirectory": {
+      "message": "Mở thư mục tệp"
+   },
+   "openInNewTab": {
+      "message": "Mở trong một tab mới"
+   },
+   "openInNewWindow": {
+      "message": "mở trong một cửa sổ mới"
+   },
+   "operation": {
+      "message": "điều hành"
+   },
+   "options": {
+      "message": "Tùy chọn"
+   },
+   "other": {
+      "message": "khác"
+   },
+   "otificationAfterFailed": {
+      "message": "Lời nhắc tải xuống không thành công"
+   },
+   "outDSEL": {
+      "message": "thay đổi"
+   },
+   "outSELA": {
+      "message": "Tất cả"
+   },
+   "pack": {
+      "message": "ZIP"
+   },
+   "page": {
+      "message": "Số trang"
+   },
+   "picture": {
+      "message": "hình ảnh"
+   },
+   "playSoundAfterFailed": {
+      "message": "Tải xuống âm thanh thất bại"
+   },
+   "playSoundAfterFinished": {
+      "message": "Tải xuống âm thanh hoàn chỉnh"
+   },
+   "pleaseEnterTheLink": {
+      "message": "Nhập liên kết"
+   },
+   "preview": {
+      "message": "Nhìn"
+   },
+   "rFComputer": {
+      "message": "Xóa khỏi máy tính"
+   },
+   "rFList": {
+      "message": "Xóa từ danh sách"
+   },
+   "recommendations": {
+      "message": "Đề nghị"
+   },
+   "recommendationsDesc": {
+      "message": "Bạn có ý tưởng hay hơn về cách cải thiện trình tải xuống thông minh?"
+   },
+   "recommendationsDesc2": {
+      "message": "sử dụng "
+   },
+   "recommendationsDesc3": {
+      "message": " Biểu mẫu để chia sẻ ý tưởng với chúng tôi."
+   },
+   "rename": {
+      "message": "Đổi tên"
+   },
+   "retract": {
+      "message": "Thu gọn chi tiết"
+   },
+   "retry": {
+      "message": "Thử lại"
+   },
+   "router": {
+      "message": "Phân loại tệp"
+   },
+   "routerExpound": {
+      "message": "Chức năng này sẽ tự động phân phối các tập tin vào các thư mục con tương ứng trong thư mục tải xuống. Dưới đây là danh sách các phần mở rộng tệp và thư mục nơi chúng sẽ được đặt sau khi tải xuống."
+   },
+   "routine": {
+      "message": "thông thường"
+   },
+   "ruleDetail": {
+      "message": "{NO} Số sê-ri；{EXT} Hậu tố；{NAME} Tên tệp gốc；{PAGETITLE} tiêu đề trang; {DATE} Dấu thời gian"
+   },
+   "ruleDetail1": {
+      "message": "Theo định dạng này, {EXT} sẽ giữ lại hậu tố của chính ảnh"
+   },
+   "ruleDetail2": {
+      "message": "\"pic_\"Có thể thay đổi thành những gì bạn muốn"
+   },
+   "ruleDetail3": {
+      "message": "Các biến sau có thể được sử dụng:"
+   },
+   "ruleDetail4": {
+      "message": "{NO} cho biết số sê-ri; {NO01}, {NO001} cho biết số sê-ri có 0, v.v.; {EXT} cho biết phần mở rộng; {NAME} cho biết tên tệp gốc; {PAGETITLE} cho biết tiêu đề trang"
+   },
+   "ruleDetail5": {
+      "message": "Ví dụ: có 2 hình dongman.jpg và meijing.gif"
+   },
+   "ruleDetail6": {
+      "message": "pic_{NO001}.{EXT}sẽ được đổi tên thành"
+   },
+   "ruleDetail7": {
+      "message": "{NAME}_{NO001}.{EXT}sẽ được đổi tên thành"
+   },
+   "save": {
+      "message": "tiết kiệm"
+   },
+   "selectAll": {
+      "message": "tất cả"
+   },
+   "size": {
+      "message": "kích thước"
+   },
+   "small": {
+      "message": "nhỏ"
+   },
+   "smallAudioFirst": {
+      "message": "Nhỏ đầu tiên"
+   },
+   "smallFileFirst": {
+      "message": "Nhỏ đầu tiên"
+   },
+   "smallPictureFirst": {
+      "message": "Nhỏ đầu tiên"
+   },
+   "smallVideoFirst": {
+      "message": "Nhỏ đầu tiên"
+   },
+   "smartRules": {
+      "message": "kịch bản"
+   },
+   "supportedBy": {
+      "message": "trình tải xuống thông minh AIX"
+   },
+   "suspend": {
+      "message": "Đình chỉ"
+   },
+   "suspended": {
+      "message": "Tạm dừng"
+   },
+   "thisIsTheLatestVersion": {
+      "message": "Hiện tại là phiên bản mới nhất"
+   },
+   "tips": {
+      "message": "lời nhắc"
+   },
+   "to": {
+      "message": "đến"
+   },
+   "update": {
+      "message": "Kiểm tra cập nhật"
+   },
+   "updatedToTheLatestVersion": {
+      "message": "Đã cập nhật lên phiên bản mới nhất"
+   },
+   "updt": {
+      "message": "Cập nhật"
+   },
+   "version": {
+      "message": "số phiên bản"
+   },
+   "video": {
+      "message": "video"
+   },
+   "width": {
+      "message": "W"
+   },
+   "wronged": {
+      "message": "Tải xuống bất thường"
+   }
+}

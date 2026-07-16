@@ -7,11 +7,45 @@ service_account.json
 telegram_mapping.json
 state.json
 stats.json
+telegram_caption_message_map.json
+telegram_caption_requests.json
+bot.lock
+profile_bot.lock
+state/*
+!state/README.txt
 system.log
 logs/
+profile_automation/state/video_jobs.json
+profile_automation/state/video_jobs.json.tmp
+
+# Environment files and credentials
+.env
+.env.*
+!.env.example
+!**/.env.example
+payment_server/.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite
+*.sqlite3
+*.db
+*.log
+
+# Local tools / generated binaries
+payment_server/ngrok.exe
+payment_server/python
+profile_automation/state/*
+!profile_automation/state/README.txt
 
 # Build / env
 .venv/
+node_modules/
+.vite/
 dist/
 build/
 __pycache__/
+*.py[cod]
+.idea/
+*.iml

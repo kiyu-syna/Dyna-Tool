@@ -1,0 +1,74 @@
+{
+  "id": "1",
+  "name": "DaLi",
+  "enabled": true,
+  "default_caption": "😌😌😌#xh #xuhuong #fyp #valorant ",
+  "check_interval_minutes": 4,
+  "douyin": {
+    "gemlogin_profile_id": "1",
+    "sources": [
+      {
+        "target_sec_uid": "MS4wLjABAAAAO3YbM9IMRbqlGTi4F8_eyagk-QXCxdvtlRUsuhbwV08",
+        "target_display_name": "",
+        "enabled": true
+      },
+      {
+        "target_sec_uid": "MS4wLjABAAAA4qFIDJ7S-JJj0UPuNV5ETR1O1kaQG6J-qT-KBXdxTb652bhpGQBumSErjHb2XBoa",
+        "target_display_name": "",
+        "enabled": true
+      },
+      {
+        "target_sec_uid": "MS4wLjABAAAAQmZhgSLPswyE3k8eyYS7r8gHTrq7C3kCMKllPH-PM2Z8FtgB0Xm1wEbLpJzkhXAc",
+        "target_display_name": "",
+        "enabled": true
+      },
+      {
+        "target_sec_uid": "MS4wLjABAAAAjmM2rbROU-sP0YSbD0y_vv35heHECznUpEgGoRBa9SSU--1YHPJSDffrXXHv-hUp",
+        "target_display_name": "",
+        "enabled": true
+      },
+      {
+        "target_sec_uid": "MS4wLjABAAAAUk0R1IkBQJbESK_sXEscHJqX4njYZhcPeEwczYTVK94",
+        "target_display_name": "",
+        "enabled": true
+      },
+      {
+        "target_sec_uid": "MS4wLjABAAAAjp1g1oIh9WjcSsgtD0ObDUoiKgknvjWZY4-7RV_VWDVdvzkWZjg4h53TIoS3K-Xi",
+        "target_display_name": "",
+        "enabled": true
+      },
+      {
+        "target_sec_uid": "MS4wLjABAAAAPXEQRE071bTwbbr5Ct6K1__rGUGtNJ2_fxKbD1dmRec",
+        "target_display_name": "",
+        "enabled": true
+      }
+    ],
+    "target_sec_uid": "MS4wLjABAAAAO3YbM9IMRbqlGTi4F8_eyagk-QXCxdvtlRUsuhbwV08",
+    "target_display_name": "",
+    "legacy_state_sec_uid": "MS4wLjABAAAAO3YbM9IMRbqlGTi4F8_eyagk-QXCxdvtlRUsuhbwV08"
+  },
+  "tiktok": {
+    "gemlogin_profile_id": "1",
+    "enabled": true,
+    "use_original_desc": false
+  },
+  "facebook": {
+    "gemlogin_profile_id": "1",
+    "enabled": true,
+    "use_original_desc": false,
+    "profile_url": "https://www.facebook.com/profile.php?id=61591820282439"
+  },
+  "youtube": {
+    "gemlogin_profile_id": "1",
+    "enabled": true,
+    "use_original_desc": false,
+    "channel_id": "UCpu483Og4GIbxbTFgdJTCEA",
+    "preset": "slow",
+    "crf": 14
+  },
+  "filters": {
+    "min_likes": 0,
+    "max_duration_seconds": 120.0
+  },
+  "save_dir": "C:/Users/Quoc Bqo/Videos/Downloaded Video/Profile 1"
+}

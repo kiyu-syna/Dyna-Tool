@@ -1,4 +1,4 @@
-import re, ctypes, os, random, sys, unicodedata
+import re, ctypes, os, random, sys, unicodedata, threading
 from datetime import datetime
 from rich.console import Console
 import core.config as config
@@ -135,6 +135,150 @@ import win32gui
 import win32con
 import time # Import time for sleep
 
+_PROFILE_WINDOW_HWND = {}
+_WINDOW_FOCUS_LOCK = threading.RLock()
+
+
+def get_window_focus_lock():
+    return _WINDOW_FOCUS_LOCK
+
+
+def _maximize_window(hwnd):
+    """Maximize directly without restoring first, which visibly shrinks the window."""
+    win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
+
+
+def _activate_window(hwnd, topmost=True, maximize=False):
+    try:
+        if maximize:
+            _maximize_window(hwnd)
+        elif win32gui.IsIconic(hwnd):
+            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+    except Exception:
+        pass
+
+    try:
+        win32gui.SetWindowPos(
+            hwnd,
+            win32con.HWND_TOPMOST,
+            0, 0, 0, 0,
+            win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+        )
+        win32gui.SetForegroundWindow(hwnd)
+        win32gui.BringWindowToTop(hwnd)
+        win32gui.SetActiveWindow(hwnd)
+        if maximize:
+            _maximize_window(hwnd)
+        if not topmost:
+            win32gui.SetWindowPos(
+                hwnd,
+                win32con.HWND_NOTOPMOST,
+                0, 0, 0, 0,
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+            )
+    except Exception:
+        raise
+
+
+def _get_active_profile_count():
+    try:
+        profiles = config.load_profile_configs()
+        active_profiles = [cfg for cfg in profiles.values() if cfg.get("enabled", True)]
+        return max(1, len(active_profiles))
+    except Exception:
+        return 4
+
+
+def _collect_browser_windows():
+    browsers = []
+    for win in gw.getAllWindows():
+        if not win.title:
+            continue
+        title = win.title.lower()
+        if any(x in title for x in ["visual studio", "cmd.exe", "powershell", "antigravity", ".py"]):
+            continue
+        if any(k in title for k in ["iron", "brower", "browser", "tiktok", "douyin", "??", "upload", "new tab", "gemlogin", "adspower"]):
+            browsers.append(win)
+    browsers.sort(key=lambda w: w._hWnd)
+    return browsers
+
+
+def _get_screen_grid_positions(total_profiles=None):
+    screen_width = 1920
+    screen_height = 1040
+    total = max(1, int(total_profiles or _get_active_profile_count()))
+
+    cols = 1
+    while cols * cols < total:
+        cols += 1
+    rows = (total + cols - 1) // cols
+
+    cell_w = max(320, screen_width // cols)
+    cell_h = max(260, screen_height // rows)
+
+    positions = []
+    for row in range(rows):
+        for col in range(cols):
+            positions.append((col * cell_w, row * cell_h))
+
+    return positions, cell_w, cell_h, cols, rows
+
+
+def _window_matches_profile_title(win, profile_id):
+    if not profile_id or not win.title:
+        return False
+    title = win.title.lower()
+    pid = str(profile_id).strip().lower()
+    tokens = [
+        f"profile {pid}",
+        f"profile_{pid}",
+        f"gemlogin {pid}",
+        f"adspower {pid}",
+        f"#{pid}",
+        f"[{pid}]",
+        f"({pid})",
+    ]
+    return any(token in title for token in tokens)
+
+
+def _window_distance_to_slot(win, profile_index, total_profiles=None):
+    positions, cell_w, cell_h, _, _ = _get_screen_grid_positions(total_profiles=total_profiles)
+    target_x, target_y = positions[int(profile_index) % len(positions)]
+    center_x = win.left + max(win.width, 0) / 2
+    center_y = win.top + max(win.height, 0) / 2
+    target_center_x = target_x + cell_w / 2
+    target_center_y = target_y + cell_h / 2
+    return abs(center_x - target_center_x) + abs(center_y - target_center_y)
+
+
+def _resolve_profile_window(profile_id=None, profile_index=None, total_profiles=None):
+    browsers = _collect_browser_windows()
+    if not browsers:
+        return None
+
+    if profile_id is not None:
+        bound_hwnd = _PROFILE_WINDOW_HWND.get(str(profile_id))
+        if bound_hwnd:
+            for win in browsers:
+                if win._hWnd == bound_hwnd:
+                    return win
+
+        for win in browsers:
+            if _window_matches_profile_title(win, profile_id):
+                _PROFILE_WINDOW_HWND[str(profile_id)] = win._hWnd
+                return win
+
+    if profile_index is not None:
+        target_win = min(
+            browsers,
+            key=lambda win: _window_distance_to_slot(win, profile_index, total_profiles=total_profiles),
+        )
+        if profile_id is not None:
+            _PROFILE_WINDOW_HWND[str(profile_id)] = target_win._hWnd
+        return target_win
+
+    return browsers[0]
+
 def bring_window_to_top(title_keywords, topmost=True, maximize=False):
     """
     Tìm cửa sổ chứa các từ khóa trong tiêu đề và đưa nó lên trên cùng.
@@ -159,8 +303,8 @@ def bring_window_to_top(title_keywords, topmost=True, maximize=False):
             
             # Phóng to hoặc phục hồi cửa sổ
             if maximize:
-                win32gui.ShowWindow(hwnd, win32con.SW_MAXIMIZE)
-            else:
+                _maximize_window(hwnd)
+            elif win32gui.IsIconic(hwnd):
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
                 
             # Đưa lên foreground
@@ -181,6 +325,167 @@ def bring_window_to_top(title_keywords, topmost=True, maximize=False):
     except Exception as e:
         console.print(f"[dim red]   ➔ Lỗi khi đưa cửa sổ lên đầu: {e}[/]")
     return False
+
+
+def bring_window_to_top(title_keywords, topmost=True, maximize=False):
+    try:
+        target_win = None
+        for win in gw.getAllWindows():
+            if any(kw.lower() in win.title.lower() for kw in title_keywords):
+                target_win = win
+                break
+
+        if target_win:
+            console.print(f"[dim]   -> Dang dua cua so len dau: {target_win.title}[/]")
+            with _WINDOW_FOCUS_LOCK:
+                _activate_window(target_win._hWnd, topmost=topmost, maximize=maximize)
+                time.sleep(0.5)
+            return True
+    except Exception as e:
+        console.print(f"[dim red]   -> Loi khi dua cua so len dau: {e}[/]")
+    return False
+
+
+def bring_profile_window_to_top(profile_id=None, profile_index=None, total_profiles=None, topmost=True, maximize=True):
+    try:
+        target_win = _resolve_profile_window(
+            profile_id=profile_id,
+            profile_index=profile_index,
+            total_profiles=total_profiles,
+        )
+        if not target_win:
+            return False
+
+        hwnd = target_win._hWnd
+        if profile_id is not None:
+            _PROFILE_WINDOW_HWND[str(profile_id)] = hwnd
+
+        console.print(f"[dim]   -> Dang dua cua so profile len dau: {target_win.title}[/]")
+        with _WINDOW_FOCUS_LOCK:
+            _activate_window(hwnd, topmost=topmost, maximize=True)
+            time.sleep(0.5)
+        return True
+    except Exception as e:
+        console.print(f"[dim red]   -> Loi khi dua cua so profile len dau: {e}[/]")
+        return False
+
+
+def arrange_window_for_profile_dynamic(page, profile_index, total_profiles=None):
+    """
+    Layout dong cho 1..N profile. Dinh nghia cuoi file de ghi de logic 4 o cu.
+    """
+    try:
+        browsers = _collect_browser_windows()
+        if not browsers:
+            logger.error("Loi: Khong bat duoc cua so trinh duyet nao. Bo qua snap.")
+            return False
+
+        positions, cell_w, cell_h, cols, rows = _get_screen_grid_positions(total_profiles=total_profiles)
+        browsers.sort(key=lambda w: w._hWnd)
+
+        for i, win in enumerate(browsers[:len(positions)]):
+            try:
+                _maximize_window(win._hWnd)
+            except Exception as e:
+                logger.error(f"Loi khi phong to 1 cua so: {e}")
+
+        logger.info(
+            f"Da phong to {min(len(positions), len(browsers))} cua so trinh duyet."
+        )
+
+        try:
+            page.bring_to_front()
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        logger.error(f"Loi tong quat khi sap xep cua so: {e}")
+        return False
+
+
+def arrange_window_for_profile(page, profile_index, total_profiles=None):
+    """
+    Override layout cu: ho tro so profile dong thay vi co dinh 4 o.
+    """
+    try:
+        browsers = _collect_browser_windows()
+        if not browsers:
+            logger.error("Loi: Khong bat duoc cua so trinh duyet nao. Bo qua snap.")
+            return False
+
+        positions, cell_w, cell_h, cols, rows = _get_screen_grid_positions(total_profiles=total_profiles)
+        browsers.sort(key=lambda w: w._hWnd)
+
+        for i, win in enumerate(browsers[:len(positions)]):
+            try:
+                _maximize_window(win._hWnd)
+            except Exception as e:
+                logger.error(f"Loi khi phong to 1 cua so: {e}")
+
+        logger.info(
+            f"Da phong to {min(len(positions), len(browsers))} cua so trinh duyet."
+        )
+
+        try:
+            page.bring_to_front()
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        logger.error(f"Loi tong quat khi sap xep cua so: {e}")
+        return False
+
+
+def bind_profile_window(profile_id, profile_index=None, total_profiles=None):
+    """Ghi nho HWND cua profile ma khong kich hoat cua so do."""
+    try:
+        target_win = _resolve_profile_window(
+            profile_id=profile_id,
+            profile_index=profile_index,
+            total_profiles=total_profiles,
+        )
+        if not target_win:
+            return False
+        _PROFILE_WINDOW_HWND[str(profile_id)] = target_win._hWnd
+        return True
+    except Exception as e:
+        logger.debug(f"Khong the bind cua so cho profile {profile_id}: {e}")
+        return False
+
+
+def _bring_profile_window_to_top_legacy(profile_id=None, profile_index=None, total_profiles=None, topmost=True, maximize=True):
+    """Dua dung cua so browser cua profile len tren cung."""
+    try:
+        target_win = _resolve_profile_window(
+            profile_id=profile_id,
+            profile_index=profile_index,
+            total_profiles=total_profiles,
+        )
+        if not target_win:
+            return False
+
+        hwnd = target_win._hWnd
+        if profile_id is not None:
+            _PROFILE_WINDOW_HWND[str(profile_id)] = hwnd
+        console.print(f"[dim]   ➔ Đang đưa cửa sổ profile lên đầu: {target_win.title}[/]")
+
+        _maximize_window(hwnd)
+
+        win32gui.SetForegroundWindow(hwnd)
+
+        if topmost:
+            win32gui.SetWindowPos(
+                hwnd,
+                win32con.HWND_TOPMOST,
+                0, 0, 0, 0,
+                win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW
+            )
+
+        time.sleep(0.5)
+        return True
+    except Exception as e:
+        console.print(f"[dim red]   ➔ Lỗi khi đưa cửa sổ profile lên đầu: {e}[/]")
+        return False
 
 
 def take_screenshot(page=None, filename="error_screenshot.png"):
@@ -219,7 +524,7 @@ def notify_intervention(reason, page=None):
     """
     Chụp ảnh và gửi thông báo cần can thiệp qua Telegram.
     """
-    from telegram_manager import send_screenshot_notification
+    from services.telegram_service import send_screenshot_notification
     
     # Chụp ảnh
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -227,13 +532,17 @@ def notify_intervention(reason, page=None):
     img_path = take_screenshot(page, fname)
     
     if img_path:
-        send_screenshot_notification(img_path, reason)
-        # Tự động dọn dẹp file sau khi gửi (tùy chọn)
-        # threading.Timer(60, lambda: os.remove(img_path) if os.path.exists(img_path) else None).start()
-        return True
+        try:
+            send_screenshot_notification(img_path, reason)
+            return True
+        finally:
+            try:
+                os.remove(img_path)
+            except OSError:
+                pass
     return False
 
-def arrange_window_for_profile(page, profile_index, total_profiles=4):
+def arrange_window_for_profile(page, profile_index, total_profiles=None):
     """
     Sắp xếp cửa sổ trình duyệt (của page) vào 1 trong 4 góc màn hình dạng grid.
     profile_index: 0, 1, 2, 3
@@ -281,16 +590,12 @@ def arrange_window_for_profile(page, profile_index, total_profiles=4):
         pos_idx = profile_index % 4
         
         for i, win in enumerate(browsers[:4]):
-            target_pos = positions[i % 4]
             try:
-                if win.isMinimized or win.isMaximized:
-                    win.restore()
-                win.moveTo(*target_pos)
-                win.resizeTo(half_w, half_h)
+                _maximize_window(win._hWnd)
             except Exception as e:
-                logger.error(f"Lỗi khi xếp 1 cửa sổ: {e}")
+                logger.error(f"Lỗi khi phóng to 1 cửa sổ: {e}")
                 
-        logger.info(f"Đã cập nhật vị trí cho {min(4, len(browsers))} cửa sổ trình duyệt.")
+        logger.info(f"Đã phóng to {min(4, len(browsers))} cửa sổ trình duyệt.")
         
         page.bring_to_front()
         return True

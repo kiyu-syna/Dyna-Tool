@@ -1,0 +1,620 @@
+{
+   "DESC": {
+      "message": "描述"
+   },
+   "DOWN": {
+      "message": ""
+   },
+   "DSEL": {
+      "message": ""
+   },
+   "EXELeftTitle": {
+      "message": "下载管理"
+   },
+   "EXERightTitle": {
+      "message": "资源嗅探"
+   },
+   "EXETitle": {
+      "message": "AIX 智能下载器"
+   },
+   "EXT": {
+      "message": "格式"
+   },
+   "ORDER": {
+      "message": "排序"
+   },
+   "SELA": {
+      "message": ""
+   },
+   "SORT": {
+      "message": "分类"
+   },
+   "URL": {
+      "message": "网址"
+   },
+   "YouTubeVideoError": {
+      "message": "由于谷歌和Chrome网上商店的政策和限制，视频下载不适用于YouTube网站或嵌入其他网站的任何其他YouTube视频。"
+   },
+   "about": {
+      "message": "关于"
+   },
+   "aboutDesc": {
+      "message": "AIX智能下载器可高效实现下载管理，网页图片，视频，音频等内容的嗅探和下载，快速提取你想要的内容。"
+   },
+   "aboutHeaderDesc": {
+      "message": "做chrome中最好的智能下载器"
+   },
+   "aboutOp": {
+      "message": "简介"
+   },
+   "add": {
+      "message": "新增"
+   },
+   "addDir": {
+      "message": "添加目录"
+   },
+   "addDownloadLink": {
+      "message": "添加链接下载"
+   },
+   "all": {
+      "message": "全部"
+   },
+   "analyzing": {
+      "message": "正在分析"
+   },
+   "audio": {
+      "message": "音频"
+   },
+   "auto": {
+      "message": "自动"
+   },
+   "big": {
+      "message": "大"
+   },
+   "bigAudioFirst": {
+      "message": "大音频优先"
+   },
+   "bigFileFirst": {
+      "message": "大文件优先"
+   },
+   "bigPictureFirst": {
+      "message": "大图优先"
+   },
+   "bigVideoFirst": {
+      "message": "大视频优先"
+   },
+   "bugs": {
+      "message": "问题"
+   },
+   "bugsDesc1": {
+      "message": "发现问题可以立即"
+   },
+   "bugsDesc2": {
+      "message": "联系我们"
+   },
+   "bugsDesc3": {
+      "message": "。"
+   },
+   "cacheTitle": {
+      "message": "视频缓存中，请勿刷新或关闭视频所在页面！！！"
+   },
+   "cancel": {
+      "message": "取消"
+   },
+   "checkNetworkConnection": {
+      "message": "当前网络环境异常，请检查您的网络或代理"
+   },
+   "choosePicture": {
+      "message": "评论区图片"
+   },
+   "clearAll": {
+      "message": "清空列表"
+   },
+   "clearCeleted": {
+      "message": "清除已删除"
+   },
+   "clearDownloadRecords": {
+      "message": "清除下载记录"
+   },
+   "clearDownloaded": {
+      "message": "清除已下载"
+   },
+   "clearWronged": {
+      "message": "清除已失败"
+   },
+   "completed": {
+      "message": "已经完成"
+   },
+   "confirm": {
+      "message": "确认"
+   },
+   "confirmClear": {
+      "message": "确认清空？"
+   },
+   "confirmDeletion": {
+      "message": "确认删除 "
+   },
+   "contactUs": {
+      "message": "遇到问题请联系我们"
+   },
+   "continue": {
+      "message": "继续"
+   },
+   "copyFailed": {
+      "message": "复制失败"
+   },
+   "copyLink": {
+      "message": "复制文件链接"
+   },
+   "copySuccess": {
+      "message": "复制成功"
+   },
+   "customFormat": {
+      "message": "自定义格式"
+   },
+   "deSelect": {
+      "message": "反选"
+   },
+   "default_title": {
+      "message": "AIX智能下载器(图片/视频/音乐/文档)"
+   },
+   "delete": {
+      "message": "删除"
+   },
+   "deleted": {
+      "message": "已被删除"
+   },
+   "description": {
+      "message": "AIX智能下载器可高效实现下载管理，网页图片，视频，音频等内容的嗅探和下载，快速提取你想要的内容。"
+   },
+   "details": {
+      "message": "详情"
+   },
+   "domainDuplicated": {
+      "message": "域名不可重复"
+   },
+   "download": {
+      "message": "下载"
+   },
+   "downloadAllImgUsingDM": {
+      "message": "下载所有图片"
+   },
+   "downloadButtonOff": {
+      "message": "已关闭"
+   },
+   "downloadButtonOn": {
+      "message": "已开启"
+   },
+   "downloadButtonTip": {
+      "message": "页面下载按钮"
+   },
+   "downloadCommentImage": {
+      "message": "下载评论图片"
+   },
+   "downloadHasBeenCancelled": {
+      "message": "下载已取消"
+   },
+   "downloadUsingDM": {
+      "message": "使用智能下载器下载"
+   },
+   "download_simple": {
+      "message": "下载"
+   },
+   "downloading": {
+      "message": "正在下载"
+   },
+   "dragDownloadDesc": {
+      "message": "图片将完成下载"
+   },
+   "dragDownloadTitle": {
+      "message": "拖拽到此处完成下载"
+   },
+   "dupImgLinkNaming": {
+      "message": "重复图片链接命名"
+   },
+   "edit": {
+      "message": "编辑"
+   },
+   "email": {
+      "message": "邮箱"
+   },
+   "enableBoxSelect": {
+      "message": "启用图片拖动框选"
+   },
+   "enableContextMenu": {
+      "message": "为右键菜单启用“智能下载器下载”"
+   },
+   "enableHotKey": {
+      "message": "新页面提取快捷键"
+   },
+   "enableOriginalBar": {
+      "message": "启用Chrome原始下载栏"
+   },
+   "enableRouter": {
+      "message": "开启下载归类"
+   },
+   "enableSmartScripts": {
+      "message": "开启智能脚本"
+   },
+   "enabledDragDownload": {
+      "message": "开启拖拽下载"
+   },
+   "example": {
+      "message": "例"
+   },
+   "exitSetting": {
+      "message": "退出设置"
+   },
+   "expImgLink": {
+      "message": "导出图片链接"
+   },
+   "exportRule": {
+      "message": "导出"
+   },
+   "fAlert": {
+      "message": "请检查您的邮箱格式是否正确,\n反馈信息至少5个字符。"
+   },
+   "fDesc": {
+      "message": "反馈建议或需要帮助请联系我们"
+   },
+   "fEmail": {
+      "message": "你的邮箱"
+   },
+   "fMessage": {
+      "message": "写下你的留言"
+   },
+   "fName": {
+      "message": "你的名字"
+   },
+   "fSend": {
+      "message": "发送"
+   },
+   "fSendFormat": {
+      "message": "上传的必须是图片格式"
+   },
+   "fSendPicture": {
+      "message": "最多只能上传两张图片"
+   },
+   "fSuccess": {
+      "message": "感谢您的反馈"
+   },
+   "fSupport": {
+      "message": "你也可以在网上商店给一个好评或者提供支持建议 "
+   },
+   "fText": {
+      "message": "请写下您的问题或建议"
+   },
+   "fTitle": {
+      "message": "AIX 智能下载器"
+   },
+   "fTouch": {
+      "message": "联系我们"
+   },
+   "fUploadImage": {
+      "message": "上传图片"
+   },
+   "fUuploadbutton": {
+      "message": "请点击这里上传图片"
+   },
+   "fWebstore": {
+      "message": "前往"
+   },
+   "feedback": {
+      "message": "反馈"
+   },
+   "file": {
+      "message": "文档"
+   },
+   "fileDeExist": {
+      "message": "文件不存在"
+   },
+   "fileHasBeenDeleted": {
+      "message": "文件已被删除"
+   },
+   "filter": {
+      "message": "任务筛选"
+   },
+   "folder": {
+      "message": "文件夹"
+   },
+   "folderDuplicated": {
+      "message": "文件夹不可重复"
+   },
+   "formatError": {
+      "message": "格式错误"
+   },
+   "go": {
+      "message": "获取"
+   },
+   "group": {
+      "message": "交流群"
+   },
+   "height": {
+      "message": "高度"
+   },
+   "help": {
+      "message": "帮助"
+   },
+   "hotKeyRemind": {
+      "message": "请直接在键盘上输入快捷键"
+   },
+   "imgFilter": {
+      "message": "图片过滤"
+   },
+   "imgFilterDesc": {
+      "message": "开启此功能将过滤掉网站中你不想提取的图片"
+   },
+   "imgFilterDesc2": {
+      "message": "示例：\n域名 “*”，正则表达式“.*?”，表示过滤全网全部图片。（域名设置为 “*” 或不填写代表全网过滤）\n域名“www.example.com”，正则表达式“abc”，表示过滤“www.example.com”域名下图片链接中包含“abc”的图片。"
+   },
+   "imgFilterReg": {
+      "message": "正则表达式"
+   },
+   "imgFilterTitle": {
+      "message": "开启图片过滤"
+   },
+   "imgFilterYm": {
+      "message": "域名"
+   },
+   "importRule": {
+      "message": "导入"
+   },
+   "maxHeight": {
+      "message": "最大高度"
+   },
+   "maxWidth": {
+      "message": "最大宽度"
+   },
+   "minHeight": {
+      "message": "最小高度"
+   },
+   "minWidth": {
+      "message": "最小宽度"
+   },
+   "more": {
+      "message": "更多"
+   },
+   "name": {
+      "message": "名称"
+   },
+   "newDownloadTask": {
+      "message": "新建下载任务"
+   },
+   "newTabTip": {
+      "message": "不方便筛选，请点击这里！"
+   },
+   "noAudio": {
+      "message": "没有获取到音频？试试网页中播放后再获取"
+   },
+   "noData": {
+      "message": "暂无数据"
+   },
+   "noVideo": {
+      "message": "没有获取到视频？试试网页中播放后再获取"
+   },
+   "notice": {
+      "message": "通知"
+   },
+   "notifEnabledTip": {
+      "message": "设置成功，重启后生效,是否现在重启？"
+   },
+   "notificationAfterFinished": {
+      "message": "下载完成通知"
+   },
+   "notifications_fail_title": {
+      "message": "啊哦, 下载失败了"
+   },
+   "notifications_open_dir": {
+      "message": "在文件夹中展示"
+   },
+   "notifications_open_file": {
+      "message": "打开文件"
+   },
+   "notifications_success_title": {
+      "message": "Nice, 下载成功了"
+   },
+   "officialwebsite": {
+      "message": "官网"
+   },
+   "oldVersion": {
+      "message": "使用旧版"
+   },
+   "opExpPage": {
+      "message": "导出页面信息"
+   },
+   "opMoreImgSel": {
+      "message": "默认展示更多图片选项"
+   },
+   "opSaveImgSize": {
+      "message": "记住图片筛选尺寸"
+   },
+   "opWebpToJpg": {
+      "message": "WEBP转JPG"
+   },
+   "open": {
+      "message": "打开文件"
+   },
+   "openDirectory": {
+      "message": "打开文件目录"
+   },
+   "openInNewTab": {
+      "message": "在新标签页打开"
+   },
+   "openInNewWindow": {
+      "message": "新窗口打开"
+   },
+   "operation": {
+      "message": "操作"
+   },
+   "options": {
+      "message": "设置"
+   },
+   "other": {
+      "message": "其它"
+   },
+   "otificationAfterFailed": {
+      "message": "下载失败通知"
+   },
+   "outDSEL": {
+      "message": "反选"
+   },
+   "outSELA": {
+      "message": "全选"
+   },
+   "pack": {
+      "message": "打包"
+   },
+   "page": {
+      "message": "评论页数"
+   },
+   "picture": {
+      "message": "图片"
+   },
+   "playSoundAfterFailed": {
+      "message": "下载失败提示音"
+   },
+   "playSoundAfterFinished": {
+      "message": "下载完成提示音"
+   },
+   "pleaseEnterTheLink": {
+      "message": "请输入链接"
+   },
+   "preview": {
+      "message": "预览"
+   },
+   "rFComputer": {
+      "message": "从电脑删除"
+   },
+   "rFList": {
+      "message": "从列表删除"
+   },
+   "recommendations": {
+      "message": "建议"
+   },
+   "recommendationsDesc": {
+      "message": "对如何改进AIX智能下载器有更好的想法？"
+   },
+   "recommendationsDesc2": {
+      "message": "用"
+   },
+   "recommendationsDesc3": {
+      "message": "形式与我们分享想法。"
+   },
+   "rename": {
+      "message": "重命名"
+   },
+   "retract": {
+      "message": "收起详情"
+   },
+   "retry": {
+      "message": "重试"
+   },
+   "router": {
+      "message": "下载文件归类"
+   },
+   "routerExpound": {
+      "message": "此功能会自动将文件分发到下载文件夹中相应的子文件夹中。下面是一个文件扩展名的列表，以及下载后它们将被放置的目录。"
+   },
+   "routine": {
+      "message": "常规"
+   },
+   "ruleDetail": {
+      "message": "{NO} 序号；{EXT} 后缀名；{NAME} 原文件名；{PAGETITLE} 页面标题; {DATE} 时间戳"
+   },
+   "ruleDetail1": {
+      "message": "按这个格式来，{EXT}不要动就会保留图片本身的后缀名"
+   },
+   "ruleDetail2": {
+      "message": "\"pic_\"可以改成你想要的"
+   },
+   "ruleDetail3": {
+      "message": "可以使用以下变量:"
+   },
+   "ruleDetail4": {
+      "message": "{NO}表示序号；{NO01}、{NO001}表示序号前面补0依次类推；{EXT}表示扩展名；{NAME}表示原文件名；{PAGETITLE}表示页面标题"
+   },
+   "ruleDetail5": {
+      "message": "比如有dongman.jpg ， meijing.gif 2张图片"
+   },
+   "ruleDetail6": {
+      "message": "pic_{NO001}.{EXT}会重命名为"
+   },
+   "ruleDetail7": {
+      "message": "{NAME}_{NO001}.{EXT}会重命名为"
+   },
+   "save": {
+      "message": "保存"
+   },
+   "selectAll": {
+      "message": "全选"
+   },
+   "size": {
+      "message": "大小"
+   },
+   "small": {
+      "message": "小"
+   },
+   "smallAudioFirst": {
+      "message": "小音频优先"
+   },
+   "smallFileFirst": {
+      "message": "小文件优先"
+   },
+   "smallPictureFirst": {
+      "message": "小图优先"
+   },
+   "smallVideoFirst": {
+      "message": "小视频优先"
+   },
+   "smartRules": {
+      "message": "提取规则"
+   },
+   "supportedBy": {
+      "message": "AIX智能下载器"
+   },
+   "suspend": {
+      "message": "暂停"
+   },
+   "suspended": {
+      "message": "已暂停"
+   },
+   "terminal": {
+      "message": "终端"
+   },
+   "terminal_mobile": {
+      "message": "移动端"
+   },
+   "terminal_pc": {
+      "message": "PC端"
+   },
+   "thisIsTheLatestVersion": {
+      "message": "当前已是最新版本"
+   },
+   "tips": {
+      "message": "提示"
+   },
+   "to": {
+      "message": "至"
+   },
+   "update": {
+      "message": "检查更新"
+   },
+   "updatedToTheLatestVersion": {
+      "message": "已更新到最新版本"
+   },
+   "updt": {
+      "message": "更新"
+   },
+   "version": {
+      "message": "版本号"
+   },
+   "video": {
+      "message": "视频"
+   },
+   "width": {
+      "message": "宽度"
+   },
+   "wronged": {
+      "message": "异常下载"
+   }
+}

@@ -1,0 +1,103 @@
+{
+   "action": {
+      "default_icon": "assets/logo/logo_x48.png",
+      "default_popup": "popup/popup.html"
+   },
+   "background": {
+      "service_worker": "./dyna-background-entry.js"
+   },
+   "content_scripts": [ {
+      "css": [ "content/content.css" ],
+      "js": [ "content/content.js" ],
+      "matches": [ "\u003Call_urls>" ],
+      "run_at": "document_start"
+   }, {
+      "js": [ "content/douyin-automation-bridge.js", "content/dyna-original-button-bridge.js" ],
+      "matches": [ "*://*.douyin.com/*" ],
+      "run_at": "document_start",
+      "world": "MAIN"
+   }, {
+      "css": [ "content/dyna-integration.css" ],
+      "js": [ "content/dyna-original-integration.js" ],
+      "matches": [ "*://*.douyin.com/*" ],
+      "run_at": "document_idle"
+   }, {
+      "js": [ "assets/videoScripts/taobao.js" ],
+      "matches": [ "*://item.taobao.com/*" ]
+   }, {
+      "js": [ "assets/videoScripts/bilibili.js" ],
+      "matches": [ "*://www.bilibili.com/video/*", "*://*.bilibili.com/bangumi/play/ep*" ],
+      "run_at": "document_end"
+   }, {
+      "js": [ "assets/videoScripts/jQuery-3.2.1.min.js", "assets/videoScripts/facebook.js" ],
+      "matches": [ "*://www.facebook.com/*" ],
+      "run_at": "document_end"
+   }, {
+      "js": [ "assets/videoScripts/jQuery-3.2.1.min.js", "assets/videoScripts/tw.js" ],
+      "matches": [ "*://x.com/*" ],
+      "run_at": "document_start"
+   }, {
+      "js": [ "assets/videoScripts/metacafe.js" ],
+      "matches": [ "*://www.metacafe.com/watch/*" ],
+      "run_at": "document_end"
+   }, {
+      "js": [ "assets/videoScripts/jQuery-3.2.1.min.js", "assets/videoScripts/instagram.js" ],
+      "matches": [ "*://www.instagram.com/*" ],
+      "run_at": "document_end"
+   }, {
+      "js": [ "assets/videoScripts/jQuery-3.2.1.min.js", "assets/videoScripts/vimeo.js" ],
+      "matches": [ "*://vimeo.com/*" ],
+      "run_at": "document_end"
+   }, {
+      "js": [ "assets/videoScripts/jQuery-3.2.1.min.js", "assets/videoScripts/acfun.js" ],
+      "matches": [ "https://*.acfun.cn/*" ]
+   }, {
+      "js": [ "assets/videoScripts/youtube.js" ],
+      "matches": [ "https://www.youtube.com/watch*" ]
+   }, {
+      "js": [ "assets/videoScripts/baidubaike.js" ],
+      "matches": [ "https://baike.baidu.com/item/*" ]
+   }, {
+      "js": [ "assets/videoScripts/tiktok.js" ],
+      "matches": [ "https://tiktok.com/*", "https://www.tiktok.com/*" ]
+   }, {
+      "js": [ "Y7SI8E91xj.js" ],
+      "matches": [ "https://instagram.com/*", "https://x.com/", "https://*/*", "https://www.xiaohongshu.com/*", "https://www.tiktok.com/*", "https://www.snapchat.com/*", "https://web.snapchat.com/*", "https://www.kuaishou.com/*", "https://ads.tiktok.com/*", "https://creatormarketplace.tiktok.com/*", "https://www.facebook.com/*", "https://www.bilibili.com/*", "https://space.bilibili.com/*", "https://search.bilibili.com/*" ],
+      "run_at": "document_start"
+   } ],
+   "declarative_net_request": {
+      "rule_resources": [ {
+         "enabled": true,
+         "id": "ruleset_1",
+         "path": "rules.json"
+      } ]
+   },
+   "default_locale": "en",
+   "description": "__MSG_description__",
+   "host_permissions": [ "*://*/*" ],
+   "icons": {
+      "128": "assets/logo/logo_x128.png",
+      "16": "assets/logo/logo_x16.png",
+      "48": "assets/logo/logo_x48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA40/bBACAN6hbLZNt1D4J2DbOKAhOsAZiZIn+PxduI+DE2LryhHOB6AUJpBce7zDWQAQPNH1D+JuHSRRgXfDq1IcSsudEU4kD1LAhZvoa04jmWx2zuowC4TZpkOsW3m+g8LY8WIcS8kFv2bLf8QYKuJCfFH5VCP4QCfa0X0sO21v+oGPFLUbPFV0AKY9IKK6kp4z1g8fsqHeK9nWJ9MGoKjvqq1r9DsEA9jwQalvHstWOxiXFZ+qD4/okdh5aVvCv1lmv+gkj1+t/tvVEBTYrPig0goPwFx4b+ru09TOXciKFijtLeZSQfSjWvAeivkglW8Y/igfhUbwOiFAiaaWl9QIDAQAB",
+   "manifest_version": 3,
+   "name": "__MSG_default_title__",
+   "options_page": "options/options.html",
+   "permissions": [ "downloads", "downloads.shelf", "downloads.open", "contextMenus", "tabs", "scripting", "storage", "unlimitedStorage", "notifications", "declarativeNetRequest", "webRequest", "offscreen" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "9.0.58",
+   "web_accessible_resources": [ {
+      "matches": [ "*://*/*" ],
+      "resources": [ "content/windowDataMessage.js" ]
+   }, {
+      "matches": [ "*://*/*" ],
+      "resources": [ "assets/*.png" ]
+   }, {
+      "matches": [ "https://www.tiktok.com/*", "https://ads.tiktok.com/*", "https://www.instagram.com/*", "https://x.com/*", "https://www.xiaohongshu.com/*", "https://www.douyin.com/*", "https://creatormarketplace.tiktok.com/*", "https://www.datatool.vip/*", "https://www.youtube.com/*", "https://www.facebook.com/*", "https://www.bilibili.com/*", "https://space.bilibili.com/*", "https://search.bilibili.com/*" ],
+      "resources": [ "zgBYECz11Z.js" ]
+   }, {
+      "matches": [ "*://*/*" ],
+      "resources": [ "d3Cn3k30Ps.css", "OSESbxp6hz.css", "wMJG0TnYEZ.css" ]
+   } ]
+}

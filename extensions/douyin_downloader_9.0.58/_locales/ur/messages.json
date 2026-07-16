@@ -1,0 +1,611 @@
+{
+   "DESC": {
+      "message": "تفصیل"
+   },
+   "DOWN": {
+      "message": "ڈاؤن لوڈ"
+   },
+   "DSEL": {
+      "message": "ریورس الیکشن"
+   },
+   "EXELeftTitle": {
+      "message": "انتظام"
+   },
+   "EXERightTitle": {
+      "message": "وسائل سنفنگ"
+   },
+   "EXETitle": {
+      "message": "AIXاسمارٹ ڈاؤنلوڈر"
+   },
+   "EXT": {
+      "message": "فارمیٹ"
+   },
+   "ORDER": {
+      "message": "ترتیب"
+   },
+   "SELA": {
+      "message": "تمام منتخب کریں"
+   },
+   "SORT": {
+      "message": "زمرہ"
+   },
+   "URL": {
+      "message": "یو آر ایل"
+   },
+   "YouTubeVideoError": {
+      "message": "گوگل اور کروم ویب سٹور کی پالیسیوں اور پابندیوں کی وجہ سے، ویڈیو ڈاؤن لوڈ یوٹیوب کی ویب سائٹ یا دیگر ویب سائٹس میں سرایت شدہ کسی بھی دیگر YouTube ویڈیوز پر کام نہیں کرتا ہے۔"
+   },
+   "about": {
+      "message": "کے بارے میں"
+   },
+   "aboutDesc": {
+      "message": "AIXہوشیار ڈاؤنلوڈر کو ڈاؤن لوڈ کے انتظام ، سنفنگ اور ویب پیج کی تصاویر ، ویڈیوز ، آڈیو جیسے مواد کی ڈاؤن لوڈ کا موثر انداز میں ادراک ہوسکتا ہے ، اور اسی کے ساتھ ہی اپنی مطلوبہ مواد کو تیزی سے نکالنے کے لئے متعدد ویب سائٹوں کے سمارٹ اسکرپٹس کو بڑھا اور انضمام کرسکتا ہے۔"
+   },
+   "aboutHeaderDesc": {
+      "message": "کروم میں بہترین اسمارٹ ڈاؤنلوڈر بننے کے لئے"
+   },
+   "aboutOp": {
+      "message": "تعارف"
+   },
+   "add": {
+      "message": "شامل کریں"
+   },
+   "addDir": {
+      "message": "ڈائریکٹری شامل کریں"
+   },
+   "addDownloadLink": {
+      "message": "لوڈ کرنے کا لنک شامل کریں"
+   },
+   "all": {
+      "message": "سب"
+   },
+   "analyzing": {
+      "message": "تجزیہ جاری ہے"
+   },
+   "audio": {
+      "message": "آڈیو"
+   },
+   "auto": {
+      "message": "خودکار"
+   },
+   "big": {
+      "message": "بڑے"
+   },
+   "bigAudioFirst": {
+      "message": "پہلے بڑے"
+   },
+   "bigFileFirst": {
+      "message": "پہلے بڑے"
+   },
+   "bigPictureFirst": {
+      "message": "پہلے بڑے"
+   },
+   "bigVideoFirst": {
+      "message": "پہلے بڑے"
+   },
+   "bugs": {
+      "message": "مسئلہ"
+   },
+   "bugsDesc1": {
+      "message": "اگر آپ کو کوئی مسئلہ درپیش ہے تو ، آپ فوری طور پر کر سکتے ہیں"
+   },
+   "bugsDesc2": {
+      "message": "ہم سے رابطہ کریں"
+   },
+   "bugsDesc3": {
+      "message": "."
+   },
+   "cacheTitle": {
+      "message": "ویڈیو کیشے میں ، براہ کرم جہاں ویڈیو موجود ہے اس صفحے کو ریفریش یا بند نہ کریں!"
+   },
+   "cancel": {
+      "message": "منسوخ"
+   },
+   "checkNetworkConnection": {
+      "message": "نیٹ ورک کی خرابی، نیٹ ورک یا پراکسی چیک کریں۔"
+   },
+   "choosePicture": {
+      "message": "تبصرہ علاقے تصویر"
+   },
+   "clearAll": {
+      "message": "واضح فہرست"
+   },
+   "clearCeleted": {
+      "message": "واضح خارج کر دیا"
+   },
+   "clearDownloadRecords": {
+      "message": "واضح لوڈ سرگزشت"
+   },
+   "clearDownloaded": {
+      "message": "صاف صاف ڈاؤن لوڈ"
+   },
+   "clearWronged": {
+      "message": "صفائی ناکام ہوگئی"
+   },
+   "completed": {
+      "message": "مکمل ہوچکا ہے"
+   },
+   "confirm": {
+      "message": "تصدیق"
+   },
+   "confirmClear": {
+      "message": "خالی تصدیق کریں？"
+   },
+   "confirmDeletion": {
+      "message": "حذف ہونے کی تصدیق کریں "
+   },
+   "contactUs": {
+      "message": "اگر آپ کو کوئی پریشانی ہو تو ہم سے رابطہ کریں"
+   },
+   "continue": {
+      "message": "جاری رکھو"
+   },
+   "copyFailed": {
+      "message": "کاپی ناکام ہوگئی"
+   },
+   "copyLink": {
+      "message": "کاپی فائل لنک"
+   },
+   "copySuccess": {
+      "message": "کامیابی کاپی کریں"
+   },
+   "customFormat": {
+      "message": "کسٹم فارمیٹ"
+   },
+   "deSelect": {
+      "message": "سوئچ"
+   },
+   "default_title": {
+      "message": "AIXاسمارٹ ڈاؤنلوڈر(تصویر / ویڈیو / موسیقی / دستاویز)"
+   },
+   "delete": {
+      "message": "حذف کریں"
+   },
+   "deleted": {
+      "message": "حذف ہوگیا"
+   },
+   "description": {
+      "message": "AIX اسمارٹ ڈاؤنلوڈر ویب صفحہ کے مواد جیسے تصاویر، ویڈیوز اور آڈیو کو مؤثر طریقے سے منظم، سنف اور ڈاؤن لوڈ کر سکتا ہے۔"
+   },
+   "details": {
+      "message": "تفصیلات"
+   },
+   "domainDuplicated": {
+      "message": "ڈومین کا نام دہرایا نہیں جاسکتا"
+   },
+   "download": {
+      "message": "ڈاؤن لوڈ کریں"
+   },
+   "downloadAllImgUsingDM": {
+      "message": "تمام تصاویر ڈاؤن لوڈ کریں"
+   },
+   "downloadButtonOff": {
+      "message": "ڈاؤن لوڈ بٹن غیر فعال"
+   },
+   "downloadButtonOn": {
+      "message": "ڈاؤن لوڈ بٹن فعال"
+   },
+   "downloadButtonTip": {
+      "message": "صفحے پر ڈاؤن لوڈ بٹن کی نمائش کو کنٹرول کریں"
+   },
+   "downloadCommentImage": {
+      "message": "تبصرہ کی تصویر ڈاؤن لوڈ کریں"
+   },
+   "downloadHasBeenCancelled": {
+      "message": "ڈاؤن لوڈ منسوخ"
+   },
+   "downloadUsingDM": {
+      "message": "ہوشیار ڈاؤنلوڈر کا استعمال کرتے ہوئے ڈاؤن لوڈ کریں"
+   },
+   "download_simple": {
+      "message": "Down"
+   },
+   "downloading": {
+      "message": "ڈاؤن لوڈ"
+   },
+   "dragDownloadDesc": {
+      "message": "تصویر ڈاؤن لوڈ کرنا ختم کر دے گی"
+   },
+   "dragDownloadTitle": {
+      "message": "ڈاؤن لوڈ کرنے کے لیے یہاں گھسیٹیں۔"
+   },
+   "dupImgLinkNaming": {
+      "message": "ڈپلیکیٹ تصویری لنک کا نام"
+   },
+   "edit": {
+      "message": "ترمیم"
+   },
+   "email": {
+      "message": "میل باکس"
+   },
+   "enableBoxSelect": {
+      "message": "تصویر ڈریگ باکس انتخاب فعال"
+   },
+   "enableContextMenu": {
+      "message": "دایاں کلک مینو کے لئے \"DM لوڈ\" فعال کریں"
+   },
+   "enableHotKey": {
+      "message": "نیا صفحہ نکالنے کا شارٹ کٹ"
+   },
+   "enableOriginalBar": {
+      "message": "کروم اصل ڈاؤن لوڈ بار کو فعال کریں"
+   },
+   "enableRouter": {
+      "message": "ڈاؤن لوڈ زمرہ شروع کریں"
+   },
+   "enableSmartScripts": {
+      "message": "سمارٹ اسکرپٹ کھولیں"
+   },
+   "enabledDragDownload": {
+      "message": "ڈریگ اور ڈراپ ڈاؤن لوڈ کو کھولیں"
+   },
+   "example": {
+      "message": "مثال"
+   },
+   "exitSetting": {
+      "message": "باہر نکلیں ترتیبات"
+   },
+   "expImgLink": {
+      "message": "تصویری لنک برآمد کریں"
+   },
+   "exportRule": {
+      "message": "export"
+   },
+   "fAlert": {
+      "message": "براہ کرم چیک کریں کہ آیا آپ کا ای میل کی شکل درست ہے یا نہیں ، \n آراء کا پیغام کم سے کم 5 حروف کا ہونا چاہئے"
+   },
+   "fDesc": {
+      "message": "رائے کے ل Please ہم سے رابطہ کریں یا مدد کی ضرورت ہے"
+   },
+   "fEmail": {
+      "message": "آپ کا میل باکس"
+   },
+   "fMessage": {
+      "message": "اپنا پیغام لکھیں"
+   },
+   "fName": {
+      "message": "تمھارا نام"
+   },
+   "fSend": {
+      "message": "بھیجیں"
+   },
+   "fSendFormat": {
+      "message": "اپ لوڈ کردہ تصویر امیج فارمیٹ میں ہونی چاہئے"
+   },
+   "fSendPicture": {
+      "message": "آپ صرف دو تک کی تصاویر اپ لوڈ کرسکتے ہیں"
+   },
+   "fSuccess": {
+      "message": "آپ کی راے کا شکریہ"
+   },
+   "fSupport": {
+      "message": "آن لائن اسٹور میں آپ ایک اچھا جائزہ بھی دے سکتے ہیں یا معاون تجاویز بھی دے سکتے ہیں "
+   },
+   "fText": {
+      "message": "براہ کرم اپنے سوالات یا تجاویز تحریر کریں"
+   },
+   "fTitle": {
+      "message": "AIXاسمارٹ ڈاؤنلوڈر"
+   },
+   "fTouch": {
+      "message": "ہم سے رابطہ کریں"
+   },
+   "fUploadImage": {
+      "message": "اپ لوڈ کریں تصویر"
+   },
+   "fUuploadbutton": {
+      "message": "تصاویر اپ لوڈ کرنے کے لئے یہاں کلک کریں"
+   },
+   "fWebstore": {
+      "message": "جائیں"
+   },
+   "feedback": {
+      "message": "آراء"
+   },
+   "file": {
+      "message": "دستاویزی"
+   },
+   "fileDeExist": {
+      "message": "فائل موجود نہیں ہے"
+   },
+   "fileHasBeenDeleted": {
+      "message": "فائل ڈیلیٹ کردی گئی ہے"
+   },
+   "filter": {
+      "message": "فلٹر"
+   },
+   "folder": {
+      "message": "فولڈر"
+   },
+   "folderDuplicated": {
+      "message": "فولڈر دہرایا نہیں جا سکتا"
+   },
+   "formatError": {
+      "message": "format error"
+   },
+   "go": {
+      "message": "حاصل کریں"
+   },
+   "group": {
+      "message": "تبادلہ گروپ"
+   },
+   "height": {
+      "message": "اونچائی"
+   },
+   "help": {
+      "message": "مدد"
+   },
+   "hotKeyRemind": {
+      "message": "براہ کرم براہ راست کی بورڈ پر شارٹ کٹ داخل کریں"
+   },
+   "imgFilter": {
+      "message": "تصویری فلٹرنگ"
+   },
+   "imgFilterDesc": {
+      "message": "اس فنکشن کو فعال کرنے سے وہ تصاویر فلٹر ہوجائیں گی جنہیں آپ ویب سائٹ سے نہیں نکالنا چاہتے ہیں"
+   },
+   "imgFilterDesc2": {
+      "message": "مثال：\nڈومین نام “*”，باقاعدہ اظہار“.*?”，پورے نیٹ ورک کی تمام تصاویر کو فلٹر کرنے کا مطلب ہے.（ڈومین کا نام سیٹ ہے “*” یا اسے خالی چھوڑ دیں ، اس کا مطلب ہے کہ پورا نیٹ ورک فلٹر ہے）\nڈومین نام“www.example.com”，باقاعدہ اظہار“abc”，فلٹرنگ کی نمائندگی کرتا ہے“www.example.com”ڈومین نام کے تحت تصویری لنک میں شامل“abc”کی تصویر。"
+   },
+   "imgFilterReg": {
+      "message": "باقاعدہ اظہار"
+   },
+   "imgFilterTitle": {
+      "message": "تصویری فلٹرنگ آن کریں"
+   },
+   "imgFilterYm": {
+      "message": "ڈومین نام"
+   },
+   "importRule": {
+      "message": "import"
+   },
+   "maxHeight": {
+      "message": "میکس ہائٹ"
+   },
+   "maxWidth": {
+      "message": "میکس چوڑائی"
+   },
+   "minHeight": {
+      "message": "منٹ"
+   },
+   "minWidth": {
+      "message": "منٹ چوڑائی"
+   },
+   "more": {
+      "message": "مزید"
+   },
+   "name": {
+      "message": "نام"
+   },
+   "newDownloadTask": {
+      "message": "نیا ڈاؤن لوڈ کام"
+   },
+   "newTabTip": {
+      "message": "فلٹر کرنا آسان نہیں ہے ، براہ کرم یہاں کلک کریں!"
+   },
+   "noAudio": {
+      "message": "آڈیو نہیں ملی؟ کوشش کرنے کے لیے ویب پیج میں پلے پر کلک کریں۔"
+   },
+   "noData": {
+      "message": "کوئی ڈیٹا"
+   },
+   "noVideo": {
+      "message": "ویڈیو نہیں ملی؟ کوشش کرنے کے لیے ویب پیج میں پلے پر کلک کریں۔"
+   },
+   "notice": {
+      "message": "نوٹس"
+   },
+   "notifEnabledTip": {
+      "message": "ترتیب کامیاب ہے اور یہ دوبارہ شروع ہونے کے بعد نافذ العمل ہوگی۔ کیا آپ اب دوبارہ شروع کرنا چاہتے ہیں؟"
+   },
+   "notificationAfterFinished": {
+      "message": "مکمل نوٹیفکیشن ڈاؤن لوڈ کریں"
+   },
+   "notifications_fail_title": {
+      "message": "ڈاؤن لوڈ ناکام"
+   },
+   "notifications_open_dir": {
+      "message": "فولڈر میں دیکھیں"
+   },
+   "notifications_open_file": {
+      "message": "فائل کھولیں"
+   },
+   "notifications_success_title": {
+      "message": "ڈاؤن لوڈ مکمل"
+   },
+   "officialwebsite": {
+      "message": "سرکاری ویب سائٹ"
+   },
+   "oldVersion": {
+      "message": "پرانا ورژن استعمال کریں"
+   },
+   "opExpPage": {
+      "message": "صفحے کی معلومات برآمد کریں"
+   },
+   "opMoreImgSel": {
+      "message": "پہلے سے طے شدہ طور پر تصویری مزید اختیارات دکھائیں"
+   },
+   "opSaveImgSize": {
+      "message": "تصویری فلٹر کا سائز یاد رکھیں"
+   },
+   "opWebpToJpg": {
+      "message": "WEBP کرنے کے لئے JPG"
+   },
+   "open": {
+      "message": "ایک فائل کھولیں"
+   },
+   "openDirectory": {
+      "message": "فائل ڈائرکٹری کھولیں"
+   },
+   "openInNewTab": {
+      "message": "ایک نئی ٹیب میں کھولیں"
+   },
+   "openInNewWindow": {
+      "message": "ایک نئی ونڈو میں کھولیں"
+   },
+   "operation": {
+      "message": "آپریٹنگ"
+   },
+   "options": {
+      "message": "مرتب کریں"
+   },
+   "other": {
+      "message": "دیگر"
+   },
+   "otificationAfterFailed": {
+      "message": "ڈاؤن لوڈ کی ناکامی کی اطلاع"
+   },
+   "outDSEL": {
+      "message": "سوئچ"
+   },
+   "outSELA": {
+      "message": "سب"
+   },
+   "pack": {
+      "message": "ZIP"
+   },
+   "page": {
+      "message": "صفحات کی تعداد"
+   },
+   "picture": {
+      "message": "سمارٹ ڈ"
+   },
+   "playSoundAfterFailed": {
+      "message": "ڈاؤن لوڈ کی ناکامی کی آواز"
+   },
+   "playSoundAfterFinished": {
+      "message": "مکمل آواز ڈاؤن لوڈ کریں"
+   },
+   "pleaseEnterTheLink": {
+      "message": "لنک درج کریں"
+   },
+   "preview": {
+      "message": "دیکھو"
+   },
+   "rFComputer": {
+      "message": "کمپیوٹر سے حذف"
+   },
+   "rFList": {
+      "message": "فہرست سے ہٹائیں"
+   },
+   "recommendations": {
+      "message": "تجویز"
+   },
+   "recommendationsDesc": {
+      "message": "ہوشیار ڈاؤنلوڈر کو بہتر بنانے کے طریقہ سے متعلق بہتر خیال ہے؟"
+   },
+   "recommendationsDesc2": {
+      "message": "استعمال کریں"
+   },
+   "recommendationsDesc3": {
+      "message": "ہمارے ساتھ نظریات بانٹنے کے لئے فارم。"
+   },
+   "rename": {
+      "message": "نام تبدیل"
+   },
+   "retract": {
+      "message": "کھولیں بند کی تفصیلات"
+   },
+   "retry": {
+      "message": "دوبارہ کوشش کریں"
+   },
+   "router": {
+      "message": "فائل کی درجہ بندی"
+   },
+   "routerExpound": {
+      "message": "یہ خصوصیت فائلوں کو خود بخود ڈاؤن لوڈز فولڈر میں مناسب ذیلی فولڈرز میں تقسیم کرتی ہے۔ نیچے فائل ایکسٹینشنز اور ڈائریکٹری کی فہرست ہے جس میں وہ ڈاؤن لوڈ کے بعد رکھی جائیں گی۔"
+   },
+   "routine": {
+      "message": "روایتی"
+   },
+   "ruleDetail": {
+      "message": "{NO} سیریل نمبر；{EXT} لاحقہ；{NAME} اصل مضمون；{PAGETITLE} صفحہ کا عنوان; {DATE} ٹائم اسٹیمپ"
+   },
+   "ruleDetail1": {
+      "message": "اس فارمیٹ کے مطابق ،  {EXT} خود ہی تصویر کا لاحقہ برقرار رکھے گا"
+   },
+   "ruleDetail2": {
+      "message": "\"pic_\" آپ کیا چاہتے ہیں کرنے کے لئے تبدیل کیا جا سکتا"
+   },
+   "ruleDetail3": {
+      "message": "درج ذیل متغیرات کو استعمال کیا جاسکتا ہے:"
+   },
+   "ruleDetail4": {
+      "message": "{NO}سیریل نمبر کی نشاندہی کرتا ہے；{NO01}、{NO001}اس ترتیب تعداد میں 0 سے اور پر اتنا ہورہے ہے اشارہ کرتا ہے；{EXT}توسیع کا نام ظاہر کرتا ہے；{NAME}اصل فائل کا نام ظاہر کرتا ہے；{PAGETITLE}صفحے کے عنوان کی نشاندہی کرتا ہے"
+   },
+   "ruleDetail5": {
+      "message": "مثال کے طور پر ، dongman.jpg اور meijing.gif کی 2 تصاویر ہیں"
+   },
+   "ruleDetail6": {
+      "message": "pic_{NO001}.{EXT}پر نام تبدیل کر دیا جائے گا"
+   },
+   "ruleDetail7": {
+      "message": "{NAME}_{NO001}.{EXT}پر نام تبدیل کر دیا جائے گا"
+   },
+   "save": {
+      "message": "محفوظ کریں"
+   },
+   "selectAll": {
+      "message": "سب"
+   },
+   "size": {
+      "message": "سائز"
+   },
+   "small": {
+      "message": "چھوٹا"
+   },
+   "smallAudioFirst": {
+      "message": "چھوٹا پہلے"
+   },
+   "smallFileFirst": {
+      "message": "چھوٹا پہلے"
+   },
+   "smallPictureFirst": {
+      "message": "چھوٹا پہلے"
+   },
+   "smallVideoFirst": {
+      "message": "چھوٹا پہلے"
+   },
+   "smartRules": {
+      "message": "اسمارٹ اسکرپٹ"
+   },
+   "supportedBy": {
+      "message": "AIX Downloader"
+   },
+   "suspend": {
+      "message": "معطل کریں"
+   },
+   "suspended": {
+      "message": "معطل کریں"
+   },
+   "thisIsTheLatestVersion": {
+      "message": "فی الحال تازہ ترین ورژن"
+   },
+   "tips": {
+      "message": "ٹپ"
+   },
+   "to": {
+      "message": "کرنا"
+   },
+   "update": {
+      "message": "اپ ڈیٹ کے لیے چیک کریں"
+   },
+   "updatedToTheLatestVersion": {
+      "message": "تازہ ترین ورژن میں تازہ کاری"
+   },
+   "updt": {
+      "message": "اپ ڈیٹ"
+   },
+   "version": {
+      "message": "ورژن نمبر"
+   },
+   "video": {
+      "message": "ویڈیو"
+   },
+   "width": {
+      "message": "چوڑائی"
+   },
+   "wronged": {
+      "message": "غلط"
+   }
+}

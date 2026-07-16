@@ -11,9 +11,10 @@ if getattr(sys, 'frozen', False):
     else:
         base_path = exe_dir
 else:
-    base_path = os.path.dirname(os.path.abspath(__file__))
+    # File này nằm trong core/, nên phải lấy thư mục cha (project root)
+    base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-STATE_FILE = os.path.join(base_path, "state.json")
+STATE_FILE = os.path.join(base_path, "state", "state.json")
 
 class ControlState:
     def __init__(self):

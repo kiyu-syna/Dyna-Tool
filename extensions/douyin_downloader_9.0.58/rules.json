@@ -1,0 +1,498 @@
+[
+  {
+    "id": 1,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "Access-Control-Allow-Origin",
+          "operation": "set",
+          "value": "*"
+        },
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.pixiv.net/"
+        },
+        {
+          "header": "User-Agent",
+          "operation": "set",
+          "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Mobile Safari/537.36"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://*.pximg.net/*",
+      "resourceTypes": [
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "Access-Control-Allow-Origin",
+          "operation": "set",
+          "value": "*"
+        },
+        {
+          "header": "Access-Control-Allow-Origin",
+          "operation": "append",
+          "value": "*"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "https://cdn.mcstatic.com/videos/*"
+    }
+  },
+  {
+    "id": 3,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "origin",
+          "operation": "set",
+          "value": "https://manhua.dmzj.com/"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://images.dmzj.com/*"
+    }
+  },
+  {
+    "id": 4,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Access-Control-Allow-Origin",
+          "operation": "set",
+          "value": "*"
+        },
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.toomics.net/"
+        },
+        {
+          "header": "User-Agent",
+          "operation": "set",
+          "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Mobile Safari/537.36"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://*.toomics.net/*"
+    }
+  },
+  {
+    "id": 5,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Access-Control-Allow-Origin",
+          "operation": "set",
+          "value": "*"
+        },
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.xiaohongshu.com/"
+        },
+        {
+          "header": "User-Agent",
+          "operation": "set",
+          "value": "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Mobile Safari/537.36"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://*.xiaohongshu.com/*DMxhsP=DM"
+    }
+  },
+  {
+    "id": 6,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Origin",
+          "operation": "set",
+          "value": "https://manga.bilibili.com"
+        }
+      ]
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "urlFilter": "*//manga.bilibili.com/twirp/*",
+      "resourceTypes": [
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.bilibili.com"
+        }
+      ],
+      "responseHeaders": [
+        {
+          "header": "Content-Disposition",
+          "operation": "set",
+          "value": "attachment"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "mcdn.bilivideo.cn:4483/upgcxcode",
+      "resourceTypes": [
+        "main_frame",
+        "media"
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.bilibili.com"
+        }
+      ],
+      "responseHeaders": [
+        {
+          "header": "Content-Disposition",
+          "operation": "set",
+          "value": "attachment"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "bilivideo.com/upgcxcode",
+      "resourceTypes": [
+        "main_frame",
+        "media"
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.v2ph.com/"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*//cdn.v2ph.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 10,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://yandanshe.com/"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*//i.yandanshe.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 11,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "content-security-policy",
+          "operation": "remove"
+        },
+        {
+          "header": "content-security-policy-report-only",
+          "operation": "remove"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://www.facebook.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 12,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "content-security-policy",
+          "operation": "remove"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://yandex.*/images/search?*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 13,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://weibo.com/"
+        },
+        {
+          "header": "Sec-Fetch-Dest",
+          "operation": "set",
+          "value": "video"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://f.video.weibocdn.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 14,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://ezaudiobookforsoul.com/"
+        },
+        {
+          "header": "Host",
+          "operation": "set",
+          "value": "storagepulsed.ezaudiobooks.com"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://*.ezaudiobooks.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 15,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "header": "content-security-policy",
+          "operation": "remove"
+        },
+        {
+          "header": "content-security-policy-report-only",
+          "operation": "remove"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://www.instagram.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 16,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.douyin.com/"
+        },
+        {
+          "header": "Origin",
+          "operation": "set",
+          "value": "https://www.douyin.com"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://*.douyinvod.com/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 17,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://weibo.com/"
+        },
+        {
+          "header": "Origin",
+          "operation": "set",
+          "value": "https://weibo.com/"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "*://*.sinaimg.cn/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 18,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://www.pixiv.net"
+        },
+        {
+          "header": "Origin",
+          "operation": "set",
+          "value": "https://www.pixiv.net"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "https://i.pximg.net/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 19,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://book.pep.com.cn"
+        },
+        {
+          "header": "Origin",
+          "operation": "set",
+          "value": "https://book.pep.com.cn"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "https://book.pep.com.cn/*",
+      "resourceTypes": [
+        "main_frame",
+        "media",
+        "xmlhttprequest"
+      ]
+    }
+  },
+  {
+    "id": 20,
+    "priority": 2,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://bisipic.online/"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "https://bisipic.online/data/*",
+      "resourceTypes": ["main_frame", "media", "xmlhttprequest"]
+    }
+  }
+]

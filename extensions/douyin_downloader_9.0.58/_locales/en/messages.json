@@ -1,0 +1,611 @@
+{
+   "DESC": {
+      "message": "DESC"
+   },
+   "DOWN": {
+      "message": "download"
+   },
+   "DSEL": {
+      "message": "select the inverse"
+   },
+   "EXELeftTitle": {
+      "message": "Downloader"
+   },
+   "EXERightTitle": {
+      "message": "Scanner"
+   },
+   "EXETitle": {
+      "message": "AIX Downloader"
+   },
+   "EXT": {
+      "message": "EXT"
+   },
+   "ORDER": {
+      "message": "ORDER"
+   },
+   "SELA": {
+      "message": "select all"
+   },
+   "SORT": {
+      "message": "SORT"
+   },
+   "URL": {
+      "message": "URL"
+   },
+   "YouTubeVideoError": {
+      "message": "Video Downloader DOES NOT work for YouTube website or any other YouTube videos embedded in other websites due to Google and Chrome web store policies and restrictions."
+   },
+   "about": {
+      "message": "About"
+   },
+   "aboutDesc": {
+      "message": "This downloader can realize efficient download management, as well as discovery and download of resources such as pictures, videos, audios and etc in web pages. It integrates smart scripts of multiple websites, which can quickly extract the content you want."
+   },
+   "aboutHeaderDesc": {
+      "message": "Be the best AI downloader in Chrome"
+   },
+   "aboutOp": {
+      "message": "About"
+   },
+   "add": {
+      "message": "Added"
+   },
+   "addDir": {
+      "message": "Add directory"
+   },
+   "addDownloadLink": {
+      "message": "Add Download Link"
+   },
+   "all": {
+      "message": "All"
+   },
+   "analyzing": {
+      "message": "Analyzing"
+   },
+   "audio": {
+      "message": "Audio"
+   },
+   "auto": {
+      "message": "AUTO"
+   },
+   "big": {
+      "message": "Big"
+   },
+   "bigAudioFirst": {
+      "message": "Big first"
+   },
+   "bigFileFirst": {
+      "message": "Big first"
+   },
+   "bigPictureFirst": {
+      "message": "Big first"
+   },
+   "bigVideoFirst": {
+      "message": "Big first"
+   },
+   "bugs": {
+      "message": "Bugs"
+   },
+   "bugsDesc1": {
+      "message": "Found a bug? "
+   },
+   "bugsDesc2": {
+      "message": " contact us "
+   },
+   "bugsDesc3": {
+      "message": "immediately."
+   },
+   "cacheTitle": {
+      "message": "DO NOT REFRESH OR CLOSE THE VIDEO PAGE!!!"
+   },
+   "cancel": {
+      "message": "Cancel"
+   },
+   "checkNetworkConnection": {
+      "message": "Network abnormality, check the network or proxy"
+   },
+   "choosePicture": {
+      "message": "Picture of comment area"
+   },
+   "clearAll": {
+      "message": "Clear all"
+   },
+   "clearCeleted": {
+      "message": "Clear deleted"
+   },
+   "clearDownloadRecords": {
+      "message": "Clear download records"
+   },
+   "clearDownloaded": {
+      "message": "Clear downloaded"
+   },
+   "clearWronged": {
+      "message": "Clear wronged"
+   },
+   "completed": {
+      "message": "Completed"
+   },
+   "confirm": {
+      "message": "Confirm"
+   },
+   "confirmClear": {
+      "message": "Are you sure to clear all？"
+   },
+   "confirmDeletion": {
+      "message": "Confirm the deletion "
+   },
+   "contactUs": {
+      "message": "Have Feedback or Need Some Help?"
+   },
+   "continue": {
+      "message": "Continue"
+   },
+   "copyFailed": {
+      "message": "Copy failed"
+   },
+   "copyLink": {
+      "message": "Copy link"
+   },
+   "copySuccess": {
+      "message": "Copy success"
+   },
+   "customFormat": {
+      "message": "Custom format"
+   },
+   "deSelect": {
+      "message": "DSEL"
+   },
+   "default_title": {
+      "message": "AIX Downloader(Picture/Video/Music)"
+   },
+   "delete": {
+      "message": "Delete"
+   },
+   "deleted": {
+      "message": "Deleted"
+   },
+   "description": {
+      "message": "Download online videos, music, mp3, images etc from websites."
+   },
+   "details": {
+      "message": "details"
+   },
+   "domainDuplicated": {
+      "message": "Domain name cannot be repeated"
+   },
+   "download": {
+      "message": "Download"
+   },
+   "downloadAllImgUsingDM": {
+      "message": "Download All Images"
+   },
+   "downloadButtonOff": {
+      "message": "Disabled"
+   },
+   "downloadButtonOn": {
+      "message": "Enabled"
+   },
+   "downloadButtonTip": {
+      "message": "Download Button"
+   },
+   "downloadCommentImage": {
+      "message": "Download comment image"
+   },
+   "downloadHasBeenCancelled": {
+      "message": "The download has been cancelled"
+   },
+   "downloadUsingDM": {
+      "message": "Download using DM"
+   },
+   "download_simple": {
+      "message": "Down"
+   },
+   "downloading": {
+      "message": "In Progress"
+   },
+   "dragDownloadDesc": {
+      "message": "图片将完成下载"
+   },
+   "dragDownloadTitle": {
+      "message": "Drag & drop here to download"
+   },
+   "dupImgLinkNaming": {
+      "message": "Repeat image link name"
+   },
+   "edit": {
+      "message": "Edit"
+   },
+   "email": {
+      "message": "Email"
+   },
+   "enableBoxSelect": {
+      "message": "Picture drag selection"
+   },
+   "enableContextMenu": {
+      "message": "Enable DM for the context menu"
+   },
+   "enableHotKey": {
+      "message": "New page hotkey"
+   },
+   "enableOriginalBar": {
+      "message": "Enable chrome original download bar"
+   },
+   "enableRouter": {
+      "message": "Enable sorting system"
+   },
+   "enableSmartScripts": {
+      "message": "Enable Smart scripts"
+   },
+   "enabledDragDownload": {
+      "message": "Enable Drag Download"
+   },
+   "example": {
+      "message": "Example"
+   },
+   "exitSetting": {
+      "message": "Exit setting"
+   },
+   "expImgLink": {
+      "message": "Export IMG Links"
+   },
+   "exportRule": {
+      "message": "export"
+   },
+   "fAlert": {
+      "message": "Please check that your email format is correct.\nThe feedback information should be at least 5 characters."
+   },
+   "fDesc": {
+      "message": "Have Feedback or Need Some Help?"
+   },
+   "fEmail": {
+      "message": "Your Email"
+   },
+   "fMessage": {
+      "message": "Your Message"
+   },
+   "fName": {
+      "message": "Your name"
+   },
+   "fSend": {
+      "message": "Send"
+   },
+   "fSendFormat": {
+      "message": "The upload must be in image format"
+   },
+   "fSendPicture": {
+      "message": "You can only upload two pictures at most"
+   },
+   "fSuccess": {
+      "message": "Thinks for your feedback"
+   },
+   "fSupport": {
+      "message": "You can also give a favorable comment or provide support suggestions at the "
+   },
+   "fText": {
+      "message": "Write your suggestions and quedtions"
+   },
+   "fTitle": {
+      "message": "AIX Downloader"
+   },
+   "fTouch": {
+      "message": "Get In Touch"
+   },
+   "fUploadImage": {
+      "message": "Upload Image"
+   },
+   "fUuploadbutton": {
+      "message": "click here upload your image"
+   },
+   "fWebstore": {
+      "message": "Web Store"
+   },
+   "feedback": {
+      "message": "Feedback"
+   },
+   "file": {
+      "message": "Document"
+   },
+   "fileDeExist": {
+      "message": "File doesn't exist"
+   },
+   "fileHasBeenDeleted": {
+      "message": "File has been deleted"
+   },
+   "filter": {
+      "message": "filter"
+   },
+   "folder": {
+      "message": "Folder"
+   },
+   "folderDuplicated": {
+      "message": "The folder cannot be duplicated"
+   },
+   "formatError": {
+      "message": "format error"
+   },
+   "go": {
+      "message": "Go"
+   },
+   "group": {
+      "message": "Group"
+   },
+   "height": {
+      "message": "H"
+   },
+   "help": {
+      "message": "Help"
+   },
+   "hotKeyRemind": {
+      "message": "Please enter the hotkey on the keyboard"
+   },
+   "imgFilter": {
+      "message": "Image Filter"
+   },
+   "imgFilterDesc": {
+      "message": "Enable this function will filter out the images you don’t want to extract from the website."
+   },
+   "imgFilterDesc2": {
+      "message": "Example: \nDomain name \"*\", Regular expression \".*?\", which means to filter all images of all websites. (Domain name is set to \"*\" or not filled means all websites are filtered)\nDomain name \"www.example.com\", Regular expression \"abc\", means to filter image contain “abc” in the image link under the “www.example.com” domain name."
+   },
+   "imgFilterReg": {
+      "message": "Regular Expression"
+   },
+   "imgFilterTitle": {
+      "message": "Enable Image Filter"
+   },
+   "imgFilterYm": {
+      "message": "Domain Name"
+   },
+   "importRule": {
+      "message": "import"
+   },
+   "maxHeight": {
+      "message": "maxHeight"
+   },
+   "maxWidth": {
+      "message": "maxWidth"
+   },
+   "minHeight": {
+      "message": "minHeight"
+   },
+   "minWidth": {
+      "message": "minWidth"
+   },
+   "more": {
+      "message": "MORE"
+   },
+   "name": {
+      "message": "Name"
+   },
+   "newDownloadTask": {
+      "message": "New download task"
+   },
+   "newTabTip": {
+      "message": "If it is not convenient to filter pictures, please click here!"
+   },
+   "noAudio": {
+      "message": "Didn't get the audio? Click play in the webpage to try"
+   },
+   "noData": {
+      "message": "No data"
+   },
+   "noVideo": {
+      "message": "Didn't get the video? Click play in the webpage to try"
+   },
+   "notice": {
+      "message": "Notifications"
+   },
+   "notifEnabledTip": {
+      "message": "The setting is successful and will take effect after restart. Do you want to restart now?"
+   },
+   "notificationAfterFinished": {
+      "message": "Notification after finished"
+   },
+   "notifications_fail_title": {
+      "message": "Download failed"
+   },
+   "notifications_open_dir": {
+      "message": "Show in folder"
+   },
+   "notifications_open_file": {
+      "message": "Open file"
+   },
+   "notifications_success_title": {
+      "message": "Download complete"
+   },
+   "officialwebsite": {
+      "message": "Official Website"
+   },
+   "oldVersion": {
+      "message": "Old Version"
+   },
+   "opExpPage": {
+      "message": "Export page information"
+   },
+   "opMoreImgSel": {
+      "message": "Show more image options by default"
+   },
+   "opSaveImgSize": {
+      "message": "Remember image filter size"
+   },
+   "opWebpToJpg": {
+      "message": "WEBP images to JPG format"
+   },
+   "open": {
+      "message": "Open"
+   },
+   "openDirectory": {
+      "message": "Show in folder"
+   },
+   "openInNewTab": {
+      "message": "Open in New Tab"
+   },
+   "openInNewWindow": {
+      "message": "Open in a new window"
+   },
+   "operation": {
+      "message": "Operation"
+   },
+   "options": {
+      "message": "Options"
+   },
+   "other": {
+      "message": "OTHER"
+   },
+   "otificationAfterFailed": {
+      "message": "Notification after failed"
+   },
+   "outDSEL": {
+      "message": "toggle"
+   },
+   "outSELA": {
+      "message": "select all"
+   },
+   "pack": {
+      "message": "pack"
+   },
+   "page": {
+      "message": "Comment Page"
+   },
+   "picture": {
+      "message": "Picture"
+   },
+   "playSoundAfterFailed": {
+      "message": "Play Sound after failed"
+   },
+   "playSoundAfterFinished": {
+      "message": "Play Sound after finished"
+   },
+   "pleaseEnterTheLink": {
+      "message": "Please enter the link"
+   },
+   "preview": {
+      "message": "Preview"
+   },
+   "rFComputer": {
+      "message": "Remove from computer"
+   },
+   "rFList": {
+      "message": "Remove from list"
+   },
+   "recommendations": {
+      "message": "Recommendations"
+   },
+   "recommendationsDesc": {
+      "message": "Have ideas on how to make AIX Downloader better?"
+   },
+   "recommendationsDesc2": {
+      "message": "Use"
+   },
+   "recommendationsDesc3": {
+      "message": "form to share ideas with us."
+   },
+   "rename": {
+      "message": "Rename"
+   },
+   "retract": {
+      "message": "retract"
+   },
+   "retry": {
+      "message": "Retry"
+   },
+   "router": {
+      "message": "Sorting System"
+   },
+   "routerExpound": {
+      "message": "This feature automatically distributes the files to the appropriate sub-folders in the Downloads folder. Below is a list of file extensions and the directory in which they will be placed after the download."
+   },
+   "routine": {
+      "message": "General"
+   },
+   "ruleDetail": {
+      "message": "{NO} serial number;{EXT} extension;{NAME} original file name;{PAGETITLE} page title; {DATE} time stamp"
+   },
+   "ruleDetail1": {
+      "message": "According to this format, {EXT} will retain the suffix of the picture itself"
+   },
+   "ruleDetail2": {
+      "message": "\"pic_\" can be changed to what you want"
+   },
+   "ruleDetail3": {
+      "message": "The following variables can be used: "
+   },
+   "ruleDetail4": {
+      "message": "{NO} represents the serial number;{NO01},{NO001} represent the serial number with 0 and so on;{EXT} represents the extension;{NAME} represents the original file name;{PAGETITLE} represents the page title"
+   },
+   "ruleDetail5": {
+      "message": "For example, there are 2 pictures dongman.jpg and meijing.gif"
+   },
+   "ruleDetail6": {
+      "message": "pic_{NO001}.{EXT} will be renamed to"
+   },
+   "ruleDetail7": {
+      "message": "{NAME}_{NO001}.{EXT} will be renamed to"
+   },
+   "save": {
+      "message": "Save"
+   },
+   "selectAll": {
+      "message": "SELA"
+   },
+   "size": {
+      "message": "Size"
+   },
+   "small": {
+      "message": "Small"
+   },
+   "smallAudioFirst": {
+      "message": "Small first"
+   },
+   "smallFileFirst": {
+      "message": "Small first"
+   },
+   "smallPictureFirst": {
+      "message": "Small first"
+   },
+   "smallVideoFirst": {
+      "message": "Small first"
+   },
+   "smartRules": {
+      "message": "Rules"
+   },
+   "supportedBy": {
+      "message": "AIX Downloader"
+   },
+   "suspend": {
+      "message": "Suspend"
+   },
+   "suspended": {
+      "message": "Suspended"
+   },
+   "thisIsTheLatestVersion": {
+      "message": "This is the latest version"
+   },
+   "tips": {
+      "message": "Tips"
+   },
+   "to": {
+      "message": "To"
+   },
+   "update": {
+      "message": "Update"
+   },
+   "updatedToTheLatestVersion": {
+      "message": "Has been updated to the latest version"
+   },
+   "updt": {
+      "message": "Updated"
+   },
+   "version": {
+      "message": "Version"
+   },
+   "video": {
+      "message": "Video"
+   },
+   "width": {
+      "message": "W"
+   },
+   "wronged": {
+      "message": "Wronged"
+   }
+}

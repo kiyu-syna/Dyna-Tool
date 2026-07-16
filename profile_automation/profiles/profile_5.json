@@ -1,0 +1,34 @@
+{
+  "id": "5",
+  "name": "Meo",
+  "enabled": true,
+  "check_interval_minutes": 30,
+  "douyin": {
+    "gemlogin_profile_id": "",
+    "target_sec_uid": "",
+    "target_display_name": ""
+  },
+  "tiktok": {
+    "gemlogin_profile_id": "5",
+    "enabled": false,
+    "hashtag": "",
+    "use_original_desc": false
+  },
+  "facebook": {
+    "gemlogin_profile_id": "5",
+    "enabled": false,
+    "hashtag": "",
+    "use_original_desc": false
+  },
+  "youtube": {
+    "gemlogin_profile_id": "5",
+    "enabled": false,
+    "hashtag": "",
+    "use_original_desc": false
+  },
+  "filters": {
+    "min_likes": 5000,
+    "max_duration_seconds": 120
+  },
+  "save_dir": ""
+}

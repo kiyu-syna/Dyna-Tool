@@ -1,0 +1,142 @@
+#dyna-douyin-integration,
+#dyna-douyin-integration * {
+  box-sizing: border-box;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+}
+
+#dyna-douyin-integration .dyna-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483640;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(5, 10, 18, .64);
+  backdrop-filter: blur(4px);
+}
+
+#dyna-douyin-integration [hidden] { display: none !important; }
+
+#dyna-douyin-integration .dyna-modal {
+  width: min(430px, 100%);
+  max-height: min(650px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: 66px auto minmax(120px, 1fr) 62px;
+  overflow: hidden;
+  border: 1px solid #2d3b4e;
+  border-radius: 14px;
+  color: #eaf0f7;
+  background: #171d26;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .5);
+}
+
+#dyna-douyin-integration .dyna-modal > header { display: flex; align-items: center; justify-content: space-between; padding: 0 17px 0 20px; border-bottom: 1px solid #2d3542; }
+#dyna-douyin-integration .dyna-modal > header div { display: grid; gap: 3px; }
+#dyna-douyin-integration .dyna-modal > header strong { font-size: 16px; }
+#dyna-douyin-integration .dyna-modal > header small { color: #8e9bad; font-size: 10px; }
+#dyna-douyin-integration .dyna-close { width: 32px; height: 32px; border: 0; border-radius: 7px; color: #aab5c3; background: transparent; cursor: pointer; font-size: 22px; }
+#dyna-douyin-integration .dyna-close:hover { color: #fff; background: #252d39; }
+
+#dyna-douyin-integration .dyna-video-info { display: grid; gap: 5px; padding: 13px 20px; border-bottom: 1px solid #2d3542; background: #1c232e; }
+#dyna-douyin-integration .dyna-video-info strong { font-size: 11px; }
+#dyna-douyin-integration .dyna-video-info span { overflow: hidden; color: #8996a8; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+
+#dyna-douyin-integration .dyna-profile-list { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 7px; padding: 12px; }
+#dyna-douyin-integration .dyna-profile { width: 100%; min-height: 58px; display: grid; grid-template-columns: 34px minmax(0, 1fr) 17px; align-items: center; gap: 10px; padding: 8px 11px; border: 1px solid #303a49; border-radius: 9px; color: #dfe7f0; background: #1c232e; text-align: left; cursor: pointer; }
+#dyna-douyin-integration .dyna-profile:hover { border-color: #496079; background: #202a37; }
+#dyna-douyin-integration .dyna-profile.selected { border-color: #4d91e8; background: #1d3048; }
+#dyna-douyin-integration .dyna-profile:disabled { cursor: not-allowed; opacity: .5; }
+#dyna-douyin-integration .dyna-profile-number { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 8px; color: #bfdded; background: #0a355e; font-size: 11px; font-weight: 750; }
+#dyna-douyin-integration .dyna-profile-copy { min-width: 0; display: grid; gap: 5px; }
+#dyna-douyin-integration .dyna-profile-copy strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+#dyna-douyin-integration .dyna-profile-copy small { overflow: hidden; color: #8b98aa; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+#dyna-douyin-integration .dyna-profile i { width: 13px; height: 13px; border: 1px solid #637084; border-radius: 50%; }
+#dyna-douyin-integration .dyna-profile.selected i { border: 4px solid #61a4f5; }
+#dyna-douyin-integration .dyna-loading,
+#dyna-douyin-integration .dyna-empty { padding: 30px 16px; color: #8e9bad; text-align: center; font-size: 11px; line-height: 1.5; }
+
+#dyna-douyin-integration .dyna-modal > footer { display: flex; align-items: center; justify-content: flex-end; gap: 9px; padding: 0 14px; border-top: 1px solid #2d3542; background: #1a202a; }
+#dyna-douyin-integration .dyna-modal > footer button { height: 35px; padding: 0 14px; border-radius: 7px; cursor: pointer; font-size: 10px; font-weight: 650; }
+#dyna-douyin-integration .dyna-cancel { border: 1px solid #394454; color: #b4bfcc; background: #232b36; }
+#dyna-douyin-integration .dyna-confirm { border: 1px solid #2679df; color: #fff; background: #1769cf; }
+#dyna-douyin-integration .dyna-confirm:disabled { cursor: default; opacity: .46; }
+
+#dyna-douyin-integration .dyna-toast { position: fixed; right: 22px; bottom: 22px; z-index: 2147483645; max-width: min(390px, calc(100vw - 44px)); display: flex; align-items: center; gap: 10px; padding: 11px 13px; border: 1px solid #3a4758; border-radius: 9px; color: #e8eef5; background: rgba(20, 27, 36, .97); box-shadow: 0 12px 34px rgba(0, 0, 0, .38); font-size: 10px; line-height: 1.45; }
+#dyna-douyin-integration .dyna-toast[data-kind="success"] { border-color: #287b5c; }
+#dyna-douyin-integration .dyna-toast[data-kind="error"] { border-color: #a2434d; }
+#dyna-douyin-integration .dyna-toast button { flex: 0 0 auto; height: 27px; border: 1px solid #4d91e8; border-radius: 5px; color: #fff; background: #1769cf; cursor: pointer; font-size: 9px; }
+
+/* Re-skin the original downloader button after its own getMediaList() is available. */
+.dy-download-button[data-dyna-integrated="true"] {
+  box-sizing: border-box !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(176, 215, 238, .42) !important;
+  border-radius: 10px !important;
+  color: #d9edf7 !important;
+  background: linear-gradient(145deg, #0c416f, #082d50) !important;
+  box-shadow: 0 5px 16px rgba(0, 22, 45, .34) !important;
+}
+.dy-download-button[data-dyna-integrated="true"]:hover {
+  background: linear-gradient(145deg, #12558d, #0a3b66) !important;
+  transform: translateY(-1px);
+}
+.dy-download-button[data-dyna-integrated="true"] .dyna-original-button-inner {
+  position: relative;
+  display: grid !important;
+  place-items: center !important;
+  width: 100%;
+  height: 100%;
+}
+.dy-download-button[data-dyna-integrated="true"] .dyna-original-logo {
+  display: block;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 7px;
+  object-fit: cover;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .34));
+}
+.dy-download-button[data-dyna-integrated="true"] .dyna-original-status {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgba(255, 255, 255, .82);
+  border-radius: 50%;
+  color: #fff;
+  background: #1769cf;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .42);
+  font: 800 9px/1 Inter, "Segoe UI", Arial, sans-serif;
+  pointer-events: none;
+}
+.dy-download-button[data-dyna-integrated="true"] .dyna-original-status[hidden] {
+  display: none !important;
+}
+.dy-download-button[data-dyna-integrated="true"][data-dyna-state="active"] {
+  animation: dyna-original-pulse 1.2s ease-in-out infinite;
+}
+.dy-download-button[data-dyna-integrated="true"][data-dyna-state="success"] {
+  border-color: rgba(123, 224, 180, .58) !important;
+  background: linear-gradient(145deg, #15714f, #0b5038) !important;
+}
+.dy-download-button[data-dyna-integrated="true"][data-dyna-state="success"] .dyna-original-status {
+  background: #1a9b65;
+}
+.dy-download-button[data-dyna-integrated="true"][data-dyna-state="error"] {
+  border-color: rgba(247, 151, 159, .62) !important;
+  background: linear-gradient(145deg, #9e3540, #71242d) !important;
+}
+.dy-download-button[data-dyna-integrated="true"][data-dyna-state="error"] .dyna-original-status {
+  background: #d33f4d;
+}
+@keyframes dyna-original-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .64; }
+}

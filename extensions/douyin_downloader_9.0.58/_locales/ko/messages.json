@@ -1,0 +1,611 @@
+{
+   "DESC": {
+      "message": "서술"
+   },
+   "DOWN": {
+      "message": "다운로드"
+   },
+   "DSEL": {
+      "message": "역 선거"
+   },
+   "EXELeftTitle": {
+      "message": "다운로드 관리"
+   },
+   "EXERightTitle": {
+      "message": "자원 스니핑"
+   },
+   "EXETitle": {
+      "message": "AIX 스마트 다운로더"
+   },
+   "EXT": {
+      "message": "체재"
+   },
+   "ORDER": {
+      "message": "종류"
+   },
+   "SELA": {
+      "message": "모두 선택"
+   },
+   "SORT": {
+      "message": "분류"
+   },
+   "URL": {
+      "message": "URL"
+   },
+   "YouTubeVideoError": {
+      "message": "Google 및 Chrome 웹 스토어 정책 및 제한으로 인해 YouTube 웹사이트 또는 다른 웹사이트에 포함된 기타 YouTube 동영상에서는 동영상 다운로드가 작동하지 않습니다."
+   },
+   "about": {
+      "message": "의 위에"
+   },
+   "aboutDesc": {
+      "message": "AIX 스마트 다운로더는 웹 페이지 사진, 비디오, 오디오와 같은 콘텐츠의 다운로드 관리, 스니핑 및 다운로드를 효율적으로 실현할 수 있으며 동시에 여러 웹 사이트의 스마트 스크립트를 확장 및 통합하여 원하는 콘텐츠를 빠르게 추출 할 수 있습니다."
+   },
+   "aboutHeaderDesc": {
+      "message": "크롬에서 최고의 스마트 다운로더가 되려면"
+   },
+   "aboutOp": {
+      "message": "소개"
+   },
+   "add": {
+      "message": "더하다"
+   },
+   "addDir": {
+      "message": "디렉토리 추가"
+   },
+   "addDownloadLink": {
+      "message": "다운로드 할 링크 추가"
+   },
+   "all": {
+      "message": "모두"
+   },
+   "analyzing": {
+      "message": "분석 중"
+   },
+   "audio": {
+      "message": "음악"
+   },
+   "auto": {
+      "message": "자동적"
+   },
+   "big": {
+      "message": "큰"
+   },
+   "bigAudioFirst": {
+      "message": "큰 우선"
+   },
+   "bigFileFirst": {
+      "message": "큰 우선"
+   },
+   "bigPictureFirst": {
+      "message": "큰 우선"
+   },
+   "bigVideoFirst": {
+      "message": "큰 우선"
+   },
+   "bugs": {
+      "message": "문제"
+   },
+   "bugsDesc1": {
+      "message": "문제를 즉시 찾기"
+   },
+   "bugsDesc2": {
+      "message": "문의하기"
+   },
+   "bugsDesc3": {
+      "message": "."
+   },
+   "cacheTitle": {
+      "message": "비디오 캐시에서 비디오가있는 페이지를 새로 고치거나 닫지 마십시오!"
+   },
+   "cancel": {
+      "message": "취소"
+   },
+   "checkNetworkConnection": {
+      "message": "네트워크 이상, 네트워크 또는 프록시를 확인하세요."
+   },
+   "choosePicture": {
+      "message": "댓글 영역 사진"
+   },
+   "clearAll": {
+      "message": "목록을 지우다"
+   },
+   "clearCeleted": {
+      "message": "정리 삭제됨"
+   },
+   "clearDownloadRecords": {
+      "message": "다운로드 기록 지우기"
+   },
+   "clearDownloaded": {
+      "message": "지우다 다운로드"
+   },
+   "clearWronged": {
+      "message": "지우다 실패"
+   },
+   "completed": {
+      "message": "완료"
+   },
+   "confirm": {
+      "message": "확인"
+   },
+   "confirmClear": {
+      "message": "비어 있는지 확인 하시겠습니까?"
+   },
+   "confirmDeletion": {
+      "message": "삭제 확인 "
+   },
+   "contactUs": {
+      "message": "문제가 있으면 저희에게 연락하십시오"
+   },
+   "continue": {
+      "message": "계속하다"
+   },
+   "copyFailed": {
+      "message": "복사 실패"
+   },
+   "copyLink": {
+      "message": "파일 링크 복사"
+   },
+   "copySuccess": {
+      "message": "성공적으로 복사"
+   },
+   "customFormat": {
+      "message": "맞춤 형식"
+   },
+   "deSelect": {
+      "message": "부정"
+   },
+   "default_title": {
+      "message": "AIX 스마트 다운로더(사진/비디오/음악/문서)Pro"
+   },
+   "delete": {
+      "message": "삭제"
+   },
+   "deleted": {
+      "message": "삭제됨"
+   },
+   "description": {
+      "message": "AIX 스마트 다운로더는 웹 페이지 사진, 비디오, 오디오와 같은 콘텐츠의 다운로드 관리, 스니핑 및 다운로드를 효율적으로 실현할 수 있으며 동시에 여러 웹 사이트의 스마트 스크립트를 확장 및 통합하여 원하는 콘텐츠를 빠르게 추출 할 수 있습니다."
+   },
+   "details": {
+      "message": "세부"
+   },
+   "domainDuplicated": {
+      "message": "도메인 이름은 반복 할 수 없습니다"
+   },
+   "download": {
+      "message": "다운로드"
+   },
+   "downloadAllImgUsingDM": {
+      "message": "모든 사진을 다운로드"
+   },
+   "downloadButtonOff": {
+      "message": "비활성"
+   },
+   "downloadButtonOn": {
+      "message": "활성"
+   },
+   "downloadButtonTip": {
+      "message": "다운로드 버튼"
+   },
+   "downloadCommentImage": {
+      "message": "댓글 사진 다운로드"
+   },
+   "downloadHasBeenCancelled": {
+      "message": "다운로드 취소"
+   },
+   "downloadUsingDM": {
+      "message": "AIX을 사용하여 다운로드"
+   },
+   "download_simple": {
+      "message": "다운로드"
+   },
+   "downloading": {
+      "message": "진행 중"
+   },
+   "dragDownloadDesc": {
+      "message": "사진 다운로드가 완료됩니다"
+   },
+   "dragDownloadTitle": {
+      "message": "다운로드하려면 여기로 드래그하세요."
+   },
+   "dupImgLinkNaming": {
+      "message": "중복 이미지 링크 이름"
+   },
+   "edit": {
+      "message": "편집하다"
+   },
+   "email": {
+      "message": "사서함"
+   },
+   "enableBoxSelect": {
+      "message": "사진 드래그 선택"
+   },
+   "enableContextMenu": {
+      "message": "오른쪽 클릭 메뉴에 DM 다운로드 활성화"
+   },
+   "enableHotKey": {
+      "message": "새 페이지 추출 바로 가기"
+   },
+   "enableOriginalBar": {
+      "message": "Chrome 원본 다운로드 바 사용"
+   },
+   "enableRouter": {
+      "message": "파일 분류 시작"
+   },
+   "enableSmartScripts": {
+      "message": "스크립트 열기"
+   },
+   "enabledDragDownload": {
+      "message": "드래그 앤 드롭 다운로드 열기"
+   },
+   "example": {
+      "message": "예컨대"
+   },
+   "exitSetting": {
+      "message": "설정 종료"
+   },
+   "expImgLink": {
+      "message": "이미지 링크 내보내기"
+   },
+   "exportRule": {
+      "message": "export"
+   },
+   "fAlert": {
+      "message": "이메일 형식이 올바른지 확인하십시오, \n피드백 메시지는 5 자 이상이어야합니다."
+   },
+   "fDesc": {
+      "message": "의견이나 필요한 도움을 문의하시기 바랍니다"
+   },
+   "fEmail": {
+      "message": "사서함"
+   },
+   "fMessage": {
+      "message": "메시지 작성"
+   },
+   "fName": {
+      "message": "너의 이름"
+   },
+   "fSend": {
+      "message": "보내다"
+   },
+   "fSendFormat": {
+      "message": "이미지 형식이어야합니다"
+   },
+   "fSendPicture": {
+      "message": "최대 2 장의 사진 만 업로드 할 수 있습니다"
+   },
+   "fSuccess": {
+      "message": "귀하의 의견에 감사드립니다"
+   },
+   "fSupport": {
+      "message": "또한 좋은 리뷰를 제공하거나 확장 저장소에 지원 제안을 제공 할 수 있습니다 "
+   },
+   "fText": {
+      "message": "질문이나 제안을 적어주세요"
+   },
+   "fTitle": {
+      "message": "AIX 스마트 다운로더"
+   },
+   "fTouch": {
+      "message": "문의하기"
+   },
+   "fUploadImage": {
+      "message": "업로드 이미지"
+   },
+   "fUuploadbutton": {
+      "message": "사진을 업로드 클릭"
+   },
+   "fWebstore": {
+      "message": "이동 클릭"
+   },
+   "feedback": {
+      "message": "궤환"
+   },
+   "file": {
+      "message": "문서"
+   },
+   "fileDeExist": {
+      "message": "파일이 없습니다"
+   },
+   "fileHasBeenDeleted": {
+      "message": "파일이 삭제되었습니다"
+   },
+   "filter": {
+      "message": "필터"
+   },
+   "folder": {
+      "message": "폴더"
+   },
+   "folderDuplicated": {
+      "message": "폴더 반복 할 수 없다"
+   },
+   "formatError": {
+      "message": "format error"
+   },
+   "go": {
+      "message": "얻다"
+   },
+   "group": {
+      "message": "교환 그룹"
+   },
+   "height": {
+      "message": "높"
+   },
+   "help": {
+      "message": "도움"
+   },
+   "hotKeyRemind": {
+      "message": "키보드에 바로 가기를 직접 입력하십시오"
+   },
+   "imgFilter": {
+      "message": "이미지 필터링"
+   },
+   "imgFilterDesc": {
+      "message": "이 기능을 활성화하면 웹 사이트에서 추출하지 않을 사진이 필터링됩니다."
+   },
+   "imgFilterDesc2": {
+      "message": "예: \n도메인 이름 \"*\", 정규식 \".*?\" 은 전체 네트워크의 모든 그림을 필터링 함을 의미합니다.(도메인 이름이 \"*\" 로 설정되거나 비워두면 전체 네트워크가 필터링됨을 의미합니다.)\n도메인 이름 \"www.example.com\", 정규 표현식 \"abc\" 도메인 이름 \"www.example.com\" 아래의 이미지 링크에 \"abc\" 가 포함 된 사진을 필터링 함을 의미합니다."
+   },
+   "imgFilterReg": {
+      "message": "정규식"
+   },
+   "imgFilterTitle": {
+      "message": "이미지 필터링 켜기"
+   },
+   "imgFilterYm": {
+      "message": "도메인 이름"
+   },
+   "importRule": {
+      "message": "import"
+   },
+   "maxHeight": {
+      "message": "최대 높이"
+   },
+   "maxWidth": {
+      "message": "최대 폭"
+   },
+   "minHeight": {
+      "message": "최소 높이"
+   },
+   "minWidth": {
+      "message": "최소 폭"
+   },
+   "more": {
+      "message": "더"
+   },
+   "name": {
+      "message": "이름"
+   },
+   "newDownloadTask": {
+      "message": "새로운 다운로드 작업"
+   },
+   "newTabTip": {
+      "message": "그것은 필터 편리하지, 여기를 클릭하세요!"
+   },
+   "noAudio": {
+      "message": "오디오를 받지 못하셨나요? 시도하려면 웹 페이지에서 재생을 클릭하십시오."
+   },
+   "noData": {
+      "message": "데이터 없음"
+   },
+   "noVideo": {
+      "message": "비디오를 얻지 못하셨나요? 시도하려면 웹 페이지에서 재생을 클릭하십시오."
+   },
+   "notice": {
+      "message": "주의"
+   },
+   "notifEnabledTip": {
+      "message": "이 설정은 성공하고 다시 시작한 후 적용됩니다. 지금 다시 시작 하시겠습니까?"
+   },
+   "notificationAfterFinished": {
+      "message": "전체 알림 다운로드"
+   },
+   "notifications_fail_title": {
+      "message": "다운로드 실패"
+   },
+   "notifications_open_dir": {
+      "message": "폴더에서 보기"
+   },
+   "notifications_open_file": {
+      "message": "파일 열기"
+   },
+   "notifications_success_title": {
+      "message": "다운로드 완료"
+   },
+   "officialwebsite": {
+      "message": "공식 웹 사이트"
+   },
+   "oldVersion": {
+      "message": "이전 버전 사용"
+   },
+   "opExpPage": {
+      "message": "페이지 정보 내보내기"
+   },
+   "opMoreImgSel": {
+      "message": "기본적으로 더 많은 이미지 옵션 표시"
+   },
+   "opSaveImgSize": {
+      "message": "이미지 필터 크기 기억"
+   },
+   "opWebpToJpg": {
+      "message": "JPG로 WebP 형식"
+   },
+   "open": {
+      "message": "파일 열기"
+   },
+   "openDirectory": {
+      "message": "파일 디렉토리 열기"
+   },
+   "openInNewTab": {
+      "message": "새 탭에서 열기"
+   },
+   "openInNewWindow": {
+      "message": "새 창에서 열기"
+   },
+   "operation": {
+      "message": "조작"
+   },
+   "options": {
+      "message": "설정"
+   },
+   "other": {
+      "message": "다른"
+   },
+   "otificationAfterFailed": {
+      "message": "다운로드 실패 알림"
+   },
+   "outDSEL": {
+      "message": "역 선거"
+   },
+   "outSELA": {
+      "message": "모두 선택"
+   },
+   "pack": {
+      "message": "곤포"
+   },
+   "page": {
+      "message": "댓글 페이지 수"
+   },
+   "picture": {
+      "message": "사진"
+   },
+   "playSoundAfterFailed": {
+      "message": "다운로드 실패 소리"
+   },
+   "playSoundAfterFinished": {
+      "message": "완전한 사운드 다운로드"
+   },
+   "pleaseEnterTheLink": {
+      "message": "링크를 입력하세요"
+   },
+   "preview": {
+      "message": "시사"
+   },
+   "rFComputer": {
+      "message": "컴퓨터에서 삭제"
+   },
+   "rFList": {
+      "message": "목록에서 제거하다"
+   },
+   "recommendations": {
+      "message": "제안"
+   },
+   "recommendationsDesc": {
+      "message": "AIX을 개선하는 방법에 대한 더 나은 아이디어가 있습니까?"
+   },
+   "recommendationsDesc2": {
+      "message": "소용"
+   },
+   "recommendationsDesc3": {
+      "message": "우리와 아이디어를 공유하는 양식."
+   },
+   "rename": {
+      "message": "이름 바꾸기"
+   },
+   "retract": {
+      "message": "세부 정보 접기"
+   },
+   "retry": {
+      "message": "다시 해 보다"
+   },
+   "router": {
+      "message": "파일 분류"
+   },
+   "routerExpound": {
+      "message": "이 기능은 다운로드 폴더의 해당 하위 폴더에 파일을 자동으로 배포합니다. 아래는 파일 확장자 목록과 다운로드 후 배치 될 디렉토리입니다."
+   },
+   "routine": {
+      "message": "전통적인"
+   },
+   "ruleDetail": {
+      "message": "{NO} 일련 번호, {EXT} 접미사 이름, {NAME} 원본 파일 이름, {PAGETITLE} 페이지 제목, {DATE} 타임 스탬프"
+   },
+   "ruleDetail1": {
+      "message": "이 형식에 따라 {EXT}는 그림 자체의 접미사를 유지합니다"
+   },
+   "ruleDetail2": {
+      "message": "\"pic_\"은 원하는대로 변경할 수 있습니다"
+   },
+   "ruleDetail3": {
+      "message": "다음 변수를 사용할 수 있습니다:"
+   },
+   "ruleDetail4": {
+      "message": "{NO}는 일련 번호를, {NO01}, {NO001}은 0이있는 일련 번호를, {EXT}는 확장자를, {NAME}은 원본 파일 이름을, {PAGETITLE}은 페이지 제목을 나타냅니다."
+   },
+   "ruleDetail5": {
+      "message": "예를 들어 dongman.jpg와 meijing.gif 사진이 2 장 있습니다"
+   },
+   "ruleDetail6": {
+      "message": "pic_ {NO001}. {EXT}의 이름이 다음으로 변경됩니다"
+   },
+   "ruleDetail7": {
+      "message": "{NAME} _ {NO001}. {EXT}의 이름이 다음으로 변경됩니다"
+   },
+   "save": {
+      "message": "저장"
+   },
+   "selectAll": {
+      "message": "모두"
+   },
+   "size": {
+      "message": "크기"
+   },
+   "small": {
+      "message": "작은"
+   },
+   "smallAudioFirst": {
+      "message": "작은 우선"
+   },
+   "smallFileFirst": {
+      "message": "작은 우선"
+   },
+   "smallPictureFirst": {
+      "message": "작은 우선"
+   },
+   "smallVideoFirst": {
+      "message": "작은 우선"
+   },
+   "smartRules": {
+      "message": "규칙"
+   },
+   "supportedBy": {
+      "message": "AIX 스마트 다운로더"
+   },
+   "suspend": {
+      "message": "잠시 멈추다"
+   },
+   "suspended": {
+      "message": "일시 중지됨"
+   },
+   "thisIsTheLatestVersion": {
+      "message": "현재 최신 버전"
+   },
+   "tips": {
+      "message": "신속한"
+   },
+   "to": {
+      "message": "에게"
+   },
+   "update": {
+      "message": "업데이트 확인"
+   },
+   "updatedToTheLatestVersion": {
+      "message": "최신 버전으로 업데이트"
+   },
+   "updt": {
+      "message": "최신 정보"
+   },
+   "version": {
+      "message": "버전"
+   },
+   "video": {
+      "message": "비디오"
+   },
+   "width": {
+      "message": "폭"
+   },
+   "wronged": {
+      "message": "잘못됨"
+   }
+}

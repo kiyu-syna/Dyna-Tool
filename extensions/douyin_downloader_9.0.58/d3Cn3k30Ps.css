@@ -1,0 +1,120 @@
+
+/* 组件本身不需要样式，所有样式都在动态创建的按钮上 */
+.dy-download-button-container[data-v-ccbdcea8] {
+  display: none;
+}
+
+
+/* 全局样式：注入到页面的按钮样式 */
+.dy-download-button {
+  position: absolute;
+  z-index: 1000;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(84, 84, 84, 0.5);
+  color: white;
+  border-radius: 11px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-weight: 500;
+  user-select: none;
+}
+.dy-download-button:hover {
+  background: rgba(84, 84, 84, 0.8);  /* 背景加深：0.5 → 0.8 */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+.dy-download-button:active {
+  background: rgba(84, 84, 84, 0.9);  /* 点击时更深 */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+.dy-download-button-inner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dy-download-button-inner svg,
+.dy-download-button-inner img {
+  width: 25px;
+  height: 25px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+.dy-download-button-text {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+.dy-download-button {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+.dy-download-button-inner svg {
+    width: 16px;
+    height: 16px;
+}
+.dy-download-button-text {
+    display: none;
+}
+}
+
+/* 动画效果 */
+@keyframes dy-button-pulse {
+0%, 100% {
+    opacity: 1;
+}
+50% {
+    opacity: 0.8;
+}
+}
+.dy-download-button.downloading {
+  animation: dy-button-pulse 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* 下载面板动画 */
+@keyframes dy-toast-fade-in {
+from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+}
+to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+}
+@keyframes dy-toast-fade-out {
+from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+}
+}
+
+/* 下载面板滚动条样式 */
+.dy-download-panel::-webkit-scrollbar {
+  width: 8px;
+}
+.dy-download-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.dy-download-panel::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+.dy-download-panel::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Firefox 滚动条样式 */
+.dy-download-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+

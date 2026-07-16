@@ -1,0 +1,611 @@
+{
+   "DESC": {
+      "message": "Descripción"
+   },
+   "DOWN": {
+      "message": "Descargar"
+   },
+   "DSEL": {
+      "message": "seleccione la inversa"
+   },
+   "EXELeftTitle": {
+      "message": "Descargador"
+   },
+   "EXERightTitle": {
+      "message": "Escáner"
+   },
+   "EXETitle": {
+      "message": "AIX Downloader"
+   },
+   "EXT": {
+      "message": "Formato"
+   },
+   "ORDER": {
+      "message": "ordenar"
+   },
+   "SELA": {
+      "message": "seleccionar todo"
+   },
+   "SORT": {
+      "message": "clasificación"
+   },
+   "URL": {
+      "message": "URL"
+   },
+   "YouTubeVideoError": {
+      "message": "Debido a las políticas y restricciones de la tienda web de Google y Chrome, la descarga de videos no funciona en el sitio web de YouTube ni en ningún otro video de YouTube incrustado en otros sitios web."
+   },
+   "about": {
+      "message": "sobre"
+   },
+   "aboutDesc": {
+      "message": "AIX downloader permite una gestión eficiente de las descargas, el sniffering y la descarga de imágenes de páginas web, vídeos, audio y otros contenidos, al mismo tiempo que amplía los scripts inteligentes que integran varios sitios web para extraer rápidamente el contenido que desea."
+   },
+   "aboutHeaderDesc": {
+      "message": "Sé el mejor descargador inteligente de chrome"
+   },
+   "aboutOp": {
+      "message": "Introducción"
+   },
+   "add": {
+      "message": "Añadir"
+   },
+   "addDir": {
+      "message": "Añadir directorio"
+   },
+   "addDownloadLink": {
+      "message": "Añadir enlace para descargar"
+   },
+   "all": {
+      "message": "Todas"
+   },
+   "analyzing": {
+      "message": "Analizando"
+   },
+   "audio": {
+      "message": "Audio"
+   },
+   "auto": {
+      "message": "automático"
+   },
+   "big": {
+      "message": "Grande"
+   },
+   "bigAudioFirst": {
+      "message": "Gran"
+   },
+   "bigFileFirst": {
+      "message": "Gran"
+   },
+   "bigPictureFirst": {
+      "message": "Gran"
+   },
+   "bigVideoFirst": {
+      "message": "Gran"
+   },
+   "bugs": {
+      "message": "Problema"
+   },
+   "bugsDesc1": {
+      "message": "Encontrar problemas "
+   },
+   "bugsDesc2": {
+      "message": " contáctenos "
+   },
+   "bugsDesc3": {
+      "message": "inmediatamente."
+   },
+   "cacheTitle": {
+      "message": "NO ACTUALICE NI CIERRE LA PÁGINA DE VIDEO !!!"
+   },
+   "cancel": {
+      "message": "Cancelar"
+   },
+   "checkNetworkConnection": {
+      "message": "Anormalidad en la red, verifique la red o el proxy."
+   },
+   "choosePicture": {
+      "message": "Imagen del área de comentarios"
+   },
+   "clearAll": {
+      "message": "Vaciar la lista"
+   },
+   "clearCeleted": {
+      "message": "Limpieza clara"
+   },
+   "clearDownloadRecords": {
+      "message": "clara registro de descarga"
+   },
+   "clearDownloaded": {
+      "message": "clara descargado"
+   },
+   "clearWronged": {
+      "message": "Excepción clara"
+   },
+   "completed": {
+      "message": "Completa"
+   },
+   "confirm": {
+      "message": "sí"
+   },
+   "confirmClear": {
+      "message": "Debes limpiar todo?"
+   },
+   "confirmDeletion": {
+      "message": "Confirmar borrado"
+   },
+   "contactUs": {
+      "message": "Por favor contáctenos si tiene algún problema."
+   },
+   "continue": {
+      "message": "continuar"
+   },
+   "copyFailed": {
+      "message": "Falla en la copia"
+   },
+   "copyLink": {
+      "message": "Enlace de copia"
+   },
+   "copySuccess": {
+      "message": "Éxito de la copia"
+   },
+   "customFormat": {
+      "message": "Formato personalizado"
+   },
+   "deSelect": {
+      "message": "Anti"
+   },
+   "default_title": {
+      "message": "AIX Downloader(Pictrue/Video/Music/Document)"
+   },
+   "delete": {
+      "message": "Borrar"
+   },
+   "deleted": {
+      "message": "eliminado"
+   },
+   "description": {
+      "message": "Descargue videos en línea, música, mp3, imágenes, etc. de sitios web y administre todos los archivos descargados."
+   },
+   "details": {
+      "message": "Detalles"
+   },
+   "domainDuplicated": {
+      "message": "El nombre de dominio no se puede repetir"
+   },
+   "download": {
+      "message": "descargar"
+   },
+   "downloadAllImgUsingDM": {
+      "message": "Descarga todas las imágenes"
+   },
+   "downloadButtonOff": {
+      "message": "Desactivado"
+   },
+   "downloadButtonOn": {
+      "message": "Activado"
+   },
+   "downloadButtonTip": {
+      "message": "Botón DL"
+   },
+   "downloadCommentImage": {
+      "message": "Descargar imagen de comentario"
+   },
+   "downloadHasBeenCancelled": {
+      "message": "Descarga cancelada"
+   },
+   "downloadUsingDM": {
+      "message": "Descargar usando DM"
+   },
+   "download_simple": {
+      "message": "Down"
+   },
+   "downloading": {
+      "message": "En curso"
+   },
+   "dragDownloadDesc": {
+      "message": "La imagen terminará de descargarse."
+   },
+   "dragDownloadTitle": {
+      "message": "Arrastra aquí para descargar"
+   },
+   "dupImgLinkNaming": {
+      "message": "Nombre de enlace de imagen duplicado"
+   },
+   "edit": {
+      "message": "Editar"
+   },
+   "email": {
+      "message": "Buzón"
+   },
+   "enableBoxSelect": {
+      "message": "Selección de arrastre de imagen"
+   },
+   "enableContextMenu": {
+      "message": "Habilite \"Descarga de AI Downloader\" para el menú contextual"
+   },
+   "enableHotKey": {
+      "message": "Extraer tecla de acceso rápido"
+   },
+   "enableOriginalBar": {
+      "message": "Habilitar la barra de descarga original de Chrome"
+   },
+   "enableRouter": {
+      "message": "Clasificación de descarga abierta"
+   },
+   "enableSmartScripts": {
+      "message": "Encender"
+   },
+   "enabledDragDownload": {
+      "message": "Habilitar la descarga de arrastre"
+   },
+   "example": {
+      "message": "Por ejemplo"
+   },
+   "exitSetting": {
+      "message": "Configuración de salida"
+   },
+   "expImgLink": {
+      "message": "Exportar enlaces IMG"
+   },
+   "exportRule": {
+      "message": "export"
+   },
+   "fAlert": {
+      "message": "Compruebe que el formato de su correo electrónico sea correcto.\nLa información de retroalimentación debe tener al menos 5 caracteres."
+   },
+   "fDesc": {
+      "message": "Comuníquese con nosotros para recibir comentarios o si necesita ayuda."
+   },
+   "fEmail": {
+      "message": "tu buzón"
+   },
+   "fMessage": {
+      "message": "Escribe tu mensaje"
+   },
+   "fName": {
+      "message": "tu nombre"
+   },
+   "fSend": {
+      "message": "Enviar"
+   },
+   "fSendFormat": {
+      "message": "La carga debe estar en formato de imagen"
+   },
+   "fSendPicture": {
+      "message": "Solo puedes subir hasta dos imágenes"
+   },
+   "fSuccess": {
+      "message": "Gracias por tus comentarios"
+   },
+   "fSupport": {
+      "message": "También puede dar una buena opinión o dar consejos de apoyo en la "
+   },
+   "fText": {
+      "message": "Escriba sus sugerencias y preguntas"
+   },
+   "fTitle": {
+      "message": "AIX Downloader"
+   },
+   "fTouch": {
+      "message": "Contáctenos"
+   },
+   "fUploadImage": {
+      "message": "Subir imagen"
+   },
+   "fUuploadbutton": {
+      "message": "Haga clic aquí para subir la imagen"
+   },
+   "fWebstore": {
+      "message": "tienda en línea"
+   },
+   "feedback": {
+      "message": "Realimentación"
+   },
+   "file": {
+      "message": "Documento"
+   },
+   "fileDeExist": {
+      "message": "El archivo no existe"
+   },
+   "fileHasBeenDeleted": {
+      "message": "El archivo ha sido eliminado"
+   },
+   "filter": {
+      "message": "filtro"
+   },
+   "folder": {
+      "message": "Carpeta"
+   },
+   "folderDuplicated": {
+      "message": "La carpeta no se puede repetir"
+   },
+   "formatError": {
+      "message": "format error"
+   },
+   "go": {
+      "message": "Obtener"
+   },
+   "group": {
+      "message": "Grupo"
+   },
+   "height": {
+      "message": "altura"
+   },
+   "help": {
+      "message": "Ayudar"
+   },
+   "hotKeyRemind": {
+      "message": "Ingrese la tecla de acceso rápido en el teclado"
+   },
+   "imgFilter": {
+      "message": "Filtro de imagen"
+   },
+   "imgFilterDesc": {
+      "message": "Habilitar esta función filtrará las imágenes que no desea extraer del sitio web."
+   },
+   "imgFilterDesc2": {
+      "message": "Ejemplo: \nnombre de dominio \"*\", expresión regular \". *?\", Que significa filtrar todas las imágenes de todos los sitios web. (El nombre de dominio se establece en \"*\" o no se completa significa que todos los sitios web están filtrados)\nNombre de dominio \"www.example.com\", expresión regular \"abc\", significa que la imagen de filtro contiene \"abc\" en el enlace de la imagen debajo del nombre de dominio \"www.example.com\"."
+   },
+   "imgFilterReg": {
+      "message": "Expresión regular"
+   },
+   "imgFilterTitle": {
+      "message": "Habilitar filtro de imagen"
+   },
+   "imgFilterYm": {
+      "message": "Nombre de dominio"
+   },
+   "importRule": {
+      "message": "import"
+   },
+   "maxHeight": {
+      "message": "Altura máxima"
+   },
+   "maxWidth": {
+      "message": "Anchura máxima"
+   },
+   "minHeight": {
+      "message": "Altura mínima"
+   },
+   "minWidth": {
+      "message": "Anchura mínima"
+   },
+   "more": {
+      "message": "MÁS"
+   },
+   "name": {
+      "message": "Nombre"
+   },
+   "newDownloadTask": {
+      "message": "Nueva tarea de descarga"
+   },
+   "newTabTip": {
+      "message": "No es conveniente filtrar, haga clic aquí!"
+   },
+   "noAudio": {
+      "message": "No recibiste el audio? Haga clic en reproducir para probar"
+   },
+   "noData": {
+      "message": "Sin datos"
+   },
+   "noVideo": {
+      "message": "No recibiste el video? Haga clic en reproducir para probar"
+   },
+   "notice": {
+      "message": "Notificación"
+   },
+   "notifEnabledTip": {
+      "message": "La configuración es correcta y entrará en vigor después de reiniciar. Quieres reiniciar ahora?"
+   },
+   "notificationAfterFinished": {
+      "message": "Descargar notificación completa"
+   },
+   "notifications_fail_title": {
+      "message": "Descarga fallida"
+   },
+   "notifications_open_dir": {
+      "message": "Mostrar en carpeta"
+   },
+   "notifications_open_file": {
+      "message": "Abrir archivo"
+   },
+   "notifications_success_title": {
+      "message": "Descarga completa"
+   },
+   "officialwebsite": {
+      "message": "página web oficial"
+   },
+   "oldVersion": {
+      "message": "Versión antigua"
+   },
+   "opExpPage": {
+      "message": "Exportar información de la página"
+   },
+   "opMoreImgSel": {
+      "message": "Mostrar más opciones de imagen por defecto"
+   },
+   "opSaveImgSize": {
+      "message": "Recuerde el tamaño del filtro de imagen"
+   },
+   "opWebpToJpg": {
+      "message": "WEBP a JPG"
+   },
+   "open": {
+      "message": "abre"
+   },
+   "openDirectory": {
+      "message": "Mostrado en la carpeta"
+   },
+   "openInNewTab": {
+      "message": "Abrir en una pestaña nueva"
+   },
+   "openInNewWindow": {
+      "message": "abrir en una nueva ventana"
+   },
+   "operation": {
+      "message": "Operación"
+   },
+   "options": {
+      "message": "Configuración"
+   },
+   "other": {
+      "message": "otros"
+   },
+   "otificationAfterFailed": {
+      "message": "Descargar notificación de falla"
+   },
+   "outDSEL": {
+      "message": "Cambiar"
+   },
+   "outSELA": {
+      "message": "Seleccionar todo"
+   },
+   "pack": {
+      "message": "ZIP"
+   },
+   "page": {
+      "message": "Página de comentarios"
+   },
+   "picture": {
+      "message": "Imagen"
+   },
+   "playSoundAfterFailed": {
+      "message": "Descargar sonido de falla"
+   },
+   "playSoundAfterFinished": {
+      "message": "Descargar sonido completo"
+   },
+   "pleaseEnterTheLink": {
+      "message": "Enlace de entrada"
+   },
+   "preview": {
+      "message": "Avance"
+   },
+   "rFComputer": {
+      "message": "Eliminar de la computadora"
+   },
+   "rFList": {
+      "message": "Eliminar de la lista"
+   },
+   "recommendations": {
+      "message": "Sugerir"
+   },
+   "recommendationsDesc": {
+      "message": "Tiene ideas sobre cómo mejorar AIX Downloader?"
+   },
+   "recommendationsDesc2": {
+      "message": "Usar"
+   },
+   "recommendationsDesc3": {
+      "message": "formulario para compartir ideas con nosotros."
+   },
+   "rename": {
+      "message": "Nombrar"
+   },
+   "retract": {
+      "message": "Retraer"
+   },
+   "retry": {
+      "message": "reintento"
+   },
+   "router": {
+      "message": "Enrutador"
+   },
+   "routerExpound": {
+      "message": "Esta función distribuirá automáticamente los archivos a las subcarpetas correspondientes en la carpeta de descarga. A continuación se muestra una lista de extensiones de archivo y el directorio donde se colocarán después de la descarga."
+   },
+   "routine": {
+      "message": "Convencional"
+   },
+   "ruleDetail": {
+      "message": "{NO} número de serie; {EXT} extensión; {NOMBRE} nombre de archivo original; {TÍTULO DE PÁGINA} título de la página; {FECHA}Marca de tiempo"
+   },
+   "ruleDetail1": {
+      "message": "Según este formato, {EXT} conservará el sufijo de la propia imagen"
+   },
+   "ruleDetail2": {
+      "message": "\"pic_ \" se puede cambiar a lo que quieras"
+   },
+   "ruleDetail3": {
+      "message": "Se pueden utilizar las siguientes variables: "
+   },
+   "ruleDetail4": {
+      "message": "{NO} representa el número de serie; {NO01},{NO001} representa el número de serie con 0 y así sucesivamente; {EXT} representa la extensión; {NAME} representa el nombre del archivo original; {PAGETITLE} representa el título de la página"
+   },
+   "ruleDetail5": {
+      "message": "Por ejemplo, hay 2 imágenes dongman.jpg y meijing.gif"
+   },
+   "ruleDetail6": {
+      "message": "pic_ {NO001}.{EXT} pasará a llamarse"
+   },
+   "ruleDetail7": {
+      "message": "{NAME}_{NO001}.{EXT} will be renamed to"
+   },
+   "save": {
+      "message": "Guardar"
+   },
+   "selectAll": {
+      "message": "Todo"
+   },
+   "size": {
+      "message": "tamaño"
+   },
+   "small": {
+      "message": "pequeña"
+   },
+   "smallAudioFirst": {
+      "message": "Pequeño"
+   },
+   "smallFileFirst": {
+      "message": "Pequeño"
+   },
+   "smallPictureFirst": {
+      "message": "Pequeño"
+   },
+   "smallVideoFirst": {
+      "message": "Pequeño"
+   },
+   "smartRules": {
+      "message": "Regla"
+   },
+   "supportedBy": {
+      "message": "AIX Downloader"
+   },
+   "suspend": {
+      "message": "suspensión"
+   },
+   "suspended": {
+      "message": "suspendido"
+   },
+   "thisIsTheLatestVersion": {
+      "message": "Actualmente la última versión"
+   },
+   "tips": {
+      "message": "Recordatorio"
+   },
+   "to": {
+      "message": "A"
+   },
+   "update": {
+      "message": "Actualización"
+   },
+   "updatedToTheLatestVersion": {
+      "message": "Actualizado a la última versión"
+   },
+   "updt": {
+      "message": "Actualización"
+   },
+   "version": {
+      "message": "número de versión"
+   },
+   "video": {
+      "message": "Video"
+   },
+   "width": {
+      "message": "ancho"
+   },
+   "wronged": {
+      "message": "anomalías"
+   }
+}

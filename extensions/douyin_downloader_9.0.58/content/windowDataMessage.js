@@ -1,0 +1,1 @@
+window.addEventListener("message",function(t){if("ext_gwd_AIX_76637127"===t.data.type){let e=[];try{e=t.data.paths.map(t=>t.split(".").reduce((t,e)=>{const a=e.match(/^(.*?)\[Symbol\]$/);return a?t?.[Reflect.ownKeys(t||{})?.[a[1]]]:t?.[e]},window))}catch(t){}window.postMessage({type:t.data.cbType,data:e})}});
