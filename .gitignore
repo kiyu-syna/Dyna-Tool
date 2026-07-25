@@ -4,6 +4,8 @@ auth.json
 license.json
 license_*.json
 service_account.json
+profile_automation/profiles/
+
 
 # Runtime state
 telegram_mapping.json
