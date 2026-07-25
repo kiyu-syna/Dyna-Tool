@@ -5,6 +5,10 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
+from pymongo import ReturnDocument
+from pymongo.read_concern import ReadConcern
+from pymongo.write_concern import WriteConcern
+
 from app.database.mongodb import get_db
 from app.models.schemas import PLANS, CreateOrderResponse
 from app.config import get_settings
@@ -48,14 +52,14 @@ def _build_vietqr_url(amount: int, content: str) -> str:
     )
 
 
-async def _resolve_order_username(order: dict) -> Optional[str]:
+async def _resolve_order_username(order: dict, *, session=None) -> Optional[str]:
     """Lấy username từ đơn (hỗ trợ đơn cũ chỉ có machine_id)."""
     if order.get("username"):
         return order["username"]
     db = get_db()
     mid = order.get("machine_id")
     if mid:
-        user = await db.users.find_one({"machine_id": mid})
+        user = await db.users.find_one({"machine_id": mid}, session=session)
         if user:
             return user["username"]
     return None
@@ -137,94 +141,85 @@ async def get_payment_status(order_id: str) -> Optional[dict]:
     }
 
 
-async def process_webhook(payload: dict, reference_code: str) -> dict:
-    """
-    Xử lý SePay webhook:
-    1. Chống duplicate bằng referenceCode
-    2. Parse content → order_id (DT######)
-    3. Kiểm tra amount khớp
-    4. Kích hoạt license
-    """
-    db = get_db()
-
-    transfer_type = (payload.get("transferType") or "in").lower()
-    if transfer_type == "out":
-        logger.info("[WEBHOOK] Bỏ qua giao dịch tiền ra (transferType=out)")
-        return {"success": True, "reason": "ignored_outgoing"}
-
-    # ── Parse order_id từ content / code / description ────────────────────────
-    content = payload.get("content") or ""
-    order_id = _extract_order_id(payload)
-
-    # ── Chống duplicate webhook (cho phép retry nếu đơn vẫn pending) ─────────
-    existing = await db.webhook_logs.find_one({"reference_code": reference_code})
-    if existing:
-        order = await db.orders.find_one({"order_id": order_id}) if order_id else None
-        if not (order and order.get("status") == "pending"):
-            logger.warning(f"[WEBHOOK] Duplicate referenceCode={reference_code}, bỏ qua")
-            return {"success": False, "reason": "duplicate"}
-        logger.info(f"[WEBHOOK] Retry referenceCode={reference_code} cho order {order_id}")
-    else:
-        await db.webhook_logs.insert_one({
+async def _apply_webhook_payment(
+    db, payload: dict, reference_code: str, order_id: str, now: datetime, session
+) -> dict:
+    """Validate and apply a payment inside an active MongoDB transaction."""
+    log_result = await db.webhook_logs.update_one(
+        {"reference_code": reference_code},
+        {"$setOnInsert": {
             "reference_code": reference_code,
-            "payload":        payload,
-            "received_at":    datetime.now(timezone.utc),
-        })
+            "payload": payload,
+            "received_at": now,
+        }},
+        upsert=True,
+        session=session,
+    )
+    is_retry = log_result.upserted_id is None
 
-    if not order_id:
-        logger.warning(
-            f"[WEBHOOK] Không tìm thấy mã đơn DT###### | content='{content}' | "
-            f"code='{payload.get('code')}' | description='{payload.get('description')}'"
-        )
-        return {"success": False, "reason": "no_order_id"}
-
-    # ── Tìm order ─────────────────────────────────────────────────────────────
-    order = await db.orders.find_one({"order_id": order_id})
+    order = await db.orders.find_one({"order_id": order_id}, session=session)
     if not order:
-        logger.warning(f"[WEBHOOK] Order {order_id} không tồn tại")
+        logger.warning("[WEBHOOK] Order %s does not exist", order_id)
         return {"success": False, "reason": "order_not_found"}
 
-    if order["status"] == "paid":
-        logger.warning(f"[WEBHOOK] Order {order_id} đã thanh toán rồi")
-        return {"success": False, "reason": "already_paid"}
+    if order.get("status") == "paid":
+        logger.warning("[WEBHOOK] Order %s is already paid", order_id)
+        return {
+            "success": False,
+            "reason": "duplicate" if is_retry else "already_paid",
+        }
 
-    now = datetime.now(timezone.utc)
+    if order.get("status") != "pending":
+        logger.warning("[WEBHOOK] Order %s is not pending", order_id)
+        return {"success": False, "reason": "order_not_pending"}
+
     if ensure_utc(order["expires_at"]) < now:
-        await db.orders.update_one({"order_id": order_id}, {"$set": {"status": "expired"}})
-        logger.warning(f"[WEBHOOK] Order {order_id} đã hết hạn")
+        await db.orders.update_one(
+            {"order_id": order_id, "status": "pending"},
+            {"$set": {"status": "expired"}},
+            session=session,
+        )
+        logger.warning("[WEBHOOK] Order %s has expired", order_id)
         return {"success": False, "reason": "order_expired"}
 
-    # ── Kiểm tra số tiền ──────────────────────────────────────────────────────
     transfer_amount = int(payload.get("transferAmount", 0))
     if transfer_amount < order["amount"]:
         logger.warning(
-            f"[WEBHOOK] Amount mismatch: nhận {transfer_amount:,} < yêu cầu {order['amount']:,}"
+            "[WEBHOOK] Amount mismatch: received %s < required %s",
+            transfer_amount,
+            order["amount"],
         )
         return {"success": False, "reason": "amount_mismatch"}
 
-    # ── Kích hoạt license theo tài khoản ──────────────────────────────────────
-    username = await _resolve_order_username(order)
+    username = await _resolve_order_username(order, session=session)
     if not username:
-        logger.warning(f"[WEBHOOK] Order {order_id} không có username (đơn cũ?)")
+        logger.warning("[WEBHOOK] Order %s has no username", order_id)
         return {"success": False, "reason": "no_username"}
 
     days = order["days"]
-    sub_expires = now + timedelta(days=days)
-
-    await db.orders.update_one(
-        {"order_id": order_id},
+    claimed_order = await db.orders.find_one_and_update(
+        {"order_id": order_id, "status": "pending"},
         {"$set": {
             "status": "paid",
             "paid_at": now,
             "reference_code": reference_code,
             "username": username,
         }},
+        return_document=ReturnDocument.AFTER,
+        session=session,
     )
+    if claimed_order is None:
+        logger.warning("[WEBHOOK] Order %s was claimed concurrently", order_id)
+        return {"success": False, "reason": "already_paid"}
 
-    existing_sub = await db.subscriptions.find_one({"username": username})
-    sub_expires_prev = ensure_utc(existing_sub.get("expires_at")) if existing_sub else None
-    if sub_expires_prev and sub_expires_prev > now:
-        sub_expires = sub_expires_prev + timedelta(days=days)
+    existing_sub = await db.subscriptions.find_one(
+        {"username": username}, session=session
+    )
+    previous_expiry = (
+        ensure_utc(existing_sub.get("expires_at")) if existing_sub else None
+    )
+    base = previous_expiry if previous_expiry and previous_expiry > now else now
+    sub_expires = base + timedelta(days=days)
 
     await db.subscriptions.update_one(
         {"username": username},
@@ -237,11 +232,14 @@ async def process_webhook(payload: dict, reference_code: str) -> dict:
             "last_order_id": order_id,
         }},
         upsert=True,
+        session=session,
     )
 
     logger.info(
-        f"[WEBHOOK] ✅ Order {order_id} PAID | user={username} | "
-        f"license đến {sub_expires.strftime('%d/%m/%Y')}"
+        "[WEBHOOK] Order %s PAID | user=%s | license until %s",
+        order_id,
+        username,
+        sub_expires.strftime("%d/%m/%Y"),
     )
     return {
         "success": True,
@@ -249,3 +247,33 @@ async def process_webhook(payload: dict, reference_code: str) -> dict:
         "username": username,
         "expires_at": sub_expires.isoformat(),
     }
+
+
+async def process_webhook(payload: dict, reference_code: str) -> dict:
+    """Process a SePay webhook as one atomic payment operation."""
+    transfer_type = (payload.get("transferType") or "in").lower()
+    if transfer_type == "out":
+        logger.info("[WEBHOOK] Ignoring outgoing transfer")
+        return {"success": True, "reason": "ignored_outgoing"}
+
+    order_id = _extract_order_id(payload)
+    if not order_id:
+        logger.warning("[WEBHOOK] No order id found in payload")
+        return {"success": False, "reason": "no_order_id"}
+
+    db = get_db()
+    now = datetime.now(timezone.utc)
+
+    async def apply_payment(session):
+        return await _apply_webhook_payment(
+            db, payload, reference_code, order_id, now, session
+        )
+
+    # Fail closed when transactions are unavailable. SePay can retry a 500;
+    # silently falling back to separate writes could charge a customer twice.
+    async with await db.client.start_session() as session:
+        return await session.with_transaction(
+            apply_payment,
+            read_concern=ReadConcern("snapshot"),
+            write_concern=WriteConcern("majority"),
+        )

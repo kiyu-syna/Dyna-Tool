@@ -1,34 +1,47 @@
 {
-  "id": "5",
-  "name": "Meo",
-  "enabled": true,
-  "check_interval_minutes": 30,
-  "douyin": {
-    "gemlogin_profile_id": "",
-    "target_sec_uid": "",
-    "target_display_name": ""
-  },
-  "tiktok": {
-    "gemlogin_profile_id": "5",
-    "enabled": false,
-    "hashtag": "",
-    "use_original_desc": false
-  },
-  "facebook": {
-    "gemlogin_profile_id": "5",
-    "enabled": false,
-    "hashtag": "",
-    "use_original_desc": false
-  },
-  "youtube": {
-    "gemlogin_profile_id": "5",
-    "enabled": false,
-    "hashtag": "",
-    "use_original_desc": false
-  },
-  "filters": {
-    "min_likes": 5000,
-    "max_duration_seconds": 120
-  },
-  "save_dir": ""
+    "id":  "5",
+    "name":  "Meo",
+    "enabled":  false,
+    "check_interval_minutes":  30,
+    "douyin":  {
+                   "gemlogin_profile_id":  "5"
+               },
+    "tiktok":  {
+                   "gemlogin_profile_id":  "5",
+                   "enabled":  false,
+                   "hashtag":  "",
+                   "use_original_desc":  false
+               },
+    "facebook":  {
+                     "gemlogin_profile_id":  "5",
+                     "enabled":  false,
+                     "hashtag":  "",
+                     "use_original_desc":  false
+                 },
+    "youtube":  {
+                    "gemlogin_profile_id":  "5",
+                    "enabled":  false,
+                    "hashtag":  "",
+                    "use_original_desc":  false,
+                    "preset":  "slow",
+                    "crf":  16
+                },
+    "filters":  {
+                    "min_likes":  5000,
+                    "max_duration_seconds":  120.0
+                },
+    "save_dir":  "",
+    "browser":  {
+                    "provider":  "local_chromium",
+                    "user_data_dir":  "C:\\Users\\Quoc Bqo\\AppData\\Local\\Dyna\\browser-profiles\\profile-5",
+                    "executable_path":  "C:\\Users\\Quoc Bqo\\AppData\\Local\\Dyna\\browser-runtimes\\chromium-1223\\chrome.exe",
+                    "profile_directory":  "Default",
+                    "headless":  false,
+                    "background":  true,
+                    "launch_timeout_ms":  60000
+                },
+    "processing_priority":  100,
+    "tracking_sources":  [
+
+                         ]
 }

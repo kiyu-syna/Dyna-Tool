@@ -8,8 +8,9 @@ Dyna Tool là ứng dụng desktop hỗ trợ tự động hóa tải, xử lý 
 - Tải và xử lý video dọc/YouTube Shorts.
 - Tự động hóa Douyin/TikTok theo profile.
 - Hỗ trợ upload lên TikTok, YouTube và Facebook.
-- Tích hợp Telegram, Google Sheets và theo dõi trạng thái tác vụ.
+- Tích hợp Telegram và theo dõi trạng thái tác vụ.
 - Payment API tích hợp SePay và MongoDB.
+- Trợ lý AI trong desktop, dùng khóa Gemini/Groq/OpenRouter được bảo vệ trên máy chủ Dyna.
 
 ## Cấu trúc dự án
 
@@ -17,15 +18,15 @@ Dyna Tool là ứng dụng desktop hỗ trợ tự động hóa tải, xử lý 
 Dyna Tool/
 ├── main.py                 # Điểm khởi động ứng dụng
 ├── core/                   # Cấu hình và tiện ích dùng chung
-├── services/               # Các dịch vụ nghiệp vụ
-├── automation/             # Lập lịch và tiện ích tự động hóa
-├── profile_automation/     # Pipeline xử lý theo profile
+├── services/               # Dịch vụ theo miền: account, browser, publishing...
+├── profile_automation/     # Pipeline, trình duyệt, watcher và uploader theo profile
 ├── desktop/                # Electron + React frontend
 ├── desktop_backend/        # API backend cho ứng dụng desktop
 ├── payment_server/         # FastAPI payment API
 ├── extensions/             # Browser extensions
 ├── image/                  # Icon và tài nguyên hình ảnh
-└── tests/                  # Automated tests
+├── runtime/                # State, log và file tạm (không commit)
+└── tests/                  # Chỉ test tích hợp xuyên nhiều miền
 ```
 
 ## Yêu cầu môi trường
@@ -65,7 +66,29 @@ Copy-Item payment_server\.env.example payment_server\.env
 
 Sau đó mở `payment_server\.env` và điền các giá trị cần thiết như MongoDB, SePay, thông tin ngân hàng và tài khoản admin.
 
-Các file local khác như `auth.json`, `settings.json`, `state.json`, log và trạng thái runtime cũng được bỏ qua bởi `.gitignore`.
+### Cấu hình Dyna AI trên máy chủ
+
+Điền một hoặc nhiều khóa cho từng nhà cung cấp trong `payment_server\.env` (nhiều khóa ngăn cách bằng dấu phẩy hoặc dấu chấm phẩy):
+
+```dotenv
+AI_PROVIDER_ORDER=gemini,groq,openrouter
+AI_GEMINI_API_KEYS=gemini_key_1,gemini_key_2
+AI_GROQ_API_KEYS=groq_key_1,groq_key_2
+AI_OPENROUTER_API_KEYS=openrouter_key_1,openrouter_key_2
+```
+
+Nếu chỉ có một khóa, có thể dùng các biến ngắn `AI_GEMINI_API_KEY`,
+`AI_GROQ_API_KEY` và `AI_OPENROUTER_API_KEY`. Gateway sẽ thử lần lượt theo
+`AI_PROVIDER_ORDER`; khi một key bị 401/403/404, hết quota/credit, bị giới hạn
+tốc độ hoặc gặp lỗi mạng/5xx, key đó được tạm ngưng và request chuyển sang key
+hoặc provider tiếp theo. Thời gian tạm ngưng được tính theo `Retry-After` của
+nhà cung cấp (nếu có), nên server không cần khởi động lại để xoay key.
+Riêng khi thêm, xóa hoặc đổi key trong `.env`, hãy khởi động lại Payment Server
+để nạp cấu hình mới.
+
+Không đặt các khóa này trong `settings.json`, mã React/Electron hoặc app desktop. Máy chủ tự xoay khóa và nhà cung cấp khi gặp hết hạn mức, giới hạn tốc độ, lỗi mạng hoặc lỗi tạm thời. `AI_REQUESTS_PER_MINUTE` giới hạn chi phí theo từng tài khoản Dyna; `AI_REQUIRE_ACTIVE_LICENSE=true` chỉ cho tài khoản Premium còn hiệu lực sử dụng.
+
+Các file local khác như `auth.json`, `settings.json`, `state.json`, log và trạng thái runtime cũng được bỏ qua bởi `.gitignore`. Sao chép `config/settings.example.json` thành `config/settings.json` khi cần tùy chỉnh cấu hình chạy local.
 
 ## Chạy dự án
 
@@ -105,8 +128,11 @@ Payment API có health check tại `http://localhost:8000/health` và tài liệ
 Từ thư mục gốc:
 
 ```powershell
-python -m pytest
+python -m unittest discover -s . -p "test_*.py" -q
 ```
+
+Test được đặt gần module tương ứng; chỉ các bài test xuyên nhiều miền mới nằm trong
+`tests/integration`.
 
 ## Quy trình Git cơ bản
 

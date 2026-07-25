@@ -7,20 +7,21 @@ from urllib.parse import quote
 
 import core.config as config
 from core.utils import console, logger
-from automation.browser_utils import set_video_file_background
+from profile_automation.browser_utils import set_video_file_background
 from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped
 from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
-from services.youtube_shorts_converter import (
+from services.publishing.youtube_shorts_converter import (
     DEFAULT_CRF,
     DEFAULT_PRESET,
     YouTubeShortsConversionError,
     convert_to_youtube_shorts,
 )
-from services.gemlogin_browser_service import (
-    connected_gemlogin_profile,
+from services.browser.browser_profile_service import (
+    browser_profile_label,
+    connected_browser_profile as connected_gemlogin_profile,
     create_background_page,
 )
-from services.diagnostic_artifact_service import attach_response_trace, record_browser_diagnostic
+from services.integrations.diagnostic_artifact_service import attach_response_trace, record_browser_diagnostic
 
 
 UPLOAD_URL = (
@@ -66,7 +67,7 @@ def _close_page_quietly(page) -> None:
 
 def _build_youtube_text(video_path: str, video: DouyinVideo, profile: dict) -> tuple[str, str]:
     youtube_cfg = profile.get("youtube", {})
-    if youtube_cfg.get("use_original_desc", False):
+    if profile.get("_runtime_use_original_desc", False) or youtube_cfg.get("use_original_desc", False):
         caption = str(video.desc or "").strip()
     else:
         caption = str(profile.get("_runtime_caption") or video.desc or "").strip()
@@ -93,7 +94,7 @@ def _wait_for_youtube_checks_complete(page, profile_id: str, timeout_seconds: in
         try:
             labels = progress_labels.all_inner_texts()
         except Exception as exc:
-            logger.debug("[Profile %s] Could not read YouTube check status: %s", profile_id, exc)
+            logger.debug("[Profile %s] Không đọc được trạng thái kiểm tra YouTube: %s", profile_id, exc)
             labels = []
 
         normalized_labels = [" ".join(label.split()) for label in labels]
@@ -108,14 +109,14 @@ def _wait_for_youtube_checks_complete(page, profile_id: str, timeout_seconds: in
             console.print("   YouTube phát hiện nội dung bản quyền. Đã hủy đăng video này.")
             return YOUTUBE_CHECK_COPYRIGHT
         if check_status == YOUTUBE_CHECK_COMPLETE:
-            logger.info("[Profile %s] YouTube checks completed with no issues.", profile_id)
+            logger.info("[Profile %s] YouTube đã kiểm tra xong, không phát hiện vấn đề.", profile_id)
             console.print("   YouTube checks completed. No issues detected.")
             return YOUTUBE_CHECK_COMPLETE
 
         visible_text = " | ".join(label for label in normalized_labels if label)
         if visible_text and visible_text != last_text:
             last_text = visible_text
-            logger.info("[Profile %s] YouTube check status: %s", profile_id, visible_text)
+            logger.info("[Profile %s] Trạng thái kiểm tra YouTube: %s", profile_id, visible_text)
 
         now = time.monotonic()
         if now - last_log_at >= 30:
@@ -200,7 +201,7 @@ class YouTubeUploader(BaseUploader):
                 cancel_event=profile.get("_runtime_cancel_event"),
             )
         except (YouTubeShortsConversionError, OSError, ValueError) as exc:
-            logger.error("[Profile %s] YouTube Shorts conversion failed: %s", profile_id, exc)
+            logger.error("[Profile %s] Chuyển đổi YouTube Shorts thất bại: %s", profile_id, exc)
             record_browser_diagnostic(
                 profile_id=profile_id,
                 video_id=str(video.aweme_id),
@@ -212,9 +213,9 @@ class YouTubeUploader(BaseUploader):
 
         logger.info("==========================================================")
         logger.info(
-            "STARTING YOUTUBE SHORTS UPLOAD - PROFILE %s (GemLogin: %s)",
+            "BẮT ĐẦU ĐĂNG YOUTUBE SHORTS - PROFILE %s (%s)",
             profile_id,
-            gemlogin_profile_id,
+            browser_profile_label(gemlogin_profile_id, profile),
         )
         logger.info("==========================================================")
 
@@ -224,9 +225,10 @@ class YouTubeUploader(BaseUploader):
             with connected_gemlogin_profile(
                 gemlogin_profile_id,
                 config.API_URL,
+                profile_config=profile,
             ) as browser, ExitStack() as page_cleanup:
                 if not browser.contexts:
-                    logger.error("[Profile %s] GemLogin has no browser context.", profile_id)
+                    logger.error("[Profile %s] Trình duyệt không có context.", profile_id)
                     return False
 
                 context = browser.contexts[0]
@@ -234,7 +236,7 @@ class YouTubeUploader(BaseUploader):
                 page_cleanup.callback(_close_page_quietly, page)
                 response_trace = attach_response_trace(page)
                 upload_url = UPLOAD_URL.format(channel_id=quote(channel_id, safe=""))
-                logger.info("[Profile %s] Opening YouTube upload page: %s", profile_id, upload_url)
+                logger.info("[Profile %s] Đang mở trang đăng YouTube: %s", profile_id, upload_url)
                 page.goto(upload_url, wait_until="domcontentloaded", timeout=60000)
 
                 select_button = page.locator(
@@ -247,7 +249,7 @@ class YouTubeUploader(BaseUploader):
                     select_button.click(force=True)
 
                 set_video_file_background(page, str(converted_path), trigger_youtube_file_chooser)
-                logger.info("[Profile %s] Selected YouTube video through background Playwright upload.", profile_id)
+                logger.info("[Profile %s] Đã chọn video YouTube bằng Playwright ở chế độ nền.", profile_id)
 
                 # Step 5: allow YouTube to accept the selected file.
                 time.sleep(5)
@@ -272,7 +274,7 @@ class YouTubeUploader(BaseUploader):
                 if hashtags:
                     page.keyboard.insert_text(hashtags)
                 logger.info(
-                    "[Profile %s] Entered title without hashtags and hashtag description.",
+                    "[Profile %s] Đã nhập tiêu đề và phần mô tả hashtag.",
                     profile_id,
                 )
 
@@ -292,12 +294,12 @@ class YouTubeUploader(BaseUploader):
                 for step in range(3):
                     next_button.wait_for(state="visible", timeout=60000)
                     next_button.click(force=True)
-                    logger.info("[Profile %s] Clicked Next %s/3.", profile_id, step + 1)
+                    logger.info("[Profile %s] Đã nhấn Tiếp, bước %s/3.", profile_id, step + 1)
                     time.sleep(1)
 
                 _select_public_visibility(page, timeout_seconds=30)
                 logger.info(
-                    "[Profile %s] Confirmed YouTube visibility is PUBLIC.",
+                    "[Profile %s] Đã chọn chế độ công khai trên YouTube.",
                     profile_id,
                 )
 
@@ -310,13 +312,13 @@ class YouTubeUploader(BaseUploader):
                 save_button.click(force=True)
                 time.sleep(5)
                 upload_succeeded = True
-                logger.info("[Profile %s] YouTube Shorts upload completed.", profile_id)
+                logger.info("[Profile %s] Đăng YouTube Shorts hoàn tất.", profile_id)
                 page.close()
 
         except UploadSkipped:
             raise
         except Exception as exc:
-            logger.exception("[Profile %s] YouTube Shorts upload failed: %s", profile_id, exc)
+            logger.exception("[Profile %s] Đăng YouTube Shorts thất bại: %s", profile_id, exc)
             record_browser_diagnostic(
                 page=page,
                 profile_id=profile_id,
@@ -332,8 +334,8 @@ class YouTubeUploader(BaseUploader):
             if converted_path is not None:
                 try:
                     Path(converted_path).unlink(missing_ok=True)
-                    logger.info("[Profile %s] Deleted temporary 9:16 video: %s", profile_id, converted_path)
+                    logger.info("[Profile %s] Đã xóa video 9:16 tạm: %s", profile_id, converted_path)
                 except OSError as exc:
-                    logger.warning("Could not delete temporary 9:16 video %s: %s", converted_path, exc)
+                    logger.warning("Không thể xóa video 9:16 tạm %s: %s", converted_path, exc)
 
         return upload_succeeded

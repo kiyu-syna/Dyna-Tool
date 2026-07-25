@@ -3,16 +3,17 @@ import time
 from contextlib import ExitStack
 from datetime import datetime
 
-from profile_automation.uploaders.base_uploader import BaseUploader
+from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped
 from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
 from core.utils import logger, console, notify_intervention
-from automation.browser_utils import is_captcha_present, set_video_file_background
+from profile_automation.browser_utils import is_captcha_present, set_video_file_background
 import core.config as config
-from services.gemlogin_browser_service import (
-    connected_gemlogin_profile,
+from services.browser.browser_profile_service import (
+    browser_profile_label,
+    connected_browser_profile as connected_gemlogin_profile,
     create_background_page,
 )
-from services.diagnostic_artifact_service import attach_response_trace, record_browser_diagnostic
+from services.integrations.diagnostic_artifact_service import attach_response_trace, record_browser_diagnostic
 
 UPLOAD_URL = "https://www.tiktok.com/tiktokstudio/upload?from=webapp"
 CLICK_UPLOAD_X, CLICK_UPLOAD_Y = 1117, 835
@@ -55,25 +56,24 @@ class TikTokUploader(BaseUploader):
         tiktok_cfg = profile.get("tiktok", {})
         gemlogin_profile_id = tiktok_cfg.get("gemlogin_profile_id")
         
-        if not gemlogin_profile_id:
-            logger.error(f"[Profile {profile_id}] TikTok upload skipped: No gemlogin_profile_id configured.")
-            return False
-            
+        browser_label = browser_profile_label(gemlogin_profile_id, profile)
         logger.info("==========================================================")
-        logger.info(f"   BẮT ĐẦU UPLOAD TIKTOK - PROFILE {profile_id} (GemLogin: {gemlogin_profile_id})   ")
+        logger.info(f"   BẮT ĐẦU ĐĂNG TIKTOK - PROFILE {profile_id} ({browser_label})   ")
         logger.info("==========================================================")
         
         api_url = config.API_URL
         is_safe = False
+        restriction_detected = False
         page = None
         response_trace: dict = {}
         with connected_gemlogin_profile(
             gemlogin_profile_id,
             api_url,
+            profile_config=profile,
         ) as browser, ExitStack() as page_cleanup:
             try:
                 if not browser.contexts:
-                    logger.error(f"[Profile {profile_id}] Không tìm thấy browser contexts sau khi kết nối CDP.")
+                    logger.error(f"[Profile {profile_id}] Không tìm thấy ngữ cảnh trình duyệt sau khi kết nối CDP.")
                     return False
                 context = browser.contexts[0]
                 
@@ -82,7 +82,7 @@ class TikTokUploader(BaseUploader):
                 page_cleanup.callback(_close_page_quietly, page)
                 response_trace = attach_response_trace(page)
                 
-                logger.info(f"[Profile {profile_id}] Äang Ä‘i tá»›i link upload: {UPLOAD_URL}")
+                logger.info(f"[Profile {profile_id}] Đang mở trang đăng TikTok: {UPLOAD_URL}")
                 page.goto(UPLOAD_URL, wait_until="domcontentloaded", timeout=60000)
                 time.sleep(5)
 
@@ -99,7 +99,7 @@ class TikTokUploader(BaseUploader):
                     client = page.context.new_cdp_session(page)
                     client.send("Browser.setDownloadBehavior", {"behavior": "default"})
                 except Exception as e:
-                    logger.error(f"Lỗi khi thiết lập download behavior: {e}")
+                    logger.error(f"Lỗi khi thiết lập chế độ tải xuống của trình duyệt: {e}")
 
                 def trigger_tiktok_file_chooser():
                     for selector in (
@@ -117,7 +117,7 @@ class TikTokUploader(BaseUploader):
                     page.mouse.click(CLICK_UPLOAD_X, CLICK_UPLOAD_Y)
 
                 set_video_file_background(page, video_path, trigger_tiktok_file_chooser)
-                logger.info(f"[Profile {profile_id}] Da chon video TikTok bang Playwright o che do nen.")
+                logger.info(f"[Profile {profile_id}] Đã chọn video TikTok bằng Playwright ở chế độ nền.")
 
                 # 2. Nhập mô tả & Hashtags
                 time.sleep(10)
@@ -137,7 +137,7 @@ class TikTokUploader(BaseUploader):
                     page.keyboard.press("Backspace")
                     time.sleep(1)
                     
-                    if tiktok_cfg.get("use_original_desc", False):
+                    if profile.get("_runtime_use_original_desc", False) or tiktok_cfg.get("use_original_desc", False):
                         desc_text = str(video.desc or "").strip()
                     else:
                         desc_text = str(profile.get("_runtime_caption") or video.desc or "").strip()
@@ -173,6 +173,7 @@ class TikTokUploader(BaseUploader):
                         break
                     elif fail_el.is_visible():
                         is_safe = False
+                        restriction_detected = True
                         console.print("[red]   ➔ LỖI: Đã hiện thông báo BỊ HẠN CHẾ! Bỏ qua video.[/]")
                         break
 
@@ -204,10 +205,19 @@ class TikTokUploader(BaseUploader):
                     console.print("[bold green]✅ Đã nhấn nút ĐĂNG thành công![/]")
                     time.sleep(15)
                     
-                else:
+                elif restriction_detected:
                     logger.warning(f"[Profile {profile_id}] Video {video.aweme_id} bị hạn chế bản quyền, không đăng.")
+                    raise UploadSkipped(
+                        "TikTok báo nội dung có thể bị hạn chế; đã bỏ qua video."
+                    )
+                else:
+                    logger.error(
+                        "[Profile %s] TikTok không hoàn tất kiểm tra nội dung trong thời gian chờ.",
+                        profile_id,
+                    )
 
-
+            except UploadSkipped:
+                raise
             except Exception as e:
                 logger.error(f"[Profile {profile_id}] Lỗi trong tiến trình upload TikTok: {e}")
                 record_browser_diagnostic(

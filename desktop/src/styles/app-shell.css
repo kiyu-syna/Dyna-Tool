@@ -1,0 +1,60 @@
+.window-titlebar { position: fixed; z-index: 999; top: 0; right: 0; left: 0; height: 32px; display: flex; align-items: center; justify-content: space-between; padding-left: 12px; background: #2e2e2e; color: #c7d3e3; -webkit-app-region: drag; }.window-title-copy { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; }.window-title-copy img { width: 18px; height: 18px; object-fit: contain; }.window-controls { height: 100%; display: flex; -webkit-app-region: no-drag; }.window-controls button { width: 46px; height: 100%; display: grid; place-items: center; border: 0; border-radius: 0; color: #c7d3e3; background: transparent; cursor: pointer; font-family: "Segoe UI", sans-serif; font-size: 17px; font-weight: 400; line-height: 1; }.window-controls button:nth-child(2) { font-size: 15px; }.window-controls button:hover { background: #414141; }.window-controls .window-close { font-size: 21px; }.window-controls .window-close:hover { color: #fff; background: #c93a45; }
+
+.app-shell { height: 100%; min-height: 0; padding-top: 32px; display: grid; grid-template-columns: 240px minmax(0, 1fr); overflow: hidden; background: var(--app); transition: grid-template-columns 140ms ease-out; }
+.app-shell.sidebar-collapsed { grid-template-columns: 68px minmax(0, 1fr); }
+.sidebar { min-width: 0; min-height: 0; position: relative; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+.brand { height: 82px; display: flex; align-items: center; gap: 10px; padding: 0 18px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+.brand > span { width: 34px; height: 34px; display: grid; place-items: center; flex: 0 0 auto; background: #082a4b; border: 1px solid color-mix(in srgb, #a9c9d8 32%, transparent); border-radius: 7px; overflow: hidden; }
+.brand-mark img { display: block; width: 31px; height: 31px; object-fit: contain; filter: brightness(.86) saturate(.94) contrast(1.08); }
+.brand div { display: flex; flex-direction: column; overflow: hidden; }
+.brand strong { font-family: "Inter", "Segoe UI Variable Display", "Segoe UI", sans-serif; font-size: 21px; font-weight: 700; letter-spacing: -.025em; }
+.brand small { margin-top: 2px; color: var(--muted); font-size: 12px; text-transform: uppercase; }
+.sidebar nav { min-height: 0; padding: 15px 9px; display: grid; gap: 16px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.sidebar nav::-webkit-scrollbar { display: none; width: 0; height: 0; }
+.nav-group, .nav-primary { display: grid; gap: 3px; }
+.nav-group h2 { height: 18px; display: flex; align-items: center; margin: 0; padding: 0 12px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+.sidebar nav button, .sidebar-footer-nav, .collapse-button { height: 43px; border: 0; border-radius: 6px; background: transparent; display: flex; align-items: center; gap: 11px; padding: 0 12px; color: var(--text-2); cursor: pointer; white-space: nowrap; overflow: hidden; }
+.sidebar nav button:hover, .sidebar-footer-nav:hover, .collapse-button:hover { background: var(--surface-2); color: var(--text); }
+.sidebar nav button.active, .sidebar-footer-nav.active { position: relative; color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.sidebar nav button.active::before { position: absolute; top: 8px; bottom: 8px; left: 0; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); content: ""; }
+.sidebar nav button svg, .sidebar-footer-nav svg, .collapse-button svg { flex: 0 0 auto; }
+.sidebar nav button > .nav-item-copy { min-width: 0; display: grid; gap: 2px; text-align: left; }
+.nav-item-copy strong { overflow: hidden; font-size: 15px; font-weight: inherit; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar-footer-nav span { font-size: 15px; }
+.sidebar-footer { flex: 0 0 auto; padding: 8px 9px 14px; border-top: 1px solid var(--border); background: var(--sidebar); }
+.sidebar-footer-nav { width: 100%; margin-bottom: 5px; }
+.account-compact { min-width: 0; display: grid; grid-template-areas: "avatar copy logout" "upgrade upgrade upgrade"; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; column-gap: 8px; row-gap: 7px; margin-bottom: 4px; padding: 7px 3px 9px; border-bottom: 1px solid var(--border); }
+.account-compact > span { grid-area: avatar; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 13px; font-weight: 700; }
+.account-copy { grid-area: copy; min-width: 0; display: grid; gap: 3px; }.account-copy strong { overflow: hidden; text-overflow: ellipsis; font-size: 12px; white-space: nowrap; }.account-copy small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }.account-copy small b { color: var(--border-strong); font-weight: 500; }.account-copy em { color: var(--accent); font-style: normal; font-weight: 700; }
+.account-compact > .icon-button { grid-area: logout; justify-self: end; width: 30px; height: 30px; }
+.account-upgrade { grid-area: upgrade; width: 100%; min-height: 29px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 9px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border)); border-radius: 5px; background: var(--accent-soft); color: var(--accent); cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; }.account-upgrade:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, var(--surface)); }
+.sidebar-support { display: grid; gap: 8px; padding: 7px 3px 10px; border-bottom: 1px solid var(--border); }
+.sidebar-support > strong { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.sidebar-support-actions { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.support-link { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #fff; cursor: pointer; box-shadow: 0 4px 12px rgba(0, 0, 0, .18); transition: transform 120ms ease, filter 120ms ease; }
+.support-link:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.support-link.telegram { background: #229ed9; }
+.support-link.facebook { background: #1877f2; overflow: hidden; }
+.support-link.facebook img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.support-link.wechat { background: transparent; overflow: hidden; }
+.support-link.wechat img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.collapse-button { width: 100%; }
+.version { padding: 10px 12px 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.version i, .backend-state i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex: 0 0 auto; }
+.sidebar-collapsed .brand { padding: 0 16px; }
+.sidebar-collapsed .brand div, .sidebar-collapsed .nav-group h2, .sidebar-collapsed .nav-item-copy, .sidebar-collapsed .sidebar-footer-nav > span, .sidebar-collapsed .collapse-button > span, .sidebar-collapsed .version, .sidebar-collapsed .account-copy, .sidebar-collapsed .account-upgrade > span, .sidebar-collapsed .sidebar-support > strong { width: 0 !important; max-width: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; visibility: hidden !important; opacity: 0 !important; display: none !important; }
+.sidebar-collapsed .sidebar { overflow: hidden; }
+.sidebar-collapsed .sidebar nav button, .sidebar-collapsed .sidebar-footer-nav, .sidebar-collapsed .collapse-button { width: 46px; min-width: 46px; justify-content: center; align-self: center; margin-right: auto; margin-left: auto; padding: 0; overflow: hidden; }
+.sidebar-collapsed .sidebar nav button svg, .sidebar-collapsed .sidebar-footer-nav svg, .sidebar-collapsed .collapse-button svg { margin: 0; flex: 0 0 18px; }
+.sidebar-collapsed .sidebar nav { gap: 8px; }
+.sidebar-collapsed .account-compact { display: grid; grid-template-columns: 40px; grid-template-areas: "avatar" "upgrade"; justify-content: center; justify-items: center; row-gap: 9px; }
+.sidebar-collapsed .account-compact > button { display: none; }
+.sidebar-collapsed .account-compact > .account-upgrade { width: 40px; min-width: 40px; height: 40px; min-height: 40px; display: inline-flex; grid-area: upgrade; padding: 0; border-radius: 7px; }
+.sidebar-collapsed .account-compact > .account-upgrade svg { width: 18px; height: 18px; }
+.sidebar-collapsed .sidebar-support { justify-items: center; padding: 8px 0 10px; }
+.sidebar-collapsed .sidebar-support-actions { display: grid; gap: 8px; }
+.sidebar-collapsed .collapse-button svg { transform: rotate(180deg); }
+.main-area { min-width: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr); overflow: hidden; }
+.content-scroll { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 18px 22px 28px; }
+.content-scroll::-webkit-scrollbar, .table-wrap::-webkit-scrollbar, .log-view::-webkit-scrollbar, .profile-log-stream::-webkit-scrollbar, .profile-editor::-webkit-scrollbar { width: 10px; height: 10px; }
+.content-scroll::-webkit-scrollbar-thumb, .table-wrap::-webkit-scrollbar-thumb, .log-view::-webkit-scrollbar-thumb, .profile-log-stream::-webkit-scrollbar-thumb, .profile-editor::-webkit-scrollbar-thumb { background: var(--border-strong); border: 3px solid transparent; background-clip: padding-box; border-radius: 5px; }

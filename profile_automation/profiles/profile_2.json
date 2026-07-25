@@ -1,114 +1,166 @@
 {
-  "id": "2",
-  "name": "Valorant edit",
-  "enabled": true,
-  "default_caption": "😌😌😌 #edit #xh #xuhuong #fyp #valorant ",
-  "check_interval_minutes": 4,
-  "douyin": {
-    "gemlogin_profile_id": "2",
-    "sources": [
-      {
-        "target_sec_uid": "MS4wLjABAAAAqp9mqKhIfTKS5IrqsN7bt7gV4tpRlGtaBW0rlwqhgylE-qZkBt8ulhNBNGxU8PA9",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAbi4fchCGHBFsEeM2ejW88hyLHQhOBMMRHwJn1lrmZKp_3Dohyvt4Az9jx_xEDq7T",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAARNCmeGqZ9xhd7nS7G5G-1TJ-rCwMwyhef_JC02AN2aM",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAABd5V9GZawsT-uEOALZk1QsbmXO7Hxyl35NCs8T4uWqa-Bp4IxXwVY3BwUmbhE27",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAA2Bl-oYUR1vXPXM-kzIxyEoMD88Lc4_hhiKSMqxo7Tx3ke-oFepKpAldtEZ8xxwPT",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAaBt29w4qnff-15ZEreqXbIdeRKcQs_SZkEskv68IHd0",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAekPuNLBEOgJFqVWoHNJXB50-rmmTxYbRb0sVgyyhS7s6h2Nk4GHqcVu4FIE2slA9",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAKNX2ChWEUS5Tw2tIxlk33S9JMZe_mlTED_sRe0lyPIQ",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAm3gCC3Cfj70LBu7GVrP3T0QAMxfCqqA-a2QCbZx05Lo",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAlitrVKkTe2wvuH8_uOIL8SbTUJYUdT5sCZGDLSx3lk0",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAG0EOaVi0FEC2UgjRNSAWBz2D950s2-Qo4qaeG2qoR-KpSV4JwSvpGTX_W3P9w7gU",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAbXhHOU9sEv8hrh0dxVAem14Mk2Hr5C-DLxA33wIft7nLxEwgUITu_duR-8EuBGeg",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAA_SBiDXzyWRHhtmtEZX_SkgvMmIPTM6UZ7SEh4oQEPiovxV3iLNsnWMCSMsvU5Ny4",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAQdCJvuYBwHU6b7pURnbfVdP7KN_wkzEsjSp3rGqe0wdH7zkeog-TGVq2y4MZf0eg",
-        "target_display_name": "",
-        "enabled": true
-      },
-      {
-        "target_sec_uid": "MS4wLjABAAAAivK6zpKl5LM_dvR4T2yRnLa5eWQbHoXLmyBvjjKd3NADgbS3aJe73LvInCESoIgZ",
-        "target_display_name": "",
-        "enabled": true
-      }
-    ],
-    "target_sec_uid": "MS4wLjABAAAAqp9mqKhIfTKS5IrqsN7bt7gV4tpRlGtaBW0rlwqhgylE-qZkBt8ulhNBNGxU8PA9",
-    "target_display_name": "",
-    "legacy_state_sec_uid": "MS4wLjABAAAAqp9mqKhIfTKS5IrqsN7bt7gV4tpRlGtaBW0rlwqhgylE-qZkBt8ulhNBNGxU8PA9"
-  },
-  "tiktok": {
-    "gemlogin_profile_id": "2",
-    "enabled": true,
-    "use_original_desc": false
-  },
-  "facebook": {
-    "gemlogin_profile_id": "2",
-    "enabled": false,
-    "use_original_desc": true,
-    "profile_url": "https://www.facebook.com/profile.php?id=61591785364493"
-  },
-  "youtube": {
-    "gemlogin_profile_id": "2",
-    "enabled": true,
-    "use_original_desc": false,
-    "channel_id": "UCCpdDWkv61mzfWEZ0etGSAg",
-    "preset": "slower",
-    "crf": 14
-  },
-  "filters": {
-    "min_likes": 1,
-    "max_duration_seconds": 120.0
-  },
-  "save_dir": "C:/Users/Quoc Bqo/Videos/Downloaded Video/Profile 2"
+    "id":  "2",
+    "name":  "Valorant edit",
+    "enabled":  true,
+    "default_caption":  "😌😌😌 #edit #xh #xuhuong #fyp #valorant ",
+    "check_interval_minutes":  4,
+    "douyin":  {
+                   "gemlogin_profile_id":  "2"
+               },
+    "tiktok":  {
+                   "gemlogin_profile_id":  "2",
+                   "enabled":  true,
+                   "use_original_desc":  false
+               },
+    "facebook":  {
+                     "gemlogin_profile_id":  "2",
+                     "enabled":  true,
+                     "use_original_desc":  false,
+                     "profile_url":  "https://www.facebook.com/profile.php?id=61592211380817"
+                 },
+    "youtube":  {
+                    "gemlogin_profile_id":  "2",
+                    "enabled":  true,
+                    "use_original_desc":  false,
+                    "channel_id":  "UCCpdDWkv61mzfWEZ0etGSAg",
+                    "preset":  "slower",
+                    "crf":  14
+                },
+    "filters":  {
+                    "min_likes":  1,
+                    "max_duration_seconds":  120.0
+                },
+    "save_dir":  "C:/Users/Quoc Bqo/Videos/Downloaded Video/Profile 2",
+    "processing_priority":  100,
+    "browser":  {
+                    "provider":  "local_chromium",
+                    "user_data_dir":  "C:\\profiles\\dyna-recovered-20260718-1054\\2",
+                    "executable_path":  "C:\\Users\\Quoc Bqo\\AppData\\Local\\Dyna\\browser-runtimes\\iron-144\\chrome.exe",
+                    "profile_directory":  "Default",
+                    "headless":  true,
+                    "background":  false,
+                    "launch_timeout_ms":  60000
+                },
+    "tracking_sources":  [
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAqp9mqKhIfTKS5IrqsN7bt7gV4tpRlGtaBW0rlwqhgylE-qZkBt8ulhNBNGxU8PA9"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAbi4fchCGHBFsEeM2ejW88hyLHQhOBMMRHwJn1lrmZKp_3Dohyvt4Az9jx_xEDq7T"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAARNCmeGqZ9xhd7nS7G5G-1TJ-rCwMwyhef_JC02AN2aM"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAABd5V9GZawsT-uEOALZk1QsbmXO7Hxyl35NCs8T4uWqa-Bp4IxXwVY3BwUmbhE27"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAA2Bl-oYUR1vXPXM-kzIxyEoMD88Lc4_hhiKSMqxo7Tx3ke-oFepKpAldtEZ8xxwPT"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAaBt29w4qnff-15ZEreqXbIdeRKcQs_SZkEskv68IHd0"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAekPuNLBEOgJFqVWoHNJXB50-rmmTxYbRb0sVgyyhS7s6h2Nk4GHqcVu4FIE2slA9"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAKNX2ChWEUS5Tw2tIxlk33S9JMZe_mlTED_sRe0lyPIQ"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAm3gCC3Cfj70LBu7GVrP3T0QAMxfCqqA-a2QCbZx05Lo"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAlitrVKkTe2wvuH8_uOIL8SbTUJYUdT5sCZGDLSx3lk0"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAG0EOaVi0FEC2UgjRNSAWBz2D950s2-Qo4qaeG2qoR-KpSV4JwSvpGTX_W3P9w7gU"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAbXhHOU9sEv8hrh0dxVAem14Mk2Hr5C-DLxA33wIft7nLxEwgUITu_duR-8EuBGeg"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAA_SBiDXzyWRHhtmtEZX_SkgvMmIPTM6UZ7SEh4oQEPiovxV3iLNsnWMCSMsvU5Ny4"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAQdCJvuYBwHU6b7pURnbfVdP7KN_wkzEsjSp3rGqe0wdH7zkeog-TGVq2y4MZf0eg"
+                             },
+                             {
+                                 "platform":  "douyin",
+                                 "display_name":  "",
+                                 "profile_url":  "",
+                                 "enabled":  true,
+                                 "check_interval_minutes":  4,
+                                 "sec_uid":  "MS4wLjABAAAAivK6zpKl5LM_dvR4T2yRnLa5eWQbHoXLmyBvjjKd3NADgbS3aJe73LvInCESoIgZ"
+                             }
+                         ]
 }

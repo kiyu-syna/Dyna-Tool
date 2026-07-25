@@ -29,6 +29,33 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: str = "change_me_admin_2026"
     ADMIN_SECRET_KEY: str = "change_me_session_secret_key_32chars"
 
+    # Dyna AI gateway. API keys stay on this server and are never sent to the app.
+    AI_ENABLED: bool = True
+    AI_REQUIRE_ACTIVE_LICENSE: bool = True
+    AI_PROVIDER_ORDER: str = "gemini,groq,openrouter"
+    # The plural fields are preferred and accept comma/semicolon/newline separated
+    # keys.  The singular aliases make a one-key setup less surprising.
+    AI_GEMINI_API_KEYS: str = ""
+    AI_GROQ_API_KEYS: str = ""
+    AI_OPENROUTER_API_KEYS: str = ""
+    AI_GEMINI_API_KEY: str = ""
+    AI_GROQ_API_KEY: str = ""
+    AI_OPENROUTER_API_KEY: str = ""
+    AI_GEMINI_MODEL: str = "gemini-3.5-flash"
+    AI_GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    AI_OPENROUTER_MODEL: str = "openrouter/auto"
+    AI_REQUEST_TIMEOUT_SECONDS: float = 45.0
+    AI_MAX_OUTPUT_TOKENS: int = 1200
+    AI_REQUESTS_PER_MINUTE: int = 12
+    AI_OPENROUTER_SITE_URL: str = ""
+    AI_OPENROUTER_APP_NAME: str = "Dyna AI"
+
+    # Shared Telegram bot. This token is intentionally server-only: never
+    # return it from an API and never put it in the desktop configuration.
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_BOT_USERNAME: str = ""
+    TELEGRAM_POLLING_ENABLED: bool = True
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

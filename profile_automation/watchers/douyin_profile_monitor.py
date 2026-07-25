@@ -15,14 +15,19 @@ from rich.panel import Panel
 from rich.table import Table
 
 import core.config as config
+from core.runtime_paths import profile_state_dir
 from core.utils import logger, console
-from services.gemlogin_browser_service import (
-    connected_gemlogin_profile,
+from profile_automation.tracking_sources import tracking_source_key
+from services.browser.browser_profile_service import (
+    connected_browser_profile as connected_gemlogin_profile,
+    configure_lightweight_scan_page,
     create_background_page,
-    is_gemlogin_connection_error,
+    is_browser_connection_error as is_gemlogin_connection_error,
 )
 
 MAX_AWEME_IDS_PER_SCAN = 4
+PHOTO_AWEME_TYPES = {68}
+PHOTO_MEDIA_TYPES = {2}
 
 
 def _close_page_quietly(page) -> None:
@@ -64,8 +69,41 @@ class DouyinVideo:
         return self.duration_ms > 0
 
 
-def _build_douyin_modal_url(sec_uid: str, aweme_id: str) -> str:
-    return f"https://www.douyin.com/user/{sec_uid}?from_tab_name=main&modal_id={aweme_id}"
+def _build_douyin_modal_url(_sec_uid: str, aweme_id: str) -> str:
+    return f"https://www.douyin.com/video/{aweme_id}"
+
+
+def _as_int(value: Any, default: int = 0) -> int:
+    try:
+        return int(value or 0)
+    except (TypeError, ValueError):
+        return default
+
+
+def _is_photo_aweme(item: dict) -> bool:
+    """
+    Nhận diện bài ảnh/carousel trước khi parser dùng thời lượng nhạc dự phòng.
+
+    Response Douyin hiện tại có thể đặt một block ``video`` trong bài ảnh để
+    phát nhạc nền. Vì vậy chỉ kiểm tra sự tồn tại của ``video`` là không đủ:
+    bài ảnh thực tế thường có aweme_type=68, media_type=2 và video.duration=0.
+    """
+    if not isinstance(item, dict):
+        return False
+    if item.get("image_post_info") is not None:
+        return True
+    if _as_int(item.get("aweme_type"), default=-1) in PHOTO_AWEME_TYPES:
+        return True
+
+    video = item.get("video") or item.get("videoInfo") or item.get("video_info") or {}
+    explicit_duration = max(
+        _as_int(item.get("duration")),
+        _as_int(video.get("duration")) if isinstance(video, dict) else 0,
+    )
+    return (
+        _as_int(item.get("media_type"), default=-1) in PHOTO_MEDIA_TYPES
+        and explicit_duration <= 0
+    )
 
 
 def _http_urls(value: Any) -> list[str]:
@@ -158,21 +196,18 @@ def extract_douyin_download_urls(aweme: dict) -> list[str]:
     return candidates
 
 
-def extract_douyin_download_url(aweme: dict) -> str:
-    """Return the preferred direct URL while preserving the legacy API."""
-    candidates = extract_douyin_download_urls(aweme)
-    return candidates[0] if candidates else ""
-
-
 def _parse_aweme(item: dict, sec_uid: Optional[str] = None) -> Optional[DouyinVideo]:
     """Parse một item từ aweme_list thành DouyinVideo object."""
     try:
+        if not isinstance(item, dict):
+            return None
+
         # Bo qua video ghim
         if item.get("is_top", 0) == 1:
             return None
 
-        # Bỏ qua ảnh/carousel
-        if item.get("image_post_info") is not None:
+        # Bỏ qua ảnh/carousel trước khi duration nhạc bị dùng làm duration video.
+        if _is_photo_aweme(item):
             return None
 
         # Bỏ qua video đã xóa hoặc riêng tư
@@ -212,7 +247,7 @@ def _parse_aweme(item: dict, sec_uid: Optional[str] = None) -> Optional[DouyinVi
             download_url=download_urls[0] if download_urls else "",
             download_urls=download_urls,
         )
-    except (KeyError, TypeError):
+    except (KeyError, TypeError, ValueError):
         return None
 
 
@@ -254,7 +289,7 @@ def _analyze_aweme_payload(data: dict) -> dict:
             analysis["top_video_count"] += 1
             continue
 
-        if item.get("image_post_info") is not None:
+        if _is_photo_aweme(item):
             analysis["image_post_count"] += 1
             continue
 
@@ -358,39 +393,21 @@ class ProfileState:
     def __init__(
         self,
         profile_id: str,
+        source_key: str,
         state_dir: Optional[str] = None,
-        source_key: Optional[str] = None,
-        migrate_legacy_state: bool = False,
     ):
         self.profile_id = profile_id
         if state_dir is None:
-            state_dir = os.path.join(config.BASE_DIR, "profile_automation", "state")
-        self.legacy_path = Path(state_dir) / f"profile_{profile_id}_seen.json"
-        self.path = (
-            Path(state_dir) / f"profile_{profile_id}_source_{source_key}_seen.json"
-            if source_key
-            else self.legacy_path
-        )
-        self._migrate_legacy_state = bool(source_key and migrate_legacy_state)
-        self._loaded_from_legacy = False
+            state_dir = str(profile_state_dir())
+        self.path = Path(state_dir) / f"profile_{profile_id}_source_{source_key}_seen.json"
         self._lock = threading.Lock()
         self._data = self._load()
-        if self._loaded_from_legacy:
-            self._save()
 
     def _load(self) -> dict:
         if self.path.exists():
             try:
                 with open(self.path, "r", encoding="utf-8") as f:
                     return json.load(f)
-            except Exception:
-                pass
-        if self._migrate_legacy_state and self.legacy_path.exists():
-            try:
-                with open(self.legacy_path, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                self._loaded_from_legacy = True
-                return data
             except Exception:
                 pass
         return {"seen_ids": [], "last_check": None, "last_video_create_time": 0}
@@ -473,7 +490,7 @@ class DouyinProfileMonitor:
         max_duration_sec: float = 300,
         state_dir: Optional[str] = None,
         source_key: Optional[str] = None,
-        migrate_legacy_state: bool = False,
+        profile_config: Optional[dict] = None,
     ):
         self.profile_id = profile_id
         self.sec_uid = sec_uid
@@ -481,12 +498,9 @@ class DouyinProfileMonitor:
         self.api_url = api_url
         self.min_likes = min_likes
         self.max_duration_sec = max_duration_sec
-        self.state = ProfileState(
-            profile_id,
-            state_dir,
-            source_key=source_key,
-            migrate_legacy_state=migrate_legacy_state,
-        )
+        self.profile_config = profile_config or {}
+        resolved_source_key = source_key or tracking_source_key("douyin", sec_uid)
+        self.state = ProfileState(profile_id, resolved_source_key, state_dir)
 
         self._captured_responses: List[dict] = []
         self._capture_lock = threading.Lock()
@@ -496,7 +510,7 @@ class DouyinProfileMonitor:
         if self.AWEME_POST_PATTERN not in response.url:
             return
         try:
-            logger.info(f"[INTERCEPT] Phát hiện gói tin mạng khớp pattern: {response.url[:120]}...")
+            logger.info(f"[BẮT GÓI] Phát hiện gói tin mạng khớp mẫu: {response.url[:120]}...")
             
             # Sử dụng response.text() để lấy chuỗi thô rất nhanh qua mạng, tránh nghẽn CDP
             text = response.text()
@@ -507,14 +521,14 @@ class DouyinProfileMonitor:
             data = json.loads(text)
             status = data.get("status_code")
             aweme_list = data.get("aweme_list", [])
-            logger.info(f"[INTERCEPT] JSON status_code: {status} | Số lượng aweme: {len(aweme_list)}")
+            logger.info(f"[BẮT GÓI] JSON mã trạng thái: {status} | Số lượng aweme: {len(aweme_list)}")
             
             if status == 0 and "aweme_list" in data:
                 with self._capture_lock:
                     self._captured_responses.append(data)
-                    logger.info(f"[INTERCEPT] Đã thêm thành công {len(aweme_list)} video vào bộ nhớ đệm để xử lý.")
+                    logger.info(f"[BẮT GÓI] Đã thêm thành công {len(aweme_list)} video vào bộ nhớ đệm để xử lý.")
         except Exception as e:
-            logger.error(f"[INTERCEPT ERROR] Lỗi phân tích gói tin JSON: {e}")
+            logger.error(f"[LỖI BẮT GÓI] Lỗi phân tích gói tin JSON: {e}")
 
     def fetch_latest_videos(
         self,
@@ -530,6 +544,9 @@ class DouyinProfileMonitor:
         with connected_gemlogin_profile(
             self.gemlogin_profile_id,
             self.api_url,
+            profile_config=self.profile_config,
+            resource_saving=True,
+            close_profile_on_exit=True,
         ) as browser, ExitStack() as page_cleanup:
             if not browser.contexts:
                 logger.error(f"[Profile {self.profile_id}] CDP đã kết nối nhưng không có browser context nào.")
@@ -537,6 +554,7 @@ class DouyinProfileMonitor:
             context = browser.contexts[0]
             page = create_background_page(browser, context)
             page_cleanup.callback(_close_page_quietly, page)
+            configure_lightweight_scan_page(page)
 
             console.print(f"[cyan]🔍 [Profile {self.profile_id}] Đang mở trang profile: {profile_url}[/]")
 
@@ -565,14 +583,14 @@ class DouyinProfileMonitor:
                         data = _json.loads(raw_text)
 
                     except Exception as wait_err:
-                        if is_gemlogin_connection_error(wait_err):
+                        if is_gemlogin_connection_error(wait_err, self.profile_config):
                             raise
                         logger.warning(f"[Profile {self.profile_id}] Không bắt được gói tin trang {page_count}: {wait_err}")
                         break
 
                     status = data.get("status_code")
                     aweme_list = data.get("aweme_list", [])
-                    logger.info(f"[INTERCEPT ✅] Trang {page_count}: status={status} | {len(aweme_list)} video")
+                    logger.info(f"[BẮT GÓI ✅] Trang {page_count}: trạng thái={status} | {len(aweme_list)} video")
 
                     if status != 0 or not aweme_list:
                         logger.warning(f"[Profile {self.profile_id}] Gói tin hợp lệ nhưng không có video. Dừng.")

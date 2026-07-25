@@ -11,6 +11,9 @@ from app.database.mongodb import connect_db, disconnect_db
 from app.routers.payment import router
 from app.routers.admin import router as admin_router
 from app.routers.auth import router as auth_router
+from app.routers.ai import router as ai_router
+from app.routers.telegram import router as telegram_router
+from app.services.telegram_bot_service import get_telegram_bot_service
 from app.config import get_settings
 
 settings = get_settings()
@@ -29,7 +32,9 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("🚀 Dyna Tool Payment Server đang khởi động...")
     await connect_db()
+    await get_telegram_bot_service().start()
     yield
+    await get_telegram_bot_service().stop()
     logger.info("🛑 Đang tắt server...")
     await disconnect_db()
 
@@ -75,6 +80,8 @@ app.mount("/admin/static", StaticFiles(directory=str(_static_dir)), name="admin-
 
 app.include_router(router)
 app.include_router(auth_router)
+app.include_router(ai_router)
+app.include_router(telegram_router)
 app.include_router(admin_router)
 
 

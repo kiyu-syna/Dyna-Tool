@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Optional
 
 import core.config as config
+from core.runtime_paths import profile_state_dir
 from core.utils import logger
 from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
-from services.activity_history_service import ActivityHistoryStore
+from profile_automation.watchers.tiktok_profile_monitor import TikTokVideo
+from services.runtime.activity_history_service import ActivityHistoryStore
 
 
 SCHEMA_VERSION = 1
@@ -53,18 +55,13 @@ def _pid_is_running(pid: int) -> bool:
 
 
 class VideoJobStore:
-    """Persistent, thread-safe state for the Douyin download/upload queue."""
+    """Persistent, thread-safe state for the cross-platform video queue."""
 
     def __init__(self, path: Optional[str] = None):
         use_default_path = path is None
         self.path = Path(
             path
-            or os.path.join(
-                config.BASE_DIR,
-                "profile_automation",
-                "state",
-                "video_jobs.json",
-            )
+            or profile_state_dir() / "video_jobs.json"
         )
         self.history = None
         if use_default_path:
@@ -180,7 +177,7 @@ class VideoJobStore:
         return removed
 
     @staticmethod
-    def _enabled_platforms(profile: dict) -> list[str]:
+    def _enabled_platforms(profile: dict, source_platform: str = "") -> list[str]:
         enabled = []
         if profile.get("tiktok", {}).get("enabled", True):
             enabled.append("tiktok")
@@ -188,7 +185,8 @@ class VideoJobStore:
             enabled.append("facebook")
         if profile.get("youtube", {}).get("enabled", False):
             enabled.append("youtube")
-        return enabled
+        normalized_source = str(source_platform or "").strip().casefold()
+        return [platform for platform in enabled if platform != normalized_source]
 
     def ensure_job(
         self,
@@ -197,9 +195,11 @@ class VideoJobStore:
         profile: dict,
         source_key: str = "",
         source_label: str = "",
+        source_platform: str = "douyin",
     ) -> dict:
         key = self.job_key(profile_id, video.aweme_id)
-        enabled_platforms = self._enabled_platforms(profile)
+        source_platform = str(source_platform or "douyin").strip().casefold()
+        enabled_platforms = self._enabled_platforms(profile, source_platform)
         timestamp = _now()
         created = False
 
@@ -216,6 +216,7 @@ class VideoJobStore:
                     "video_id": str(video.aweme_id),
                     "source_key": str(source_key or ""),
                     "source_label": str(source_label or ""),
+                    "source_platform": source_platform,
                     "video": asdict(video),
                     "status": "detected",
                     "caption": "",
@@ -238,6 +239,8 @@ class VideoJobStore:
                     job["source_key"] = str(source_key)
                 if source_label:
                     job["source_label"] = str(source_label)
+                if source_platform:
+                    job["source_platform"] = source_platform
 
             job["enabled_platforms"] = enabled_platforms
             platforms = job.setdefault("platforms", {})
@@ -264,9 +267,16 @@ class VideoJobStore:
             job = self._load_unlocked()["jobs"].get(key)
             return copy.deepcopy(job) if job else None
 
-    def list_jobs(self, profile_id: Optional[str] = None, include_terminal: bool = True) -> list[dict]:
+    def list_jobs(
+        self,
+        profile_id: Optional[str] = None,
+        include_terminal: bool = True,
+        include_dismissed: bool = False,
+    ) -> list[dict]:
         with _STORE_LOCK:
             jobs = list(self._load_unlocked()["jobs"].values())
+        if not include_dismissed:
+            jobs = [job for job in jobs if not job.get("dismissed_at")]
         if profile_id is not None:
             jobs = [job for job in jobs if job.get("profile_id") == str(profile_id)]
         if not include_terminal:
@@ -274,7 +284,12 @@ class VideoJobStore:
         jobs.sort(key=lambda job: (job.get("updated_at", ""), job.get("created_at", "")), reverse=True)
         return copy.deepcopy(jobs)
 
-    def list_pending_videos(self, profile_id: str, source_key: str = "") -> list[DouyinVideo]:
+    def list_pending_videos(
+        self,
+        profile_id: str,
+        source_key: str = "",
+        source_platform: str = "",
+    ) -> list:
         jobs = self.list_jobs(profile_id=profile_id, include_terminal=False)
         jobs = [
             job
@@ -283,12 +298,22 @@ class VideoJobStore:
         ]
         if source_key:
             jobs = [job for job in jobs if job.get("source_key") == str(source_key)]
+        if source_platform:
+            jobs = [
+                job for job in jobs
+                if str(job.get("source_platform") or "douyin") == str(source_platform)
+            ]
         jobs.sort(key=lambda job: int(job.get("video", {}).get("create_time", 0)))
         videos = []
         for job in jobs:
             video_data = job.get("video", {})
             try:
-                videos.append(DouyinVideo(**video_data))
+                video_type = (
+                    TikTokVideo
+                    if str(job.get("source_platform") or "douyin") == "tiktok"
+                    else DouyinVideo
+                )
+                videos.append(video_type(**video_data))
             except (TypeError, ValueError) as exc:
                 logger.error("Video job %s có metadata không hợp lệ: %s", job.get("key"), exc)
         return videos
@@ -371,7 +396,7 @@ class VideoJobStore:
         with _STORE_LOCK:
             data = self._load_unlocked()
             job = data["jobs"].get(key)
-            if not job:
+            if not job or job.get("dismissed_at"):
                 return False
             owner_pid = int(job.get("owner_pid") or 0)
             owner_instance_id = str(job.get("owner_instance_id") or "")
@@ -447,6 +472,22 @@ class VideoJobStore:
             job["updated_at"] = _now()
             self._save_unlocked(data)
         self._record_history(profile_id, video_id, "status", status="caption_ready")
+
+    def set_schedule(self, profile_id: str, video_id: str, scheduled_at: str) -> dict:
+        key = self.job_key(profile_id, video_id)
+        with _STORE_LOCK:
+            data = self._load_unlocked()
+            job = data["jobs"].get(key)
+            if not job:
+                raise KeyError(key)
+            job["scheduled_at"] = str(scheduled_at or "")
+            job["status"] = "scheduled" if scheduled_at else job.get("status", "downloaded")
+            job["last_error"] = ""
+            job["updated_at"] = _now()
+            self._save_unlocked(data)
+            result = copy.deepcopy(job)
+        self._record_history(profile_id, video_id, "status", status=str(result["status"]))
+        return result
 
     def set_download_path(self, profile_id: str, video_id: str, download_path: str) -> None:
         key = self.job_key(profile_id, video_id)
@@ -542,12 +583,15 @@ class VideoJobStore:
         return result
 
     def cancel_job(self, profile_id: str, video_id: str, reason: str = "") -> Optional[dict]:
-        """Cancel a job that is waiting or has failed, without interrupting active work."""
+        """Cancel a queued job, or stop further platform uploads for an active upload."""
         key = self.job_key(profile_id, video_id)
         with _STORE_LOCK:
             data = self._load_unlocked()
             job = data["jobs"].get(key)
-            if not job or (job.get("active") and not str(job.get("status", "")).startswith("failed")):
+            if not job:
+                return None
+            status = str(job.get("status", ""))
+            if job.get("active") and status != "uploading" and not status.startswith("failed"):
                 return None
             if job.get("status") in TERMINAL_STATUSES:
                 return copy.deepcopy(job)
@@ -564,6 +608,71 @@ class VideoJobStore:
             error=str(reason or "Người dùng hủy video."),
         )
         return result
+
+    def dismiss_job(self, profile_id: str, video_id: str, reason: str = "") -> Optional[dict]:
+        """Hide an inactive job from queues without deleting the user's media file."""
+        key = self.job_key(profile_id, video_id)
+        with _STORE_LOCK:
+            data = self._load_unlocked()
+            job = data["jobs"].get(key)
+            if not job:
+                return None
+            if job.get("active"):
+                raise RuntimeError("Video đang được xử lý; hãy đợi hoàn tất hoặc hủy trước khi xóa.")
+            timestamp = _now()
+            job["status"] = "ignored"
+            job["dismissed_at"] = timestamp
+            job["last_error"] = str(reason or "Người dùng xóa video khỏi hàng đợi.")
+            job["owner_pid"] = 0
+            job["owner_instance_id"] = ""
+            job["updated_at"] = timestamp
+            self._save_unlocked(data)
+            result = copy.deepcopy(job)
+        self._record_history(
+            profile_id,
+            video_id,
+            "status",
+            status="ignored",
+            error=str(reason or "Người dùng xóa video khỏi hàng đợi."),
+        )
+        return result
+
+    def dismiss_jobs(self, *, source_key: str | None = None, reason: str = "") -> dict:
+        """Hide an entire queue atomically; active jobs must be stopped first."""
+        with _STORE_LOCK:
+            data = self._load_unlocked()
+            jobs = [
+                job
+                for job in data["jobs"].values()
+                if not job.get("dismissed_at")
+                and (source_key is None or str(job.get("source_key") or "") == str(source_key))
+            ]
+            active_jobs = [job for job in jobs if job.get("active")]
+            if active_jobs:
+                raise RuntimeError(
+                    f"Có {len(active_jobs)} video đang được xử lý. Hãy dừng Profile trước khi reset hàng đợi."
+                )
+            timestamp = _now()
+            reset_reason = str(reason or "Người dùng reset hàng đợi video.")
+            for job in jobs:
+                job["status"] = "ignored"
+                job["dismissed_at"] = timestamp
+                job["last_error"] = reset_reason
+                job["owner_pid"] = 0
+                job["owner_instance_id"] = ""
+                job["updated_at"] = timestamp
+            if jobs:
+                self._save_unlocked(data)
+
+        for job in jobs:
+            self._record_history(
+                str(job.get("profile_id") or ""),
+                str(job.get("video_id") or ""),
+                "status",
+                status="ignored",
+                error=reset_reason,
+            )
+        return {"reset_count": len(jobs)}
 
     def successful_platforms(self, profile_id: str, video_id: str) -> set[str]:
         job = self.get_job(profile_id, video_id) or {}

@@ -4,10 +4,11 @@ from profile_automation.uploaders.youtube_uploader import YouTubeUploader
 from profile_automation.uploaders.base_uploader import UploadSkipped
 from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
 from core.utils import logger
-from services.workload_coordinator import WorkloadCancelled, workload_slot
+from services.runtime.workload_coordinator import WorkloadCancelled, workload_slot
 
 
-def enabled_platform_names(profile: dict) -> list[str]:
+def enabled_platform_names(profile: dict, source_platform: str = "") -> list[str]:
+    """Return enabled destinations, excluding the video's source platform."""
     enabled = []
     if profile.get("tiktok", {}).get("enabled", True):
         enabled.append("tiktok")
@@ -15,29 +16,21 @@ def enabled_platform_names(profile: dict) -> list[str]:
         enabled.append("facebook")
     if profile.get("youtube", {}).get("enabled", False):
         enabled.append("youtube")
-    return enabled
+    normalized_source = str(source_platform or "").strip().casefold()
+    return [platform for platform in enabled if platform != normalized_source]
 
 
-def all_enabled_uploads_succeeded(results: dict, profile: dict) -> bool:
-    enabled = enabled_platform_names(profile)
+def all_enabled_uploads_succeeded(
+    results: dict,
+    profile: dict,
+    source_platform: str = "",
+) -> bool:
+    enabled = enabled_platform_names(profile, source_platform)
     return bool(enabled) and all(
         results.get(platform, False) is True or results.get(platform) == "skipped"
         for platform in enabled
     )
 
-
-def primary_upload_succeeded(results: dict, profile: dict) -> bool:
-    """Use TikTok as primary, but support profiles where TikTok is disabled."""
-    if profile.get("tiktok", {}).get("enabled", True):
-        return bool(results.get("tiktok", False))
-
-    return any(
-        bool(platform_cfg.get("enabled", False)) and bool(results.get(platform_name, False))
-        for platform_name, platform_cfg in (
-            ("facebook", profile.get("facebook", {})),
-            ("youtube", profile.get("youtube", {})),
-        )
-    )
 
 class UploadPipeline:
     def __init__(self):
@@ -54,6 +47,8 @@ class UploadPipeline:
         on_platform_status=None,
         priority: int = 100,
         cancel_event=None,
+        should_cancel=None,
+        source_platform: str = "",
     ) -> dict:
         results = {}
         successful_platforms = set(successful_platforms or ())
@@ -65,11 +60,14 @@ class UploadPipeline:
             "youtube": self.youtube_uploader,
         }
 
-        for platform in enabled_platform_names(profile):
+        for platform in enabled_platform_names(profile, source_platform):
+            if should_cancel and should_cancel():
+                logger.info("[Upload pipeline] Video %s cancelled before %s upload.", video.aweme_id, platform)
+                break
             if platform in successful_platforms:
                 results[platform] = True
                 logger.info(
-                    "[Upload Pipeline] Bỏ qua %s cho video %s vì đã đăng thành công trước đó.",
+                    "[Tiến trình đăng] Bỏ qua %s cho video %s vì đã đăng thành công trước đó.",
                     platform,
                     video.aweme_id,
                 )
@@ -98,7 +96,7 @@ class UploadPipeline:
                 reason = str(exc)
                 results[platform] = "skipped"
                 logger.warning(
-                    "[Upload Pipeline] Bỏ qua %s cho video %s: %s",
+                    "[Tiến trình đăng] Bỏ qua %s cho video %s: %s",
                     platform,
                     video.aweme_id,
                     reason,
@@ -110,7 +108,7 @@ class UploadPipeline:
                     on_platform_status(platform, "pending", "")
                 raise
             except Exception as e:
-                logger.error(f"[Upload Pipeline] {platform} upload error: {e}")
+                logger.error(f"[Tiến trình đăng] Lỗi đăng lên {platform}: {e}")
                 results[platform] = False
                 if on_platform_status:
                     on_platform_status(platform, "failed", str(e))

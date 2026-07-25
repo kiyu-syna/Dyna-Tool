@@ -7,14 +7,15 @@ from playwright.sync_api import Locator, Page
 
 import core.config as config
 from core.utils import console, logger
-from automation.browser_utils import set_video_file_background
+from profile_automation.browser_utils import set_video_file_background
 from profile_automation.uploaders.base_uploader import BaseUploader
 from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
-from services.gemlogin_browser_service import (
-    connected_gemlogin_profile,
+from services.browser.browser_profile_service import (
+    browser_profile_label,
+    connected_browser_profile as connected_gemlogin_profile,
     create_background_page,
 )
-from services.diagnostic_artifact_service import attach_response_trace, record_browser_diagnostic
+from services.integrations.diagnostic_artifact_service import attach_response_trace, record_browser_diagnostic
 
 
 DEFAULT_PROFILE_URL = "https://www.facebook.com/me"
@@ -30,7 +31,7 @@ def _close_page_quietly(page) -> None:
 
 def _build_facebook_caption(video: DouyinVideo, profile: dict) -> str:
     facebook_cfg = profile.get("facebook", {})
-    if facebook_cfg.get("use_original_desc", False):
+    if profile.get("_runtime_use_original_desc", False) or facebook_cfg.get("use_original_desc", False):
         caption = str(video.desc or "").strip()
     else:
         caption = str(profile.get("_runtime_caption") or video.desc or "").strip()
@@ -181,9 +182,9 @@ class FacebookUploader(BaseUploader):
 
         logger.info("==========================================================")
         logger.info(
-            "BẮT ĐẦU UPLOAD FACEBOOK REELS - PROFILE %s (GemLogin: %s)",
+            "BẮT ĐẦU ĐĂNG FACEBOOK REELS - PROFILE %s (%s)",
             profile_id,
-            gemlogin_profile_id,
+            browser_profile_label(gemlogin_profile_id, profile),
         )
         logger.info("==========================================================")
 
@@ -194,9 +195,10 @@ class FacebookUploader(BaseUploader):
             with connected_gemlogin_profile(
                 gemlogin_profile_id,
                 config.API_URL,
+                profile_config=profile,
             ) as browser, ExitStack() as page_cleanup:
                 if not browser.contexts:
-                    logger.error("[Profile %s] GemLogin không có browser context.", profile_id)
+                    logger.error("[Profile %s] Trình duyệt không có context.", profile_id)
                     return False
 
                 context = browser.contexts[0]
@@ -218,12 +220,24 @@ class FacebookUploader(BaseUploader):
                 _wait_for_upload_complete(page)
                 logger.info("[Profile %s] Facebook đã tải video lên 100%%.", profile_id)
 
-                # Step 5: enter caption and hashtags as normal text.
+                # Step 5: Facebook's safety scan must finish before continuing.
+                console.print("   ➔ Đang chờ Facebook xác nhận thước phim an toàn...")
+                _wait_for_reel_safe(page)
+
+                # Steps 6-7: the two screens expose the same aria-label. Resolve the
+                # currently visible/enabled button after each transition.
+                for step in range(2):
+                    _click_aria_button(page, ("Tiếp", "Next"), timeout_ms=60000)
+                    logger.info("[Profile %s] Đã nhấn Tiếp %s/2.", profile_id, step + 1)
+                    time.sleep(2)
+
+                # Step 8: enter the caption on the Reel description screen, which
+                # only appears after the second Next click.
                 caption_box = page.locator(
                     'div[contenteditable="true"][role="textbox"]'
-                    '[aria-placeholder="Bạn đang nghĩ gì?"]:visible, '
+                    '[aria-placeholder="Mô tả thước phim của bạn..."]:visible, '
                     'div[contenteditable="true"][role="textbox"]'
-                    '[aria-placeholder="What\'s on your mind?"]:visible'
+                    '[aria-placeholder="Describe your reel..."]:visible'
                 ).first
                 caption_box.wait_for(state="visible", timeout=60000)
                 caption_box.click()
@@ -233,17 +247,6 @@ class FacebookUploader(BaseUploader):
                 if caption:
                     page.keyboard.insert_text(caption)
                 logger.info("[Profile %s] Đã nhập mô tả Facebook Reels.", profile_id)
-
-                # Step 6: Facebook's safety scan must finish before continuing.
-                console.print("   ➔ Đang chờ Facebook xác nhận thước phim an toàn...")
-                _wait_for_reel_safe(page)
-
-                # Steps 7-8: the two screens expose the same aria-label. Resolve the
-                # currently visible/enabled button after each transition.
-                for step in range(2):
-                    _click_aria_button(page, ("Tiếp", "Next"), timeout_ms=60000)
-                    logger.info("[Profile %s] Đã nhấn Tiếp %s/2.", profile_id, step + 1)
-                    time.sleep(2)
 
                 # Steps 9-10: publish, dismiss the scheduling prompt, then wait.
                 _click_aria_button(page, ("Đăng", "Post", "Publish"), timeout_ms=60000)
@@ -270,7 +273,7 @@ class FacebookUploader(BaseUploader):
                 page.close()
 
         except Exception as exc:
-            logger.exception("[Profile %s] Upload Facebook Reels thất bại: %s", profile_id, exc)
+            logger.exception("[Profile %s] Đăng Facebook Reels thất bại: %s", profile_id, exc)
             record_browser_diagnostic(
                 page=page,
                 profile_id=profile_id,

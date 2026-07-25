@@ -64,6 +64,16 @@ async def connect_db():
     await db.users.create_index([("username", ASCENDING)], unique=True)
     await db.users.create_index([("phone", ASCENDING)], unique=True)
     await db.users.create_index([("session_token", ASCENDING)])
+    await db.telegram_links.create_index([("username", ASCENDING)], unique=True)
+    await db.telegram_links.create_index([("chat_id", ASCENDING)], unique=True)
+    await db.telegram_link_codes.create_index([("code", ASCENDING)], unique=True)
+    await db.telegram_link_codes.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+    await db.telegram_caption_requests.create_index([("request_id", ASCENDING)], unique=True)
+    await db.telegram_caption_requests.create_index([("username", ASCENDING), ("updated_at", DESCENDING)])
+    await db.telegram_caption_requests.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+    await db.telegram_remote_actions.create_index([("request_id", ASCENDING)], unique=True)
+    await db.telegram_remote_actions.create_index([("username", ASCENDING), ("status", ASCENDING), ("confirmed_at", ASCENDING)])
+    await db.telegram_remote_actions.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
     logger.info("✅ MongoDB connected & indexes created")
     return db
 
