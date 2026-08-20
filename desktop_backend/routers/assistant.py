@@ -4,9 +4,13 @@ from typing import Any
 from fastapi import HTTPException
 
 import core.config as config
-from desktop_backend.schemas import AssistantChatPayload, AssistantConfirmPayload
+from desktop_backend.schemas import (
+    AssistantCaptionPayload,
+    AssistantChatPayload,
+    AssistantConfirmPayload,
+)
 from services.assistant.ai_assistant_service import AiAssistantError
-from services.publishing.manual_publish_service import ManualPublishTarget
+from application.publishing.manual_publish_service import ManualPublishTarget
 
 
 def register_routes(app, context, protected, *, _profile_summary) -> None:
@@ -62,6 +66,22 @@ def register_routes(app, context, protected, *, _profile_summary) -> None:
                 headers=headers,
             ) from exc
 
+    @app.post("/api/assistant/captions/generate", dependencies=protected)
+    def assistant_generate_caption(payload: AssistantCaptionPayload) -> dict:
+        try:
+            return context.assistant.generate_caption(
+                original_description=payload.original_description,
+                instruction=payload.instruction,
+                video_label=payload.video_label,
+            )
+        except AiAssistantError as exc:
+            headers = {"Retry-After": str(exc.retry_after)} if exc.retry_after else None
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail=str(exc),
+                headers=headers,
+            ) from exc
+
     @app.post("/api/assistant/actions/confirm", dependencies=protected)
     def assistant_confirm(payload: AssistantConfirmPayload) -> dict:
         try:
@@ -98,4 +118,3 @@ def register_routes(app, context, protected, *, _profile_summary) -> None:
             "ok": bool(results) and all(item["ok"] for item in results),
             "results": results,
         }
-

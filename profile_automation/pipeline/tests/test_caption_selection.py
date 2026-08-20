@@ -1,7 +1,7 @@
 import unittest
 from types import SimpleNamespace
 
-from profile_automation.pipeline import profile_worker
+from profile_automation.pipeline.downloads import captions
 
 
 class CaptionSelectionTests(unittest.TestCase):
@@ -12,7 +12,7 @@ class CaptionSelectionTests(unittest.TestCase):
             "caption_options": {"douyin_use_original_desc": False},
         }
 
-        caption = profile_worker.resolve_runtime_caption(
+        caption = captions.resolve_runtime_caption(
             profile,
             "2",
             video,
@@ -28,7 +28,7 @@ class CaptionSelectionTests(unittest.TestCase):
             "caption_options": {"douyin_use_original_desc": True},
         }
 
-        caption = profile_worker.resolve_runtime_caption(
+        caption = captions.resolve_runtime_caption(
             profile,
             "2",
             video,
@@ -44,7 +44,7 @@ class CaptionSelectionTests(unittest.TestCase):
             "caption_options": {"douyin_use_original_desc": False},
         }
 
-        caption = profile_worker.resolve_runtime_caption(
+        caption = captions.resolve_runtime_caption(
             profile,
             "2",
             video,

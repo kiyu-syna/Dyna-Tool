@@ -57,6 +57,86 @@ def unlink_telegram() -> bool:
     return bool(_request("DELETE", "/api/telegram/link"))
 
 
+def create_caption_request(
+    *,
+    profile_id: str,
+    profile_name: str,
+    source_label: str,
+    video_id: str,
+    description: str,
+    default_caption: str,
+    pin_message: bool = False,
+) -> str:
+    result = _request(
+        "POST",
+        "/api/telegram/captions",
+        body={
+            "profile_id": str(profile_id or ""),
+            "profile_name": str(profile_name or ""),
+            "source_label": str(source_label or ""),
+            "video_id": str(video_id or ""),
+            "description": str(description or "")[:1200],
+            "default_caption": str(default_caption or "")[:10000],
+            "pin_message": bool(pin_message),
+        },
+    )
+    if not result:
+        raise RuntimeError("Không thể tạo yêu cầu caption trên Telegram.")
+    if not result.get("available"):
+        raise RuntimeError(
+            str(result.get("reason") or "Telegram chưa được liên kết với Dyna.")
+        )
+    request_id = str(result.get("request_id") or "").strip()
+    if not request_id:
+        raise RuntimeError("Máy chủ Telegram không trả về mã yêu cầu caption.")
+    if pin_message and not result.get("pinned"):
+        logger.warning(
+            "Không thể ghim yêu cầu caption Telegram cho Profile %s: %s",
+            profile_id,
+            result.get("pin_error") or "bot không có quyền ghim tin nhắn",
+        )
+    return request_id
+
+
+def wait_for_caption(
+    request_id: str,
+    *,
+    cancel_event=None,
+    poll_interval_seconds: float = 3,
+) -> str:
+    """Wait without a deadline until the user replies to the Telegram prompt."""
+    request_id = str(request_id or "").strip()
+    if not request_id:
+        raise ValueError("Thiếu mã yêu cầu caption Telegram.")
+
+    while True:
+        if cancel_event is not None and cancel_event.is_set():
+            raise InterruptedError("Profile đã dừng khi đang chờ caption Telegram.")
+
+        result = _request(
+            "GET",
+            f"/api/telegram/captions/{request_id}",
+            timeout=12,
+        )
+        if result:
+            status = str(result.get("status") or "pending").strip().casefold()
+            if status == "selected":
+                return str(result.get("caption") or "")
+            if status in {"missing", "expired", "skipped"}:
+                raise RuntimeError(
+                    "Yêu cầu caption Telegram không còn khả dụng; hãy thử lại video."
+                )
+
+        wait_seconds = max(0.2, float(poll_interval_seconds))
+        if cancel_event is not None:
+            if cancel_event.wait(wait_seconds):
+                raise InterruptedError(
+                    "Profile đã dừng khi đang chờ caption Telegram."
+                )
+        else:
+            time.sleep(wait_seconds)
+
+
 def _notify(text: str, *, cancel_job: dict[str, str] | None = None) -> None:
     body: dict[str, Any] = {"text": text[:4000]}
     if cancel_job:

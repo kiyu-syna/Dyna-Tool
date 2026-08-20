@@ -17,8 +17,8 @@
       "run_at": "document_start",
       "world": "MAIN"
    }, {
-      "css": [ "content/dyna-integration.css" ],
-      "js": [ "content/dyna-original-integration.js" ],
+      "css": [ "content/dyna-integration.css", "content/dyna-batch-selection.css" ],
+      "js": [ "content/dyna-original-integration.js", "content/dyna-batch-selection.js" ],
       "matches": [ "*://*.douyin.com/*" ],
       "run_at": "document_idle"
    }, {

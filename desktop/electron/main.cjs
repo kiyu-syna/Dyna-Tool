@@ -14,12 +14,13 @@ let quitting = false;
 let shutdownStarted = false;
 let backendRestartPromise = null;
 let backendRestartTimer = null;
+let selectionFocusTimer = null;
+let lastFocusedSelectionId = "";
 const statusWaiters = [];
 const isDevelopment = process.argv.includes("--dev");
-// An ephemeral port isolates each desktop launch from stale backends that may
-// still be listening after an interrupted shutdown. A caller can still supply
-// a fixed port when an external extension bridge explicitly requires one.
-const extensionBridgePort = String(process.env.DYNA_EXTENSION_PORT || "0");
+// The browser extension connects to this fixed loopback bridge. A caller may
+// override it for development, but the packaged extension expects port 8765.
+const extensionBridgePort = String(process.env.DYNA_EXTENSION_PORT || "8765");
 
 function packagedDataRoot() {
   return app.getPath("userData");
@@ -50,6 +51,7 @@ function resolveBackendCommand() {
       args: ["--port", extensionBridgePort, "--token", apiToken],
       cwd: dataRoot,
       dataRoot,
+      playwrightDriverDir: path.join(process.resourcesPath, "playwright-driver"),
     };
   }
 
@@ -79,6 +81,7 @@ function startBackend() {
       PYTHONUNBUFFERED: "1",
       PYTHONDONTWRITEBYTECODE: "1",
       ...(launch.dataRoot ? { DYNA_DATA_DIR: launch.dataRoot } : {}),
+      ...(launch.playwrightDriverDir ? { DYNA_PLAYWRIGHT_DRIVER_DIR: launch.playwrightDriverDir } : {}),
     },
   });
   backendProcess = child;
@@ -272,6 +275,35 @@ function createWindow() {
   }
 }
 
+function focusMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function startSelectionFocusWatcher() {
+  if (selectionFocusTimer) return;
+  selectionFocusTimer = setInterval(() => {
+    void apiRequest({ path: "/api/publisher/douyin-selections/active" })
+      .then((result) => {
+        const session = result?.session;
+        const sessionId = String(session?.id || "");
+        if (
+          sessionId
+          && session?.status === "ready"
+          && session?.focus_requested
+          && sessionId !== lastFocusedSelectionId
+        ) {
+          lastFocusedSelectionId = sessionId;
+          focusMainWindow();
+          mainWindow?.webContents.send("dyna:navigate", "publish");
+        }
+      })
+      .catch(() => undefined);
+  }, 1000);
+}
+
 function createLogWindow() {
   if (logWindow && !logWindow.isDestroyed()) {
     if (logWindow.isMinimized()) logWindow.restore();
@@ -304,16 +336,24 @@ function createLogWindow() {
   });
   logWindow.once("ready-to-show", () => logWindow?.show());
   logWindow.on("closed", () => { logWindow = null; });
+  logWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    if (!logWindow || logWindow.isDestroyed() || String(validatedURL || "").startsWith("data:")) return;
+    const detail = `Không thể tải cửa sổ Nhật ký (${errorCode}): ${errorDescription}`;
+    const html = `<!doctype html><html lang="vi"><meta charset="utf-8"><body style="margin:0;padding:28px;color:#d7e0ea;background:#090d12;font:14px/1.55 Segoe UI,sans-serif"><h2 style="margin-top:0;color:#ff7d88">Dyna Logs không thể khởi động</h2><p>${detail}</p><p>Hãy đóng cửa sổ này và mở Nhật ký lại. Lỗi đã được ghi vào tiến trình chính của Dyna.</p></body></html>`;
+    void logWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  });
   if (isDevelopment) {
-    logWindow.loadURL("http://127.0.0.1:5173/?view=logs-terminal");
+    logWindow.loadURL("http://127.0.0.1:5173/logs.html");
   } else {
-    logWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"), {
-      query: { view: "logs-terminal" },
-    });
+    logWindow.loadFile(path.join(__dirname, "..", "dist", "logs.html"));
   }
 }
 
 function stopBackend() {
+  if (selectionFocusTimer) {
+    clearInterval(selectionFocusTimer);
+    selectionFocusTimer = null;
+  }
   if (backendRestartTimer) {
     clearTimeout(backendRestartTimer);
     backendRestartTimer = null;
@@ -376,6 +416,38 @@ if (!hasSingleInstanceLock) {
         : await dialog.showOpenDialog(options);
       return result.canceled ? [] : result.filePaths;
     });
+    ipcMain.handle("dyna:local-media-url", async (_event, value) => {
+      const projectId = String(value || "").trim().toLowerCase();
+      if (!/^[a-f0-9]{32}$/.test(projectId)) {
+        throw new Error("Mã dự án video xem trước không hợp lệ");
+      }
+      const info = await ensureBackend();
+      return `${info.baseUrl}/api/video-ai/projects/${projectId}/media?access_token=${encodeURIComponent(apiToken)}`;
+    });
+    ipcMain.handle("dyna:local-dubbing-url", async (_event, value) => {
+      const projectId = String(value || "").trim().toLowerCase();
+      if (!/^[a-f0-9]{32}$/.test(projectId)) {
+        throw new Error("Mã dự án lồng tiếng không hợp lệ");
+      }
+      const info = await ensureBackend();
+      return `${info.baseUrl}/api/video-ai/projects/${projectId}/dubbing-audio?access_token=${encodeURIComponent(apiToken)}`;
+    });
+    ipcMain.handle("dyna:local-tts-preview-url", async (_event, value) => {
+      const previewId = String(value || "").trim().toLowerCase();
+      if (!/^[a-f0-9]{32}$/.test(previewId)) {
+        throw new Error("Mã bản nghe thử giọng đọc không hợp lệ");
+      }
+      const info = await ensureBackend();
+      return `${info.baseUrl}/api/video-ai/tts/previews/${previewId}?access_token=${encodeURIComponent(apiToken)}`;
+    });
+    ipcMain.handle("dyna:reveal-file", (_event, value) => {
+      const target = path.resolve(String(value || ""));
+      if (!path.isAbsolute(target) || !fs.existsSync(target)) {
+        throw new Error("Không tìm thấy file đầu ra");
+      }
+      shell.showItemInFolder(target);
+      return { ok: true };
+    });
     ipcMain.handle("dyna:open-external", async (_event, value) => {
       const target = String(value || "").trim();
       let parsed;
@@ -399,12 +471,17 @@ if (!hasSingleInstanceLock) {
       if (action === "minimize") mainWindow.minimize();
       else if (action === "maximize") mainWindow.isMaximized() ? mainWindow.unmaximize() : mainWindow.maximize();
       else if (action === "close") mainWindow.close();
+      else if (action === "focus") {
+        focusMainWindow();
+      }
     });
     try {
       await startBackend();
       createWindow();
+      startSelectionFocusWatcher();
     } catch (error) {
       createWindow();
+      startSelectionFocusWatcher();
       broadcast("dyna:backend-status", { state: "failed", error: String(error) });
     }
   });

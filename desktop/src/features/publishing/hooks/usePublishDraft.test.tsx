@@ -52,4 +52,32 @@ describe("usePublishDraft", () => {
     expect(result.current.message).toContain("Scheduled 2 videos");
     expect(result.current.error).toBe("");
   });
+
+  it("applies one shared caption to every selected video and keeps an editable batch name", async () => {
+    Object.defineProperty(window, "dyna", {
+      configurable: true,
+      value: {
+        selectMedia: vi.fn().mockResolvedValue(["C:/videos/a.mp4", "C:/videos/b.mp4"]),
+      },
+    });
+    const { result } = renderHook(() => {
+      const [message, setMessage] = useState("");
+      const [error, setError] = useState("");
+      const draft = usePublishDraft({ l, setMessage, setError });
+      return { ...draft, message, error };
+    });
+
+    await act(async () => result.current.chooseFiles());
+    act(() => {
+      result.current.setBatchName("Lô game tháng 7");
+      result.current.applySharedCaption("Một mô tả chung #game");
+    });
+
+    expect(result.current.batchName).toBe("Lô game tháng 7");
+    expect(result.current.items.map((item) => item.caption)).toEqual([
+      "Một mô tả chung #game",
+      "Một mô tả chung #game",
+    ]);
+    expect(result.current.message).toContain("Applied the same caption to 2 videos");
+  });
 });

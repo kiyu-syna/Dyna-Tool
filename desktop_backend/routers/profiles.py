@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
 from desktop_backend.schemas import CreateProfilePayload, ProfilePayload, SeenStatePayload, SourceTestPayload
-from profile_automation.tracking_sources import get_tracking_sources
+from application.tracking.sources import get_tracking_sources
 
 
 def register_routes(app, context, protected) -> None:
@@ -40,7 +40,7 @@ def register_routes(app, context, protected) -> None:
             if not sources:
                 raise ValueError("Nguồn theo dõi chưa có định danh hợp lệ.")
 
-            from profile_automation.pipeline.profile_worker import ProfileWorker
+            from application.workflows.profile_worker import ProfileWorker
 
             worker = ProfileWorker(candidate_profile)
             source = sources[0]

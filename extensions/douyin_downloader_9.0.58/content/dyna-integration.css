@@ -57,6 +57,9 @@
 
 #dyna-douyin-integration .dyna-modal > footer { display: flex; align-items: center; justify-content: flex-end; gap: 9px; padding: 0 14px; border-top: 1px solid #2d3542; background: #1a202a; }
 #dyna-douyin-integration .dyna-modal > footer button { height: 35px; padding: 0 14px; border-radius: 7px; cursor: pointer; font-size: 10px; font-weight: 650; }
+#dyna-douyin-integration .dyna-download-only { margin-right: auto; border: 1px solid #d4a72c; color: #211600; background: linear-gradient(135deg, #ffe28a, #d9a928); box-shadow: 0 5px 16px rgba(204, 151, 22, .2); }
+#dyna-douyin-integration .dyna-download-only:hover { border-color: #f7cd59; background: linear-gradient(135deg, #ffeba9, #e6b83a); }
+#dyna-douyin-integration .dyna-download-only:disabled { cursor: default; opacity: .58; }
 #dyna-douyin-integration .dyna-cancel { border: 1px solid #394454; color: #b4bfcc; background: #232b36; }
 #dyna-douyin-integration .dyna-confirm { border: 1px solid #2679df; color: #fff; background: #1769cf; }
 #dyna-douyin-integration .dyna-confirm:disabled { cursor: default; opacity: .46; }

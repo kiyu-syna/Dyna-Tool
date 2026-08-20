@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     # Dyna AI gateway. API keys stay on this server and are never sent to the app.
     AI_ENABLED: bool = True
     AI_REQUIRE_ACTIVE_LICENSE: bool = True
-    AI_PROVIDER_ORDER: str = "gemini,groq,openrouter"
+    AI_PROVIDER_ORDER: str = "groq,gemini,openrouter"
     # The plural fields are preferred and accept comma/semicolon/newline separated
     # keys.  The singular aliases make a one-key setup less surprising.
     AI_GEMINI_API_KEYS: str = ""

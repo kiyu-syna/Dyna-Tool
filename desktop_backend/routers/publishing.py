@@ -1,10 +1,90 @@
 from fastapi import HTTPException, Query
 
-from desktop_backend.schemas import JobActionPayload, ManualPublishPayload, PublisherReadyCheckPayload
-from services.publishing.manual_publish_service import ManualPublishItem, ManualPublishRequest, ManualPublishTarget
+from desktop_backend.schemas import (
+    DouyinSelectionCreatePayload,
+    DouyinSelectionPublishPayload,
+    JobActionPayload,
+    ManualPublishPayload,
+    PublisherReadyCheckPayload,
+)
+from application.publishing.manual_publish_service import ManualPublishItem, ManualPublishRequest, ManualPublishTarget
 
 
 def register_routes(app, context, protected) -> None:
+    @app.post(
+        "/api/publisher/douyin-selections",
+        dependencies=protected,
+        status_code=201,
+    )
+    def publisher_create_douyin_selection(
+        payload: DouyinSelectionCreatePayload,
+    ) -> dict:
+        try:
+            session = context.douyin_selections.create(payload.source_url)
+            return {"ok": True, "session": session}
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+    @app.get(
+        "/api/publisher/douyin-selections/active",
+        dependencies=protected,
+    )
+    def publisher_active_douyin_selection() -> dict:
+        return {"session": context.douyin_selections.active()}
+
+    @app.get(
+        "/api/publisher/douyin-selections/{session_id}",
+        dependencies=protected,
+    )
+    def publisher_douyin_selection(session_id: str) -> dict:
+        session = context.douyin_selections.get(session_id)
+        if session is None:
+            raise HTTPException(status_code=404, detail="Không tìm thấy bản nháp Douyin.")
+        return {"session": session}
+
+    @app.delete(
+        "/api/publisher/douyin-selections/{session_id}",
+        dependencies=protected,
+    )
+    def publisher_cancel_douyin_selection(session_id: str) -> dict:
+        try:
+            session = context.douyin_selections.cancel(session_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc))
+        if session is None:
+            raise HTTPException(status_code=404, detail="Không tìm thấy phiên chọn Douyin.")
+        return {"ok": True, "session": session}
+
+    @app.post(
+        "/api/publisher/douyin-selections/{session_id}/publish",
+        dependencies=protected,
+        status_code=202,
+    )
+    def publisher_submit_douyin_selection(
+        session_id: str,
+        payload: DouyinSelectionPublishPayload,
+    ) -> dict:
+        try:
+            session = context.douyin_selections.submit(
+                session_id,
+                batch_name=payload.batch_name,
+                items=[item.model_dump() for item in payload.items],
+                targets=tuple(
+                    ManualPublishTarget(
+                        profile_id=target.profile_id,
+                        platforms=tuple(target.platforms),
+                    )
+                    for target in payload.targets
+                ),
+            )
+            return {"ok": True, "session": session}
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail=str(exc))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+        except RuntimeError as exc:
+            raise HTTPException(status_code=409, detail=str(exc))
+
     @app.get("/api/publisher/profiles", dependencies=protected)
     def publisher_profiles() -> dict:
         return {"profiles": context.manual_publish.list_profiles()}
@@ -42,6 +122,7 @@ def register_routes(app, context, protected) -> None:
                 ManualPublishRequest(
                     file_paths=tuple(payload.file_paths),
                     caption=payload.caption,
+                    batch_name=payload.batch_name,
                     items=tuple(
                         ManualPublishItem(
                             file_path=item.file_path,

@@ -1,0 +1,10 @@
+# Optional local AI runtime used by the "Xử lý video AI" desktop tab.
+# Models are downloaded on first use and stored under runtime/state/video-ai-models.
+faster-whisper>=1.2.0,<2
+edge-tts>=7.2,<8
+vieneu>=3.2.3,<4
+opencv-python>=4.10,<5
+numpy>=2,<3
+# CTranslate2 4.8 uses CUDA 12 + cuDNN 9. The wheel supplies cuDNN,
+# while cuBLAS is installed separately and registered at runtime on Windows.
+nvidia-cublas-cu12>=12.4,<13; platform_system == "Windows"

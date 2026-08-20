@@ -1,4 +1,4 @@
-import { FileText, MonitorCog, SlidersHorizontal, Video, Workflow, type LucideIcon } from "lucide-react";
+import { Captions, FileText, MonitorCog, SlidersHorizontal, Video, Workflow, type LucideIcon } from "lucide-react";
 import type { PageKey } from "./types";
 
 type Localize = (vi: string, en: string, zh: string) => string;
@@ -20,7 +20,8 @@ export function createNavigationGroups(l: Localize): NavigationGroup[] {
       label: l("VẬN HÀNH", "OPERATIONS", "运行"),
       items: [
         { key: "tracking", label: l("Theo dõi hồ sơ", "Profile Tracking", "配置文件跟踪"), icon: Workflow },
-        { key: "publish", label: l("Đăng video trên máy", "Publish local videos", "发布本机视频"), icon: Video },
+        { key: "publish", label: l("Trung tâm đăng video", "Publish Center", "发布中心"), icon: Video },
+        { key: "video-ai", label: l("Xử lý video AI", "AI Video Processing", "AI 视频处理"), icon: Captions },
       ],
     },
     {

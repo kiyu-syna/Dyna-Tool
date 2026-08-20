@@ -22,6 +22,7 @@ class CaptionRequest(BaseModel):
     video_id: str = Field(default="", max_length=256)
     description: str = Field(default="", max_length=1200)
     default_caption: str = Field(default="", max_length=10000)
+    pin_message: bool = False
 
 
 class RemoteActionResult(BaseModel):

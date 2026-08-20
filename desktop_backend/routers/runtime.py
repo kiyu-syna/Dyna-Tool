@@ -2,7 +2,7 @@ from fastapi import HTTPException
 
 import core.config as config
 from desktop_backend.schemas import DiagnosticPayload, TestUploadPayload
-from services.profiles.profile_diagnostics_service import run_profile_diagnostics
+from application.tracking.profile_diagnostics_service import run_profile_diagnostics
 from services.runtime.overview_service import build_overview_snapshot
 
 

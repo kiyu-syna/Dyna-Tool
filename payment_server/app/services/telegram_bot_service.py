@@ -130,33 +130,56 @@ class TelegramBotService:
         request_id = secrets.token_urlsafe(18)
         now = _now()
         default_caption = str(payload.get("default_caption") or "").strip()
+        description = str(payload.get("description") or "").strip()
         text = (
-            "<b>Dyna cần caption cho video</b>\n\n"
+            "DYNA CẦN CAPTION CHO VIDEO\n\n"
+            "Hãy Reply chính tin nhắn này và gửi caption bạn muốn dùng. "
+            "Dyna sẽ chờ đến khi nhận được reply rồi mới đăng video.\n\n"
             f"Hồ sơ: {payload.get('profile_name') or payload.get('profile_id') or '-'}\n"
             f"Nguồn: {payload.get('source_label') or '-'}\n"
             f"Video: {payload.get('video_id') or '-'}\n\n"
-            f"<b>Caption mặc định</b>\n{default_caption or '(trống)'}\n\n"
-            "Trả lời tin nhắn này để nhập caption khác, hoặc dùng nút bên dưới."
+            f"Mô tả nguồn:\n{description or '(trống)'}\n\n"
+            f"Caption hiện tại:\n{default_caption or '(trống)'}"
         )
         result = await self._api("sendMessage", {
-            "chat_id": link["chat_id"], "text": text, "parse_mode": "HTML",
-            "reply_markup": {"inline_keyboard": [[
-                {"text": "Dùng caption mặc định", "callback_data": f"cap:{request_id}:default"},
-                {"text": "Bỏ qua", "callback_data": f"cap:{request_id}:skip"},
-            ]]},
+            "chat_id": link["chat_id"],
+            "text": text[:4000],
+            "disable_web_page_preview": True,
         })
+        pinned = False
+        pin_error = ""
+        if payload.get("pin_message") is True:
+            try:
+                await self._api("pinChatMessage", {
+                    "chat_id": link["chat_id"],
+                    "message_id": int(result["message_id"]),
+                    "disable_notification": True,
+                })
+                pinned = True
+            except RuntimeError as exc:
+                pin_error = str(exc)
+                logger.warning(
+                    "Unable to pin Telegram caption request %s: %s",
+                    request_id,
+                    exc,
+                )
         await get_db().telegram_caption_requests.insert_one({
             "request_id": request_id, "username": username, "status": "pending",
             "default_caption": default_caption, "caption": "", "created_at": now,
-            "updated_at": now, "expires_at": now + timedelta(hours=24),
+            "updated_at": now, "pinned": pinned,
             "message_id": int(result["message_id"]), "chat_id": str(link["chat_id"]),
         })
-        return {"available": True, "request_id": request_id}
+        return {
+            "available": True,
+            "request_id": request_id,
+            "pinned": pinned,
+            "pin_error": pin_error,
+        }
 
     async def caption_status(self, username: str, request_id: str) -> dict[str, Any]:
         request = await get_db().telegram_caption_requests.find_one({"username": username, "request_id": request_id})
         if not request:
-            return {"status": "expired", "caption": ""}
+            return {"status": "missing", "caption": ""}
         return {"status": str(request.get("status") or "pending"), "caption": str(request.get("caption") or "")}
 
     async def _poll_loop(self) -> None:
@@ -284,7 +307,7 @@ class TelegramBotService:
             })
 
     async def _handle_message(self, message: dict[str, Any]) -> None:
-        text = str(message.get("text") or "").strip()
+        text = str(message.get("text") or message.get("caption") or "").strip()
         chat = message.get("chat") or {}
         chat_id = str(chat.get("id") or "")
         if not chat_id:
@@ -314,10 +337,43 @@ class TelegramBotService:
             return
         reply_to = (message.get("reply_to_message") or {}).get("message_id")
         if reply_to and text:
-            await get_db().telegram_caption_requests.update_one(
-                {"chat_id": chat_id, "message_id": int(reply_to), "status": "pending"},
-                {"$set": {"status": "selected", "caption": text[:10000], "updated_at": _now()}},
-            )
+            request = await get_db().telegram_caption_requests.find_one({
+                "chat_id": chat_id,
+                "message_id": int(reply_to),
+                "status": "pending",
+            })
+            if request:
+                result = await get_db().telegram_caption_requests.update_one(
+                    {"_id": request["_id"], "status": "pending"},
+                    {"$set": {
+                        "status": "selected",
+                        "caption": text[:10000],
+                        "updated_at": _now(),
+                    }},
+                )
+                if result.modified_count == 1:
+                    if request.get("pinned"):
+                        try:
+                            await self._api("unpinChatMessage", {
+                                "chat_id": chat_id,
+                                "message_id": int(reply_to),
+                            })
+                        except RuntimeError:
+                            logger.warning(
+                                "Unable to unpin completed Telegram caption request %s",
+                                request.get("request_id"),
+                            )
+                    try:
+                        await self._api("sendMessage", {
+                            "chat_id": chat_id,
+                            "text": "Dyna đã nhận caption và sẽ tiếp tục đăng video.",
+                            "reply_to_message_id": int(message.get("message_id") or 0),
+                        })
+                    except RuntimeError:
+                        logger.warning(
+                            "Unable to acknowledge Telegram caption request %s",
+                            request.get("request_id"),
+                        )
 
     async def _handle_callback(self, call: dict[str, Any]) -> None:
         parts = str(call.get("data") or "").split(":", 2)

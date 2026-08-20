@@ -7,3 +7,4 @@ export * from "./overview";
 export * from "./profiles";
 export * from "./publishing";
 export * from "./settings";
+export * from "./videoAi";

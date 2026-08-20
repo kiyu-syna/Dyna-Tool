@@ -1,0 +1,97 @@
+import unittest
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
+from app.services import telegram_bot_service
+
+
+class TelegramCaptionServiceTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.service = telegram_bot_service.TelegramBotService()
+        self.db = SimpleNamespace(
+            telegram_links=SimpleNamespace(find_one=AsyncMock()),
+            telegram_caption_requests=SimpleNamespace(
+                find_one=AsyncMock(),
+                insert_one=AsyncMock(),
+                update_one=AsyncMock(),
+            ),
+        )
+
+    async def test_caption_request_is_pinned_and_has_no_expiry(self):
+        self.db.telegram_links.find_one.return_value = {
+            "chat_id": "12345",
+        }
+        self.service._api = AsyncMock(
+            side_effect=[
+                {"message_id": 77},
+                True,
+            ]
+        )
+
+        with patch.object(telegram_bot_service, "get_db", return_value=self.db):
+            result = await self.service.create_caption_request(
+                "tester",
+                {
+                    "profile_id": "2",
+                    "profile_name": "Profile 2",
+                    "source_label": "Nguồn A",
+                    "video_id": "video-1",
+                    "description": "Mô tả nguồn",
+                    "default_caption": "Caption mặc định",
+                    "pin_message": True,
+                },
+            )
+
+        stored = self.db.telegram_caption_requests.insert_one.await_args.args[0]
+        self.assertNotIn("expires_at", stored)
+        self.assertTrue(stored["pinned"])
+        self.assertTrue(result["pinned"])
+        self.assertEqual(self.service._api.await_args_list[1].args[0], "pinChatMessage")
+
+    async def test_only_reply_to_prompt_selects_caption_and_unpins_it(self):
+        self.db.telegram_caption_requests.find_one.return_value = {
+            "_id": "mongo-id",
+            "request_id": "caption-request-1",
+            "pinned": True,
+        }
+        self.db.telegram_caption_requests.update_one.return_value = SimpleNamespace(
+            modified_count=1
+        )
+        self.service._api = AsyncMock(return_value=True)
+
+        with patch.object(telegram_bot_service, "get_db", return_value=self.db):
+            await self.service._handle_message(
+                {
+                    "message_id": 88,
+                    "text": "Caption do người dùng nhập",
+                    "chat": {"id": "12345"},
+                    "reply_to_message": {"message_id": 77},
+                }
+            )
+
+        update = self.db.telegram_caption_requests.update_one.await_args.args[1]
+        self.assertEqual(update["$set"]["status"], "selected")
+        self.assertEqual(
+            update["$set"]["caption"],
+            "Caption do người dùng nhập",
+        )
+        self.assertEqual(self.service._api.await_args_list[0].args[0], "unpinChatMessage")
+
+    async def test_non_reply_message_does_not_select_caption(self):
+        self.service._api = AsyncMock(return_value=True)
+
+        with patch.object(telegram_bot_service, "get_db", return_value=self.db):
+            await self.service._handle_message(
+                {
+                    "message_id": 88,
+                    "text": "Tin nhắn bình thường",
+                    "chat": {"id": "12345"},
+                }
+            )
+
+        self.db.telegram_caption_requests.find_one.assert_not_awaited()
+        self.db.telegram_caption_requests.update_one.assert_not_awaited()
+
+
+if __name__ == "__main__":
+    unittest.main()

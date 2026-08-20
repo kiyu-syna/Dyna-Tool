@@ -16,7 +16,7 @@ function errorText(error: unknown): string {
 }
 
 export function usePublishQueue({ l, setMessage, setError }: PublishQueueOptions) {
-  const jobs = usePolling<{ jobs: Job[]; total: number }>("/api/publisher/jobs?limit=100", 2_000);
+  const jobs = usePolling<{ jobs: Job[]; total: number }>("/api/publisher/jobs?limit=500", 2_000);
   const [busyJob, setBusyJob] = useState("");
 
   async function jobAction(action: "retry" | "cancel", job: Job) {

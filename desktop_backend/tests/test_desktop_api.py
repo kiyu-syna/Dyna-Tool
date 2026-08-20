@@ -9,7 +9,7 @@ from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 
 import desktop_backend.api as desktop_api
-from services.profiles.profile_management_service import ProfileManagementService
+from application.tracking.profile_management_service import ProfileManagementService
 
 
 class DesktopBackendStartupTests(unittest.IsolatedAsyncioTestCase):
@@ -42,6 +42,8 @@ class DesktopBackendStartupTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertIn("content/dyna-original-button-bridge.js", main_world["js"])
         self.assertNotEqual(isolated_world.get("world"), "MAIN")
+        self.assertIn("content/dyna-batch-selection.js", isolated_world["js"])
+        self.assertIn("content/dyna-batch-selection.css", isolated_world["css"])
 
     async def test_ready_signal_is_emitted_after_uvicorn_starts(self):
         server = object.__new__(desktop_api._ReadyServer)
@@ -85,6 +87,8 @@ class DesktopApiTests(unittest.TestCase):
             "checking": False,
             "checking_profiles": [],
         }
+        self.douyin_selections = Mock()
+        self.douyin_selections.active.return_value = None
         self.local_profiles = Mock()
         self.local_profiles.snapshot.return_value = {}
         self.assistant = Mock()
@@ -96,6 +100,24 @@ class DesktopApiTests(unittest.TestCase):
             "provider": "gemini",
             "model": "gemini-test",
         }
+        self.assistant.generate_caption.return_value = {
+            "caption": "Mô tả AI riêng #game",
+            "provider": "gemini",
+            "model": "gemini-test",
+        }
+        self.video_ai = Mock()
+        self.video_ai.capabilities.return_value = {
+            "ffmpeg": {"ready": True},
+            "ffprobe": {"ready": True},
+            "asr": {"ready": True, "models": ["small"]},
+            "translation": {"ready": True},
+        }
+        self.video_ai.create_project.return_value = {
+            "id": "a" * 32,
+            "source_path": r"C:\Videos\sample.mp4",
+            "status": "ready",
+            "subtitles": [],
+        }
         self.client = TestClient(
             desktop_api.create_app(
                 "test-token",
@@ -105,8 +127,10 @@ class DesktopApiTests(unittest.TestCase):
                 test_upload_service=self.test_uploads,
                 extension_upload_service=self.extension_uploads,
                 manual_publish_service=self.manual_publish,
+                douyin_selection_service=self.douyin_selections,
                 local_profile_setup_service=self.local_profiles,
                 ai_assistant_service=self.assistant,
+                video_ai_service=self.video_ai,
             )
         )
         self.headers = {"X-Dyna-Token": "test-token"}
@@ -190,6 +214,268 @@ class DesktopApiTests(unittest.TestCase):
         self.assertEqual(confirmed.status_code, 200)
         self.assistant.consume_proposal.assert_called_once_with("proposal-token-at-least-20-chars")
         self.runtime.start_profile.assert_called_once_with("2")
+
+    def test_assistant_generates_caption_with_the_same_dyna_ai_service(self):
+        response = self.client.post(
+            "/api/assistant/captions/generate",
+            headers=self.headers,
+            json={
+                "original_description": "Mô tả gốc #game",
+                "instruction": "Viết vui vẻ và giữ hashtag",
+                "video_label": "76620001",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["caption"], "Mô tả AI riêng #game")
+        self.assistant.generate_caption.assert_called_once_with(
+            original_description="Mô tả gốc #game",
+            instruction="Viết vui vẻ và giữ hashtag",
+            video_label="76620001",
+        )
+
+    def test_video_ai_project_uses_selected_local_video(self):
+        response = self.client.post(
+            "/api/video-ai/projects",
+            headers=self.headers,
+            json={"source_path": r"C:\Videos\sample.mp4"},
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["project"]["status"], "ready")
+        self.video_ai.create_project.assert_called_once_with(r"C:\Videos\sample.mp4")
+
+    def test_video_ai_editor_autosave_accepts_large_font(self):
+        project_id = "a" * 32
+        self.video_ai.save_editor_state.return_value = {
+            "id": project_id,
+            "status": "ready",
+            "stage": "Đã tự lưu chỉnh sửa",
+        }
+        response = self.client.put(
+            f"/api/video-ai/projects/{project_id}/editor",
+            headers=self.headers,
+            json={
+                "subtitles": [
+                    {
+                        "id": "line-1",
+                        "start": 0,
+                        "end": 2,
+                        "text": "Nguồn",
+                        "translated_text": "Bản dịch",
+                    }
+                ],
+                "blur": {
+                    "enabled": True,
+                    "x": 0.05,
+                    "y": 0.78,
+                    "width": 0.9,
+                    "height": 0.17,
+                    "strength": 22,
+                },
+                "style": {
+                    "font_name": "Arial",
+                    "font_size": 260,
+                    "margin_v": 54,
+                    "outline": 2,
+                    "primary_color": "&H00FFFFFF",
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["project"]["stage"], "Đã tự lưu chỉnh sửa")
+        self.assertEqual(
+            self.video_ai.save_editor_state.call_args.kwargs["style"]["font_size"],
+            260,
+        )
+
+    def test_video_ai_starts_hard_subtitle_detection(self):
+        project_id = "a" * 32
+        self.video_ai.start_subtitle_detection.return_value = {
+            "id": project_id,
+            "status": "detecting",
+            "stage": "Đang chuẩn bị tìm vùng phụ đề cứng",
+        }
+        response = self.client.post(
+            f"/api/video-ai/projects/{project_id}/detect-subtitle-region",
+            headers=self.headers,
+            json={"sample_count": 24},
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["project"]["status"], "detecting")
+        self.video_ai.start_subtitle_detection.assert_called_once_with(
+            project_id,
+            sample_count=24,
+        )
+
+    def test_video_ai_starts_dubbing_with_selected_voice(self):
+        project_id = "a" * 32
+        self.video_ai.start_dubbing.return_value = {
+            "id": project_id,
+            "status": "dubbing",
+            "dubbing_options": {
+                "voice": "vi-VN-NamMinhNeural",
+                "rate": 10,
+                "volume": 120,
+                "original_volume": 15,
+            },
+        }
+        response = self.client.post(
+            f"/api/video-ai/projects/{project_id}/dubbing",
+            headers=self.headers,
+            json={
+                "enabled": True,
+                "voice": "vi-VN-NamMinhNeural",
+                "rate": 10,
+                "volume": 120,
+                "original_volume": 15,
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["project"]["status"], "dubbing")
+        self.video_ai.start_dubbing.assert_called_once_with(
+            project_id,
+            provider="edge",
+            voice="vi-VN-NamMinhNeural",
+            style="tu_nhien",
+            rate=10,
+            volume=120,
+            original_volume=15,
+        )
+
+    def test_video_ai_starts_vieneu_dubbing_with_style(self):
+        project_id = "a" * 32
+        self.video_ai.start_dubbing.return_value = {
+            "id": project_id,
+            "status": "dubbing",
+            "dubbing_options": {
+                "provider": "vieneu",
+                "voice": "Trúc Ly",
+                "style": "doc_truyen",
+            },
+        }
+        response = self.client.post(
+            f"/api/video-ai/projects/{project_id}/dubbing",
+            headers=self.headers,
+            json={
+                "enabled": True,
+                "provider": "vieneu",
+                "voice": "Trúc Ly",
+                "style": "doc_truyen",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.video_ai.start_dubbing.assert_called_once_with(
+            project_id,
+            provider="vieneu",
+            voice="Trúc Ly",
+            style="doc_truyen",
+            rate=0,
+            volume=100,
+            original_volume=18,
+        )
+
+    def test_video_ai_dubbing_preview_requires_token(self):
+        project_id = "a" * 32
+        audio = Path(self.profile_temp.name) / "dubbed.wav"
+        audio.write_bytes(b"RIFF-test-dubbing-audio")
+        self.video_ai.get_project.return_value = {
+            "dubbing_options": {"audio_path": str(audio)}
+        }
+
+        unauthorized = self.client.get(
+            f"/api/video-ai/projects/{project_id}/dubbing-audio",
+        )
+        response = self.client.get(
+            f"/api/video-ai/projects/{project_id}/dubbing-audio?access_token=test-token",
+        )
+
+        self.assertEqual(unauthorized.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b"RIFF-test-dubbing-audio")
+
+    def test_video_ai_reports_and_prepares_vieneu_runtime(self):
+        self.video_ai.tts_runtime_status.return_value = {
+            "provider": "vieneu",
+            "state": "downloaded",
+            "ready": False,
+            "progress": 100,
+        }
+        self.video_ai.start_tts_prepare.return_value = {
+            "provider": "vieneu",
+            "state": "loading",
+            "ready": False,
+            "progress": 98,
+        }
+
+        status = self.client.get(
+            "/api/video-ai/tts/status?provider=vieneu",
+            headers=self.headers,
+        )
+        prepare = self.client.post(
+            "/api/video-ai/tts/prepare",
+            headers=self.headers,
+            json={"provider": "vieneu"},
+        )
+
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.json()["state"], "downloaded")
+        self.assertEqual(prepare.status_code, 202)
+        self.video_ai.start_tts_prepare.assert_called_once_with("vieneu")
+
+    def test_video_ai_creates_and_serves_voice_preview(self):
+        preview_id = "b" * 32
+        audio = Path(self.profile_temp.name) / f"{preview_id}.wav"
+        audio.write_bytes(b"RIFF-preview")
+        self.video_ai.create_tts_preview.return_value = {
+            "preview_id": preview_id,
+            "provider": "vieneu",
+            "voice": "Trúc Ly",
+        }
+        self.video_ai.tts_preview_path.return_value = audio
+
+        created = self.client.post(
+            "/api/video-ai/tts/preview",
+            headers=self.headers,
+            json={
+                "provider": "vieneu",
+                "voice": "Trúc Ly",
+                "style": "tu_nhien",
+                "text": "Xin chào [cười]",
+            },
+        )
+        unauthorized = self.client.get(f"/api/video-ai/tts/previews/{preview_id}")
+        served = self.client.get(
+            f"/api/video-ai/tts/previews/{preview_id}?access_token=test-token"
+        )
+
+        self.assertEqual(created.status_code, 200)
+        self.assertEqual(created.json()["voice"], "Trúc Ly")
+        self.assertEqual(unauthorized.status_code, 401)
+        self.assertEqual(served.status_code, 200)
+        self.assertEqual(served.content, b"RIFF-preview")
+
+    def test_video_ai_preview_supports_authenticated_byte_ranges(self):
+        source = Path(self.profile_temp.name) / "preview.mp4"
+        source.write_bytes(b"0123456789")
+        self.video_ai.get_project.return_value = {"source_path": str(source)}
+
+        unauthorized = self.client.get(
+            f"/api/video-ai/projects/{'a' * 32}/media",
+        )
+        response = self.client.get(
+            f"/api/video-ai/projects/{'a' * 32}/media?access_token=test-token",
+            headers={"Range": "bytes=2-5"},
+        )
+
+        self.assertEqual(unauthorized.status_code, 401)
+        self.assertEqual(response.status_code, 206)
+        self.assertEqual(response.content, b"2345")
+        self.assertEqual(response.headers["accept-ranges"], "bytes")
 
     @patch.object(desktop_api, "_apply_runtime_settings")
     @patch.object(desktop_api, "_atomic_json_write")
@@ -442,6 +728,97 @@ class DesktopApiTests(unittest.TestCase):
         self.assertEqual(profiles.status_code, 200)
         self.assertEqual(profiles.json()["profiles"][0]["id"], "2")
 
+    def test_douyin_selection_can_start_in_dyna_and_complete_from_extension(self):
+        selecting = {
+            "id": "selection-1",
+            "source_url": "https://www.douyin.com/user/source",
+            "status": "selecting",
+            "items": [],
+            "selected_count": 0,
+        }
+        ready = {
+            **selecting,
+            "status": "ready",
+            "selected_count": 1,
+            "items": [{"video_id": "76620001"}],
+        }
+        self.douyin_selections.create.return_value = selecting
+        self.douyin_selections.complete.return_value = ready
+
+        created = self.client.post(
+            "/api/publisher/douyin-selections",
+            headers=self.headers,
+            json={"source_url": selecting["source_url"]},
+        )
+        completed = self.client.post(
+            "/api/extension/selections/selection-1/complete",
+            headers=self.extension_headers,
+            json={
+                "items": [
+                    {
+                        "video_id": "76620001",
+                        "source_url": "https://www.douyin.com/video/76620001",
+                        "description": "Original caption",
+                    }
+                ]
+            },
+        )
+
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(completed.status_code, 202)
+        self.assertEqual(completed.json()["session"]["selected_count"], 1)
+        selected_items = self.douyin_selections.complete.call_args.args[1]
+        self.assertEqual(selected_items[0]["video_id"], "76620001")
+
+    def test_douyin_selection_can_start_directly_from_extension(self):
+        selecting = {
+            "id": "selection-direct",
+            "source_url": "https://www.douyin.com/user/source",
+            "status": "selecting",
+            "items": [],
+            "selected_count": 0,
+        }
+        self.douyin_selections.create.return_value = selecting
+
+        response = self.client.post(
+            "/api/extension/selections",
+            headers=self.extension_headers,
+            json={"source_url": selecting["source_url"]},
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["session"]["id"], "selection-direct")
+        self.douyin_selections.create.assert_called_once_with(selecting["source_url"])
+
+    def test_douyin_selection_publish_keeps_the_user_batch_name(self):
+        self.douyin_selections.submit.return_value = {
+            "id": "selection-1",
+            "status": "preparing",
+            "batch_name": "Lô Ma Chao buổi tối",
+        }
+
+        response = self.client.post(
+            "/api/publisher/douyin-selections/selection-1/publish",
+            headers=self.headers,
+            json={
+                "batch_name": "Lô Ma Chao buổi tối",
+                "items": [
+                    {
+                        "video_id": "76620001",
+                        "caption": "Mô tả riêng #game",
+                        "scheduled_at": "",
+                    }
+                ],
+                "targets": [{"profile_id": "2", "platforms": ["tiktok"]}],
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(
+            self.douyin_selections.submit.call_args.kwargs["batch_name"],
+            "Lô Ma Chao buổi tối",
+        )
+
     def test_extension_cors_preflight_allows_known_origin(self):
         response = self.client.options(
             "/api/extension/health",
@@ -509,6 +886,7 @@ class DesktopApiTests(unittest.TestCase):
             json={
                 "file_paths": [r"C:\Videos\clip.mp4"],
                 "caption": "Caption local",
+                "batch_name": "Lô video local",
                 "targets": [{"profile_id": "2", "platforms": ["tiktok"]}],
             },
         )
@@ -516,6 +894,7 @@ class DesktopApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 202)
         publish_request = self.manual_publish.submit.call_args.args[0]
         self.assertEqual(publish_request.caption, "Caption local")
+        self.assertEqual(publish_request.batch_name, "Lô video local")
         self.assertEqual(publish_request.targets[0].profile_id, "2")
         self.assertEqual(publish_request.targets[0].platforms, ("tiktok",))
 
@@ -633,7 +1012,7 @@ class DesktopApiTests(unittest.TestCase):
         self.assertEqual(saved["tracking_sources"][0]["sec_uid"], "abc")
         self.assertNotIn("sources", saved["douyin"])
 
-    @patch("profile_automation.pipeline.profile_worker.ProfileWorker")
+    @patch("application.workflows.profile_worker.ProfileWorker")
     def test_profile_source_test_returns_first_four_valid_videos(self, worker_type):
         self.profile_service.create("10", "Source test")
         videos = []

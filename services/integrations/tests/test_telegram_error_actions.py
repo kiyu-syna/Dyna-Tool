@@ -1,4 +1,5 @@
 import unittest
+import threading
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -92,6 +93,61 @@ class TelegramRelayTests(unittest.TestCase):
         self.assertIn("Hồ sơ: 2", text)
         self.assertIn("Nền tảng: youtube", text)
         self.assertIn("chooser timeout", text)
+
+    @patch.object(telegram_service, "_request")
+    def test_caption_request_includes_pin_preference(self, request):
+        request.return_value = {
+            "available": True,
+            "request_id": "caption-request-1",
+            "pinned": True,
+        }
+
+        request_id = telegram_service.create_caption_request(
+            profile_id="2",
+            profile_name="Valorant edit",
+            source_label="Nguồn A",
+            video_id="123",
+            description="Mô tả nguồn",
+            default_caption="Caption mặc định",
+            pin_message=True,
+        )
+
+        self.assertEqual(request_id, "caption-request-1")
+        self.assertEqual(
+            request.call_args.args,
+            ("POST", "/api/telegram/captions"),
+        )
+        self.assertTrue(request.call_args.kwargs["body"]["pin_message"])
+
+    @patch.object(telegram_service, "_request")
+    def test_caption_wait_has_no_deadline_and_returns_selected_reply(self, request):
+        request.side_effect = [
+            None,
+            {"status": "pending", "caption": ""},
+            {"status": "selected", "caption": "Caption từ Telegram"},
+        ]
+
+        caption = telegram_service.wait_for_caption(
+            "caption-request-1",
+            poll_interval_seconds=0,
+        )
+
+        self.assertEqual(caption, "Caption từ Telegram")
+        self.assertEqual(request.call_count, 3)
+
+    @patch.object(telegram_service, "_request")
+    def test_caption_wait_can_stop_with_profile(self, request):
+        stop_event = threading.Event()
+        stop_event.set()
+
+        with self.assertRaises(InterruptedError):
+            telegram_service.wait_for_caption(
+                "caption-request-1",
+                cancel_event=stop_event,
+                poll_interval_seconds=0,
+            )
+
+        request.assert_not_called()
 
 
 if __name__ == "__main__":

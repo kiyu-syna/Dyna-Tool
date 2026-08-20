@@ -70,7 +70,10 @@ async def connect_db():
     await db.telegram_link_codes.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
     await db.telegram_caption_requests.create_index([("request_id", ASCENDING)], unique=True)
     await db.telegram_caption_requests.create_index([("username", ASCENDING), ("updated_at", DESCENDING)])
-    await db.telegram_caption_requests.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
+    caption_indexes = await db.telegram_caption_requests.index_information()
+    for index_name, index_config in caption_indexes.items():
+        if index_config.get("expireAfterSeconds") is not None:
+            await db.telegram_caption_requests.drop_index(index_name)
     await db.telegram_remote_actions.create_index([("request_id", ASCENDING)], unique=True)
     await db.telegram_remote_actions.create_index([("username", ASCENDING), ("status", ASCENDING), ("confirmed_at", ASCENDING)])
     await db.telegram_remote_actions.create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)

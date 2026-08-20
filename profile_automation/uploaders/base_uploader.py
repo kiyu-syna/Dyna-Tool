@@ -1,4 +1,4 @@
-from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
+from profile_automation.watchers.douyin_video import DouyinVideo
 
 
 class UploadSkipped(RuntimeError):

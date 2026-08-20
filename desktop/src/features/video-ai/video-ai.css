@@ -1,0 +1,879 @@
+.video-ai-page { padding-bottom: 18px; }
+
+.video-ai-intro {
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--border));
+  border-radius: 7px;
+  background: linear-gradient(105deg, var(--accent-soft), var(--surface) 62%);
+}
+
+.video-ai-intro-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  color: var(--accent);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.video-ai-intro > div { min-width: 0; display: grid; gap: 4px; flex: 1; }
+.video-ai-intro strong { font-size: 15px; }
+.video-ai-intro span:not(.status-pill):not(.video-ai-intro-icon) { color: var(--text-2); font-size: 12px; }
+
+.video-ai-dependency-warning,
+.video-ai-notice {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 13px;
+  border: 1px solid color-mix(in srgb, var(--warning) 30%, var(--border));
+  border-radius: 7px;
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.video-ai-dependency-warning > div { display: grid; gap: 3px; }
+.video-ai-dependency-warning strong { font-size: 13px; }
+.video-ai-dependency-warning span { font-family: "Consolas", monospace; font-size: 11px; overflow-wrap: anywhere; }
+.video-ai-notice { min-height: 40px; padding: 7px 12px; font-size: 12px; }
+.video-ai-notice.error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, var(--border)); background: var(--danger-soft); }
+.video-ai-notice.success { color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, var(--border)); background: var(--success-soft); }
+
+.video-ai-dropzone {
+  width: calc(100% - 24px);
+  min-height: 154px;
+  margin: 12px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: 7px;
+  color: var(--muted);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.video-ai-dropzone:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.video-ai-dropzone strong { color: var(--text); font-size: 14px; }
+.video-ai-dropzone span { font-size: 11px; }
+
+.video-ai-source {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 14px;
+}
+
+.video-ai-preview {
+  min-height: 250px;
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #07090c;
+}
+
+.video-ai-preview-viewport {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  background: #05070a;
+}
+.video-ai-stage {
+  width: 100%;
+  position: relative;
+  flex: 0 1 auto;
+  overflow: hidden;
+  background: #000;
+  touch-action: none;
+}
+.video-ai-stage video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.video-ai-stage video { cursor: pointer; }
+.video-ai-player-controls {
+  position: relative;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  padding: 9px 12px 11px;
+  border-top: 1px solid #303641;
+  color: #e7ebf2;
+  background: #161a21;
+}
+.video-ai-player-toolbar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.video-ai-player-toolbar button {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  color: #e7ebf2;
+  background: transparent;
+  cursor: pointer;
+}
+.video-ai-player-toolbar button:hover { color: #fff; background: rgba(255, 255, 255, .09); }
+.video-ai-player-time {
+  min-width: 92px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #f5f7fb;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.video-ai-player-time i { color: #7f8998; font-style: normal; font-weight: 500; }
+.video-ai-player-volume {
+  min-width: 118px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+}
+.video-ai-player-volume input {
+  width: 82px;
+  height: 4px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.video-ai-player-toolbar select {
+  width: 67px;
+  min-height: 30px;
+  padding: 4px 7px;
+  border-color: #39414e;
+  color: #e7ebf2;
+  background: #20252e;
+  font-size: 10px;
+}
+.video-ai-player-timeline {
+  width: 100%;
+  height: 5px;
+  margin: 0;
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+.video-ai-player-timeline::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 999px;
+  background: transparent;
+}
+.video-ai-player-timeline::-webkit-slider-thumb {
+  width: 13px;
+  height: 13px;
+  margin-top: -4px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .55);
+  appearance: none;
+}
+.video-ai-player-timeline:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.video-ai-preview:fullscreen {
+  width: 100vw;
+  height: 100vh;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+}
+.video-ai-preview:fullscreen .video-ai-preview-viewport { overflow: hidden; }
+.video-ai-preview:fullscreen .video-ai-stage {
+  width: auto;
+  max-width: 100% !important;
+  height: 100%;
+  max-height: calc(100vh - 79px);
+}
+.video-ai-preview-empty { display: grid; place-items: center; gap: 8px; color: #8893a4; font-size: 12px; }
+.video-ai-blur-overlay {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  min-height: 16px;
+  border: 1px solid rgba(255, 205, 76, .95);
+  background: rgba(18, 21, 26, .24);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .52), inset 0 0 18px rgba(0, 0, 0, .3);
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  will-change: backdrop-filter;
+}
+.video-ai-blur-overlay.disabled { cursor: default; pointer-events: none; }
+.video-ai-caption-preview {
+  max-width: calc(100% - 16px);
+  padding: 1px 4px;
+  overflow: hidden;
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  overflow-wrap: anywhere;
+}
+.video-ai-resize-handle {
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  z-index: 3;
+  border: 1px solid #4d3600;
+  border-radius: 2px;
+  background: #ffd35c;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.5);
+}
+.video-ai-resize-handle.nw { top: -5px; left: -5px; cursor: nwse-resize; }
+.video-ai-resize-handle.n { top: -5px; left: calc(50% - 5px); cursor: ns-resize; }
+.video-ai-resize-handle.ne { top: -5px; right: -5px; cursor: nesw-resize; }
+.video-ai-resize-handle.e { top: calc(50% - 5px); right: -5px; cursor: ew-resize; }
+.video-ai-resize-handle.se { right: -5px; bottom: -5px; cursor: nwse-resize; }
+.video-ai-resize-handle.s { bottom: -5px; left: calc(50% - 5px); cursor: ns-resize; }
+.video-ai-resize-handle.sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
+.video-ai-resize-handle.w { top: calc(50% - 5px); left: -5px; cursor: ew-resize; }
+
+.video-ai-source-info {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) repeat(4, minmax(90px, auto));
+  align-items: stretch;
+  gap: 7px;
+}
+.video-ai-source-title {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  padding: 7px 9px 7px 2px;
+}
+.video-ai-source-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.video-ai-source-title span { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.video-ai-source-info dl { display: contents; margin: 0; }
+.video-ai-source-info dl div {
+  min-width: 90px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+.video-ai-source-info dt { color: var(--muted); font-size: 9px; text-transform: uppercase; white-space: nowrap; }
+.video-ai-source-info dd { margin: 0; color: var(--text); font-size: 12px; font-weight: 700; white-space: nowrap; }
+
+.video-ai-progress-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 7px;
+  background: var(--accent-soft);
+}
+.video-ai-progress-card > div:first-child { display: flex; align-items: center; gap: 8px; color: var(--accent); font-size: 12px; }
+.video-ai-progress-card > div:first-child span { margin-left: auto; font-weight: 700; }
+.video-ai-progress-card > button { grid-column: 2; grid-row: 1 / span 2; }
+.video-ai-progress-track { height: 5px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); }
+.video-ai-progress-track i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transition: width 250ms ease; }
+
+.video-ai-workflow-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.video-ai-step-form { min-height: 205px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 12px; padding: 14px; }
+.video-ai-step-form label { display: grid; align-content: start; gap: 6px; }
+.video-ai-step-form label > span,
+.video-ai-export label > span { color: var(--text-2); font-size: 11px; font-weight: 700; }
+.video-ai-step-form small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.video-ai-step-form .primary-button { grid-column: 1 / -1; justify-self: start; }
+.video-ai-detected { align-self: center; color: var(--success) !important; }
+.video-ai-device-note { color: var(--warning) !important; }
+.video-ai-translation-summary {
+  grid-column: 1 / -1;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  background: var(--surface-2);
+  font-size: 11px;
+}
+.video-ai-translation-summary svg { color: var(--accent); }
+.video-ai-translation-summary span { display: flex; align-items: baseline; gap: 4px; }
+.video-ai-translation-summary strong { color: var(--text); font-size: 17px; }
+
+.video-ai-editor-section { overflow: visible; }
+.video-ai-autosave {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--muted);
+  background: var(--surface-2);
+  font-size: 10px;
+  font-weight: 700;
+}
+.video-ai-autosave.saved { color: var(--success); }
+.video-ai-autosave.saving { color: var(--accent); }
+.video-ai-autosave.error { color: var(--danger); }
+.video-ai-editor-empty { min-height: 150px; display: grid; place-items: center; align-content: center; gap: 7px; color: var(--muted); }
+.video-ai-editor-empty strong { color: var(--text); font-size: 13px; }
+.video-ai-editor-empty span { font-size: 11px; }
+.video-ai-editor-workspace { min-width: 0; }
+.video-ai-timeline {
+  display: grid;
+  gap: 7px;
+  margin: 12px 12px 8px;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+}
+.video-ai-timeline-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.video-ai-timeline-title strong { color: var(--text); font-size: 11px; }
+.video-ai-timeline-title span { color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.video-ai-timeline-axis {
+  height: 14px;
+  position: relative;
+  margin: 0 4px;
+  color: var(--muted);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.video-ai-timeline-axis span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.video-ai-timeline-axis span:first-child { transform: none; }
+.video-ai-timeline-axis span:last-child { transform: translateX(-100%); }
+.video-ai-timeline-track {
+  height: 48px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background:
+    linear-gradient(90deg, transparent 24.8%, var(--border) 25%, transparent 25.2%, transparent 49.8%, var(--border) 50%, transparent 50.2%, transparent 74.8%, var(--border) 75%, transparent 75.2%),
+    color-mix(in srgb, var(--surface) 72%, #000);
+  cursor: crosshair;
+}
+.video-ai-timeline-segment {
+  height: 30px;
+  position: absolute;
+  top: 8px;
+  z-index: 1;
+  min-width: 4px;
+  overflow: hidden;
+  padding: 0 3px;
+  border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--border));
+  border-radius: 3px;
+  color: #dfeaff;
+  background: color-mix(in srgb, var(--accent) 48%, var(--surface));
+  font-size: 8px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.video-ai-timeline-segment.warning {
+  border-color: color-mix(in srgb, var(--warning) 74%, var(--border));
+  background: color-mix(in srgb, var(--warning) 38%, var(--surface));
+}
+.video-ai-timeline-segment.active {
+  z-index: 3;
+  border-color: #fff;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.video-ai-timeline-playhead {
+  width: 1px;
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  bottom: 0;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .55);
+  pointer-events: none;
+}
+.video-ai-quality-summary {
+  min-height: 30px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 8px;
+}
+.video-ai-quality-summary span {
+  min-height: 23px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 7px;
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, var(--border));
+  border-radius: 999px;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 9%, var(--surface));
+  font-size: 9px;
+  font-weight: 700;
+}
+.video-ai-quality-summary span.good {
+  border-color: color-mix(in srgb, var(--success) 35%, var(--border));
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 9%, var(--surface));
+}
+.video-ai-subtitle-table { max-height: 560px; overflow: auto; }
+.video-ai-subtitle-head,
+.video-ai-subtitle-row {
+  min-width: 1130px;
+  display: grid;
+  grid-template-columns: 48px 210px minmax(240px, 1fr) minmax(240px, 1fr) 140px 40px;
+  gap: 8px;
+  align-items: center;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.video-ai-subtitle-head { position: sticky; top: 0; z-index: 2; min-height: 38px; color: var(--muted); background: var(--surface-2); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.video-ai-subtitle-row:hover { background: color-mix(in srgb, var(--surface-2) 72%, transparent); }
+.video-ai-subtitle-row.active { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.video-ai-subtitle-row textarea { min-height: 57px; line-height: 1.45; resize: vertical; }
+.video-ai-play-line { height: 30px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 4px; color: var(--accent); background: var(--accent-soft); font-size: 10px; cursor: pointer; }
+.video-ai-timing { display: grid; grid-template-columns: 1fr 13px 1fr; align-items: center; gap: 3px; }
+.video-ai-timing input { min-width: 0; min-height: 34px; padding: 5px 6px; font-size: 11px; }
+.video-ai-timing span { color: var(--muted); text-align: center; font-size: 10px; }
+.video-ai-row-warnings { display: flex; flex-wrap: wrap; align-content: center; gap: 4px; }
+.video-ai-row-warnings span {
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px;
+  border-radius: 999px;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, var(--surface));
+  font-size: 8px;
+  font-weight: 800;
+}
+.video-ai-row-warnings span.good {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+}
+
+.video-ai-dubbing {
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+.video-ai-dubbing-heading {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.video-ai-dubbing-heading > div {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+.video-ai-dubbing-heading strong {
+  color: var(--text);
+  font-size: 12px;
+}
+.video-ai-dubbing-heading span {
+  color: var(--text-2);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.video-ai-dubbing-heading .switch-row { white-space: nowrap; }
+.video-ai-voice-filters {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(130px, 1fr)) auto;
+  align-items: end;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+}
+.video-ai-voice-filters > strong {
+  align-self: center;
+  color: var(--text);
+  font-size: 11px;
+}
+.video-ai-voice-filters label {
+  display: grid;
+  gap: 5px;
+}
+.video-ai-voice-filters label > span {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+}
+.video-ai-voice-filter-count {
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.video-ai-dubbing-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+.video-ai-dubbing-controls > label {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+.video-ai-dubbing-controls > label > span {
+  color: var(--text-2);
+  font-size: 10px;
+  font-weight: 700;
+}
+.video-ai-voice-select {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+}
+.video-ai-voice-select .small-button {
+  min-width: 92px;
+  white-space: nowrap;
+}
+.video-ai-model-status {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--surface-2);
+}
+.video-ai-model-status.loading {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+.video-ai-model-status.failed {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+}
+.video-ai-model-status-body {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.video-ai-model-status-body > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.video-ai-model-status-body strong {
+  color: var(--text);
+  font-size: 10px;
+}
+.video-ai-model-status-body span,
+.video-ai-model-status-body code,
+.video-ai-model-status-body small {
+  color: var(--muted);
+  font-size: 9px;
+}
+.video-ai-model-status-body code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.video-ai-model-status-body small { color: var(--danger); }
+.video-ai-model-progress {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 70%, transparent);
+}
+.video-ai-model-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width 240ms ease;
+}
+.video-ai-voice-preview {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.video-ai-voice-preview strong {
+  color: var(--text);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.video-ai-voice-preview audio {
+  width: 100%;
+  height: 34px;
+}
+.video-ai-emotion-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+}
+.video-ai-emotion-tools > div:first-child {
+  min-width: 0;
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+.video-ai-emotion-tools strong {
+  font-size: 10px;
+}
+.video-ai-emotion-tools span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.video-ai-emotion-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.video-ai-clone-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 9px 10px;
+  border-left: 3px solid var(--warning);
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 7%, var(--surface-2));
+  font-size: 9px;
+  line-height: 1.5;
+}
+.video-ai-clone-note svg { flex: none; }
+.video-ai-dubbing-range {
+  min-height: 38px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 50px;
+  align-items: center;
+  gap: 8px;
+}
+.video-ai-dubbing-range input {
+  width: 100%;
+  accent-color: var(--accent);
+}
+.video-ai-dubbing-range output {
+  min-height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  background: var(--surface-2);
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.video-ai-dubbing-action {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface-2);
+}
+.video-ai-dubbing-action > div {
+  min-width: 0;
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+.video-ai-dubbing-action strong { font-size: 11px; }
+.video-ai-dubbing-action span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+.video-ai-speed-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  color: var(--warning) !important;
+  font-weight: 700;
+}
+.video-ai-dubbing-preview {
+  width: 100%;
+  height: 38px;
+  accent-color: var(--accent);
+}
+.video-ai-dubbing-warning {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--border));
+  border-radius: 6px;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 8%, var(--surface));
+  font-size: 10px;
+}
+
+.video-ai-export { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; }
+.video-ai-export-column { min-width: 0; display: grid; align-content: start; gap: 12px; padding: 14px; }
+.video-ai-export-column + .video-ai-export-column { border-left: 1px solid var(--border); }
+.video-ai-export-column > label:not(.switch-row) { display: grid; gap: 6px; }
+.video-ai-subtitle-detector {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-radius: 7px;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.video-ai-subtitle-detector > div { min-width: 0; display: grid; gap: 4px; }
+.video-ai-subtitle-detector strong { color: var(--text); font-size: 11px; }
+.video-ai-subtitle-detector span { color: var(--text-2); font-size: 9px; line-height: 1.45; }
+.video-ai-subtitle-detector small {
+  grid-column: 2 / -1;
+  color: var(--warning);
+  font-size: 9px;
+}
+.video-ai-style-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.video-ai-style-grid label { display: grid; gap: 5px; }
+.video-ai-style-grid input { min-height: 36px; }
+.video-ai-region-help,
+.video-ai-caption-position-note {
+  min-height: 74px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 6px;
+  color: var(--text-2);
+  background: var(--accent-soft);
+}
+.video-ai-region-help.disabled { opacity: .5; }
+.video-ai-region-help strong { color: var(--text); font-size: 12px; }
+.video-ai-region-help span,
+.video-ai-caption-position-note span { font-size: 11px; line-height: 1.5; }
+.video-ai-blur-strength { display: grid; gap: 6px; }
+.video-ai-blur-strength > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 9px;
+}
+.video-ai-blur-strength input { width: 100%; accent-color: var(--accent); }
+.video-ai-blur-strength output {
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text);
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 800;
+}
+.video-ai-caption-position-note {
+  min-height: 52px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  align-content: initial;
+  color: var(--accent);
+}
+.video-ai-caption-position-note span { color: var(--text-2); }
+.video-ai-export-action {
+  grid-column: 1 / -1;
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.video-ai-export-action > div { min-width: 0; display: grid; flex: 1; gap: 4px; }
+.video-ai-export-action > div strong { font-size: 12px; }
+.video-ai-export-action > div span { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.video-ai-render-button { min-width: 132px; }
+
+@media (max-width: 1180px) {
+  .video-ai-workflow-grid,
+  .video-ai-export { grid-template-columns: 1fr; }
+  .video-ai-dubbing-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .video-ai-voice-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .video-ai-voice-filters > strong,
+  .video-ai-voice-filter-count { grid-column: 1 / -1; }
+  .video-ai-source-info { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .video-ai-source-title { grid-column: 1 / -1; }
+  .video-ai-export-column + .video-ai-export-column { border-top: 1px solid var(--border); border-left: 0; }
+}
+
+@media (max-width: 700px) {
+  .video-ai-player-controls { padding-right: 8px; padding-left: 8px; }
+  .video-ai-player-toolbar { gap: 4px; }
+  .video-ai-player-volume { min-width: 30px; margin-left: auto; }
+  .video-ai-player-volume input { display: none; }
+  .video-ai-dubbing-heading { grid-template-columns: auto minmax(0, 1fr); }
+  .video-ai-dubbing-heading .switch-row { grid-column: 1 / -1; }
+  .video-ai-dubbing-controls { grid-template-columns: 1fr; }
+  .video-ai-dubbing-action { align-items: stretch; flex-direction: column; }
+  .video-ai-voice-filters { grid-template-columns: 1fr; }
+  .video-ai-voice-filters > strong,
+  .video-ai-voice-filter-count { grid-column: auto; }
+  .video-ai-model-status { grid-template-columns: auto minmax(0, 1fr); }
+  .video-ai-model-status > button { grid-column: 1 / -1; }
+  .video-ai-emotion-tools { align-items: stretch; flex-direction: column; }
+  .video-ai-voice-preview { grid-template-columns: auto minmax(0, 1fr); }
+  .video-ai-voice-preview audio { grid-column: 1 / -1; }
+}

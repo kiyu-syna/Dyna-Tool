@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import OverviewPage from "../features/overview/OverviewPage";
 import type { Language } from "../shared/i18n";
 import type { AuthUser } from "../shared/types";
@@ -14,6 +14,7 @@ const ProfilesPage = lazy(() => import("../features/profiles/ProfilesPage"));
 const PublishCenterPage = lazy(() => import("../features/publishing/PublishCenterPage"));
 const SettingsPage = lazy(() => import("../features/settings/SettingsPage"));
 const TrackingPage = lazy(() => import("../features/tracking/TrackingPage"));
+const VideoAiPage = lazy(() => import("../features/video-ai/VideoAiPage"));
 
 function PageFallback() {
   return (
@@ -46,6 +47,24 @@ export default function AppShell({
   const [collapsed, setCollapsed] = useState(false);
   const [wechatQrOpen, setWechatQrOpen] = useState(false);
 
+  useEffect(() => {
+    return window.dyna?.onNavigate?.((nextPage) => {
+      if (
+        nextPage === "overview" ||
+        nextPage === "tracking" ||
+        nextPage === "publish" ||
+        nextPage === "video-ai" ||
+        nextPage === "profiles" ||
+        nextPage === "browser" ||
+        nextPage === "logs" ||
+        nextPage === "premium" ||
+        nextPage === "settings"
+      ) {
+        setPage(nextPage);
+      }
+    });
+  }, []);
+
   return (
     <>
       <WindowTitleBar />
@@ -66,6 +85,7 @@ export default function AppShell({
               {page === "overview" && <OverviewPage onOpenTracking={() => setPage("tracking")} />}
               {page === "tracking" && <TrackingPage />}
               {page === "publish" && <PublishCenterPage />}
+              {page === "video-ai" && <VideoAiPage />}
               {page === "profiles" && <ProfilesPage />}
               {page === "browser" && <BrowserPage />}
               {page === "premium" && <PremiumPage />}

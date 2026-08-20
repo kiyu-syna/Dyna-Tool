@@ -15,6 +15,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from core.playwright_runtime import configure_packaged_playwright_driver
+
+configure_packaged_playwright_driver()
+
 import uvicorn
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,11 +28,11 @@ import core.config as config
 from core.runtime_paths import logs_dir
 import services.account.auth_service as auth_service
 import services.account.license_service as license_service
-from profile_automation.tracking_sources import (
+from application.tracking.sources import (
     get_tracking_sources,
     tracking_source_label,
 )
-from profile_automation.pipeline.video_job_store import VideoJobStore
+from application.workflows.video_job_store import VideoJobStore
 from services.runtime.overview_service import build_overview_snapshot
 from services.browser.browser_runtime_service import (
     BrowserRuntimeError,
@@ -36,24 +40,26 @@ from services.browser.browser_runtime_service import (
     install_playwright_chromium_runtime,
     list_browser_runtimes,
 )
-from services.browser.local_profile_setup_service import (
+from application.workflows.local_profile_setup_service import (
     LocalProfileSetupError,
     LocalProfileSetupService,
 )
 from services.runtime.log_view_service import build_log_snapshot, reset_log_files
-from services.profiles.profile_diagnostics_service import run_profile_diagnostics
-from services.profiles.profile_management_service import ProfileManagementService
-from services.publishing.profile_test_upload_service import ProfileTestUploadService
+from application.tracking.profile_diagnostics_service import run_profile_diagnostics
+from application.tracking.profile_management_service import ProfileManagementService
+from application.publishing.profile_test_upload_service import ProfileTestUploadService
 from services.runtime.tracking_runtime_service import TrackingRuntimeService
-from services.publishing.extension_upload_service import ExtensionUploadRequest, ExtensionUploadService
-from services.publishing.manual_publish_service import (
+from application.publishing.extension_upload_service import ExtensionUploadRequest, ExtensionUploadService
+from application.publishing.manual_publish_service import (
     ManualPublishItem,
     ManualPublishRequest,
     ManualPublishService,
     ManualPublishTarget,
 )
+from application.publishing.douyin_selection_service import DouyinSelectionService
 from services.assistant.ai_assistant_service import AiAssistantError, AiAssistantService
-from services.integrations.telegram_remote_action_worker import TelegramRemoteActionWorker
+from services.video_ai.video_ai_service import VideoAiService
+from application.workflows.telegram_remote_action_worker import TelegramRemoteActionWorker
 
 
 APP_VERSION = "0.1.0"
@@ -104,8 +110,10 @@ class ApiContext:
         test_uploads: ProfileTestUploadService | None = None,
         extension_uploads: ExtensionUploadService | None = None,
         manual_publish: ManualPublishService | None = None,
+        douyin_selections: DouyinSelectionService | None = None,
         local_profiles: LocalProfileSetupService | None = None,
         assistant: AiAssistantService | None = None,
+        video_ai: VideoAiService | None = None,
     ):
         self.token = token
         self.jobs = job_store or VideoJobStore()
@@ -117,8 +125,12 @@ class ApiContext:
             self.profiles,
         )
         self.manual_publish = manual_publish or ManualPublishService(self.extension_uploads)
+        self.douyin_selections = douyin_selections or DouyinSelectionService(
+            self.manual_publish
+        )
         self.local_profiles = local_profiles or LocalProfileSetupService(self.profiles)
         self.assistant = assistant or AiAssistantService()
+        self.video_ai = video_ai or VideoAiService(self.assistant)
         self.telegram_remote_actions = TelegramRemoteActionWorker(self.runtime, self.manual_publish, self.jobs)
 
     def start_background_services(self) -> None:
@@ -222,8 +234,10 @@ def create_app(
     test_upload_service: ProfileTestUploadService | None = None,
     extension_upload_service: ExtensionUploadService | None = None,
     manual_publish_service: ManualPublishService | None = None,
+    douyin_selection_service: DouyinSelectionService | None = None,
     local_profile_setup_service: LocalProfileSetupService | None = None,
     ai_assistant_service: AiAssistantService | None = None,
+    video_ai_service: VideoAiService | None = None,
     start_background_services: bool = False,
 ) -> FastAPI:
     context = ApiContext(
@@ -234,8 +248,10 @@ def create_app(
         test_uploads=test_upload_service,
         extension_uploads=extension_upload_service,
         manual_publish=manual_publish_service,
+        douyin_selections=douyin_selection_service,
         local_profiles=local_profile_setup_service,
         assistant=ai_assistant_service,
+        video_ai=video_ai_service,
     )
     if start_background_services:
         context.start_background_services()
@@ -292,6 +308,7 @@ def create_app(
         runtime,
         settings,
         system,
+        video_ai,
     )
 
     hooks = sys.modules[__name__]
@@ -302,6 +319,7 @@ def create_app(
         APP_VERSION=APP_VERSION,
     )
     publishing.register_routes(app, context, protected)
+    video_ai.register_routes(app, context, protected)
     system.register_routes(app, protected, APP_VERSION=APP_VERSION)
     assistant.register_routes(
         app,

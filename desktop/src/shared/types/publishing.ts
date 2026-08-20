@@ -3,6 +3,8 @@ import type { PlatformKey } from "./profiles";
 export type Job = {
   profile_id: string;
   video_id: string;
+  batch_id?: string;
+  batch_name?: string;
   source_label?: string;
   source_key?: string;
   source_platform?: "douyin" | "tiktok";
@@ -55,8 +57,38 @@ export type PublishTarget = {
 export type PublishBatchResult = {
   ok: boolean;
   batch_id: string;
+  batch_name?: string;
   file_count: number;
   job_count: number;
   scheduled_count: number;
   immediate_count: number;
+};
+
+export type DouyinSelectionItem = {
+  video_id: string;
+  source_url: string;
+  description: string;
+  author_uid?: string;
+  author_nickname?: string;
+  create_time?: number;
+  duration_ms?: number;
+  thumbnail_url?: string;
+  selected_order: number;
+  status?: string;
+  last_error?: string;
+};
+
+export type DouyinSelectionSession = {
+  id: string;
+  source_url: string;
+  status: "selecting" | "ready" | "preparing" | "published" | "cancelled" | "expired" | string;
+  items: DouyinSelectionItem[];
+  selected_count: number;
+  focus_requested?: boolean;
+  created_at: string;
+  updated_at: string;
+  expires_at: string;
+  last_error?: string;
+  published_count?: number;
+  failed_count?: number;
 };

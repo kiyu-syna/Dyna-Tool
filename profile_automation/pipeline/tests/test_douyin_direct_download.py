@@ -21,10 +21,12 @@ from profile_automation.pipeline.downloads.douyin import (
     check_douyin_direct_download,
     download_douyin_video_direct,
 )
-from profile_automation.watchers.douyin_profile_monitor import (
+from profile_automation.watchers.douyin_console import (
     MAX_AWEME_IDS_PER_SCAN,
-    DouyinVideo,
     _analyze_aweme_payload,
+)
+from profile_automation.watchers.douyin_video import (
+    DouyinVideo,
     _parse_aweme,
     extract_douyin_download_urls,
 )

@@ -133,6 +133,42 @@ class LocalChromiumBrowserServiceTests(unittest.TestCase):
             self.assertNotIn("--disable-gpu", options["args"])
             self.assertNotIn("ignore_default_args", options)
 
+    def test_headless_uses_normal_chrome_user_agent_for_site_compatibility(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            profile["browser"]["headless"] = True
+            config = service.resolve_local_chromium_config(profile)
+
+            with patch.object(service, "_executable_major_version", return_value=150):
+                options = service.local_chromium_launch_options(
+                    config,
+                    resource_saving=True,
+                )
+
+            self.assertTrue(options["headless"])
+            self.assertEqual(
+                options["user_agent"],
+                (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/150.0.0.0 Safari/537.36"
+                ),
+            )
+            self.assertNotIn("Headless", options["user_agent"])
+
+    def test_offscreen_mode_keeps_browser_default_user_agent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            profile["browser"].update({"headless": False, "background": True})
+            config = service.resolve_local_chromium_config(profile)
+
+            options = service.local_chromium_launch_options(
+                config,
+                resource_saving=True,
+            )
+
+            self.assertNotIn("user_agent", options)
+
     def test_crash_output_is_summarized_in_vietnamese(self):
         noisy_error = """BrowserType.launch_persistent_context: Target page, context or browser has been closed
 Browser logs:

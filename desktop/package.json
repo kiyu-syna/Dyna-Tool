@@ -68,6 +68,10 @@
         "to": "backend"
       },
       {
+        "from": "build/playwright-driver",
+        "to": "playwright-driver"
+      },
+      {
         "from": "../image/dyna-app-icon.ico",
         "to": "image/dyna-app-icon.ico"
       }

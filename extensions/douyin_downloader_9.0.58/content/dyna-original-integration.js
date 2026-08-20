@@ -56,6 +56,7 @@
           <div class="dyna-video-info"><strong></strong><span></span></div>
           <div class="dyna-profile-list"><div class="dyna-loading">Đang kết nối Dyna…</div></div>
           <footer>
+            <button class="dyna-download-only" type="button">Chỉ tải video</button>
             <button class="dyna-cancel" type="button">Hủy</button>
             <button class="dyna-confirm" type="button" disabled>Tải và đăng</button>
           </footer>
@@ -70,6 +71,7 @@
       if (event.target.classList.contains("dyna-modal-backdrop")) closeModal();
     });
     root.querySelector(".dyna-confirm").addEventListener("click", startDownload);
+    root.querySelector(".dyna-download-only").addEventListener("click", startDownloadOnly);
     return root;
   }
 
@@ -149,6 +151,8 @@
     const quality = metadata.resolution ? ` · ${metadata.resolution}` : "";
     info.querySelector("span").textContent = `${metadata.description || "Không có mô tả"}${quality}`;
     root.querySelector(".dyna-confirm").disabled = true;
+    root.querySelector(".dyna-download-only").disabled = false;
+    root.querySelector(".dyna-download-only").textContent = "Chỉ tải video";
     root.querySelector(".dyna-profile-list").innerHTML = '<div class="dyna-loading">Đang kết nối Dyna…</div>';
     root.querySelector(".dyna-modal-backdrop").hidden = false;
     try {
@@ -232,6 +236,27 @@
     } finally {
       confirm.disabled = false;
       confirm.textContent = "Tải và đăng";
+    }
+  }
+
+  async function startDownloadOnly() {
+    if (!currentMetadata) return;
+    const metadata = currentMetadata;
+    const button = createRoot().querySelector(".dyna-download-only");
+    button.disabled = true;
+    button.textContent = "Đang tải…";
+    try {
+      await sendMessage({
+        type: "dyna:start-download-only",
+        metadata,
+      });
+      closeModal();
+      showToast("Chrome đã bắt đầu tải video vào thư mục Dyna.", "success");
+    } catch (error) {
+      showToast(error.message, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Chỉ tải video";
     }
   }
 

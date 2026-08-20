@@ -90,6 +90,37 @@
     );
   }
 
+  function getVideoUrls(video) {
+    if (!video || typeof video !== "object") return [];
+    const urls = [];
+    const add = (value) => {
+      const url = firstUrl(value);
+      if (url && !urls.includes(url)) urls.push(url);
+    };
+    const rates = video.bitRateList || video.bit_rate_list || video.bit_rate || [];
+    if (Array.isArray(rates)) {
+      const ordered = [...rates].sort((left, right) =>
+        resolutionValue(right) - resolutionValue(left) ||
+        numericValue(right?.dataSize || right?.data_size || right?.size) -
+          numericValue(left?.dataSize || left?.data_size || left?.size) ||
+        numericValue(right?.bitRate || right?.bit_rate) -
+          numericValue(left?.bitRate || left?.bit_rate)
+      );
+      for (const rate of ordered) {
+        add(rate?.playApi || rate?.play_api || rate?.playAddr || rate?.play_addr);
+      }
+    }
+    for (const value of [
+      video.playApi,
+      video.play_api,
+      video.playAddr,
+      video.play_addr,
+      video.downloadAddr,
+      video.download_addr,
+    ]) add(value);
+    return urls;
+  }
+
   function toResult(aweme, source) {
     if (!aweme || typeof aweme !== "object") return null;
 
@@ -99,6 +130,7 @@
       ? selectHighestResolutionRate(rates)
       : null;
     const downloadUrl = selectedRate?.url || getVideoUrl(video);
+    const downloadUrls = getVideoUrls(video);
     if (!downloadUrl) return null;
 
     const awemeId = String(aweme.awemeId || aweme.aweme_id || aweme.id || "");
@@ -129,7 +161,16 @@
       play_count: numericValue(statistics.play_count),
       author_uid: String(author.sec_uid || author.secUid || author.uid || ""),
       author_nickname: String(author.nickname || author.name || ""),
+      thumbnail_url: firstUrl(
+        video?.cover
+        || video?.originCover
+        || video?.origin_cover
+        || video?.dynamicCover
+        || video?.dynamic_cover
+        || aweme.cover
+      ),
       download_url: downloadUrl,
+      download_urls: downloadUrls,
       resolution: selectedRate?.resolution || resolutionValue(video),
       width: numericValue(selectedRate?.rate?.width || video?.width),
       height: numericValue(selectedRate?.rate?.height || video?.height),

@@ -11,7 +11,10 @@ from urllib.parse import unquote
 import core.config as config
 from core.utils import console, logger
 from profile_automation.pipeline.downloads.captions import get_tracking_download_path
-from profile_automation.watchers.douyin_profile_monitor import DouyinVideo, extract_douyin_download_urls
+from profile_automation.watchers.douyin_video import (
+    DouyinVideo,
+    extract_douyin_download_urls,
+)
 from services.browser.browser_profile_service import (
     connected_browser_profile as connected_gemlogin_profile,
     configure_lightweight_scan_page,

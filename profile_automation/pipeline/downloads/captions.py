@@ -4,7 +4,7 @@ import os
 from typing import Optional
 
 from core.utils import logger
-from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
+from profile_automation.watchers.douyin_video import DouyinVideo
 
 
 def get_tracking_download_path(profile_id: str, video_id: str) -> str:

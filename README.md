@@ -56,6 +56,19 @@ npm run build
 cd ..
 ```
 
+### Tùy chọn: Xử lý video AI
+
+Tab **VẬN HÀNH → Xử lý video AI** dùng `faster-whisper` để tạo phụ đề cục bộ.
+FFmpeg cần có trong `PATH` hoặc tại `C:\ffmpeg\bin`. Cài runtime nhận dạng bằng:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-video-ai.txt
+```
+
+Model nhận dạng được tải ở lần chạy đầu tiên và lưu trong thư mục dữ liệu runtime
+của Dyna. Nếu chưa cài runtime này, các chức năng chỉnh sửa phụ đề, làm mờ và
+chèn phụ đề bằng FFmpeg vẫn có thể sử dụng.
+
 ## Cấu hình bí mật
 
 Không commit token, mật khẩu hoặc file `.env` lên Git. Tạo file cấu hình local từ template:
@@ -154,3 +167,10 @@ git diff --cached --stat
 ## Lưu ý bảo mật
 
 Nếu một secret đã từng được commit hoặc push lên GitHub, việc thêm file vào `.gitignore` không xóa secret khỏi lịch sử Git. Hãy thu hồi/đổi secret đó ngay và làm sạch lịch sử repository nếu cần.
+
+## Thành phần mã nguồn mở
+
+Tính năng lồng tiếng tiếng Việt offline sử dụng
+[VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) của Phạm Nguyễn Ngọc Bảo,
+được phát hành theo giấy phép Apache-2.0. Model được tải về máy ở lần sử dụng
+đầu tiên và chạy bằng ONNX Runtime trên CPU.

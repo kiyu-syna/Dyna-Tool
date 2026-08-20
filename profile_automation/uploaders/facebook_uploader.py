@@ -9,7 +9,7 @@ import core.config as config
 from core.utils import console, logger
 from profile_automation.browser_utils import set_video_file_background
 from profile_automation.uploaders.base_uploader import BaseUploader
-from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
+from profile_automation.watchers.douyin_video import DouyinVideo
 from services.browser.browser_profile_service import (
     browser_profile_label,
     connected_browser_profile as connected_gemlogin_profile,

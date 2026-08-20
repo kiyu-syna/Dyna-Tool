@@ -177,6 +177,30 @@
     return { ok: true, downloadId, videoId, profileId };
   }
 
+  async function startDownloadOnly(message) {
+    const metadata = message.metadata || {};
+    const videoId = String(metadata.aweme_id || metadata.video_id || "").trim();
+    const url = String(metadata.download_url || "").trim();
+    if (!/^[A-Za-z0-9_-]+$/.test(videoId)) {
+      throw new Error("Không xác định được ID video Douyin.");
+    }
+    if (!/^https?:\/\//i.test(url)) {
+      throw new Error("Extension chưa lấy được link tải video.");
+    }
+
+    const requestedName = safePart(metadata.filename, `${videoId}.mp4`);
+    const filenamePart = requestedName.toLowerCase().endsWith(".mp4")
+      ? requestedName
+      : `${requestedName}.mp4`;
+    const downloadId = await downloadsStart({
+      url,
+      filename: `Dyna/Chi tai video/${filenamePart}`,
+      conflictAction: "uniquify",
+      saveAs: false,
+    });
+    return { ok: true, downloadId, videoId };
+  }
+
   async function processFinishedDownload(downloadId, state, downloadError = "") {
     if (handlingDownloads.has(downloadId)) return;
     handlingDownloads.add(downloadId);
@@ -231,8 +255,22 @@
           return dynaRequest("/health");
         case "dyna:get-profiles":
           return dynaRequest("/profiles");
+        case "dyna:get-active-selection":
+          return dynaRequest("/selections/active");
+        case "dyna:create-selection":
+          return dynaRequest(
+            "/selections",
+            { method: "POST", body: { source_url: message.sourceUrl || "" } },
+          );
+        case "dyna:complete-selection":
+          return dynaRequest(
+            `/selections/${encodeURIComponent(message.sessionId)}/complete`,
+            { method: "POST", body: { items: message.items || [] } },
+          );
         case "dyna:start-download":
           return startDynaDownload(message, sender);
+        case "dyna:start-download-only":
+          return startDownloadOnly(message);
         case "dyna:get-job-status":
           return dynaRequest(`/jobs/${encodeURIComponent(message.profileId)}/${encodeURIComponent(message.videoId)}`);
         case "dyna:retry-handoff": {

@@ -9,7 +9,7 @@ import core.config as config
 from core.utils import console, logger
 from profile_automation.browser_utils import set_video_file_background
 from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped
-from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
+from profile_automation.watchers.douyin_video import DouyinVideo
 from services.publishing.youtube_shorts_converter import (
     DEFAULT_CRF,
     DEFAULT_PRESET,

@@ -2,7 +2,7 @@ from fastapi import HTTPException
 
 from desktop_backend.schemas import BrowserRuntimeInstallPayload, LocalProfileCheckPayload, LocalProfileSetupPayload
 from services.browser.browser_runtime_service import BrowserRuntimeError
-from services.browser.local_profile_setup_service import LocalProfileSetupError
+from application.workflows.local_profile_setup_service import LocalProfileSetupError
 
 
 def register_routes(app, context, protected, *, hooks) -> None:

@@ -9,7 +9,14 @@ export const PLATFORM_LABELS: Record<PlatformKey, string> = {
 export type PublishItemDraft = {
   file_path: string;
   caption: string;
+  original_description?: string;
   scheduled_at: string;
+  source_type?: "local" | "douyin";
+  selection_id?: string;
+  video_id?: string;
+  source_url?: string;
+  thumbnail_url?: string;
+  author_nickname?: string;
 };
 
 export function fileName(filePath: string) {
@@ -70,6 +77,11 @@ export function defaultScheduleDate() {
   return localDateValue(new Date(Date.now() + 24 * 60 * 60 * 1000));
 }
 
+export function defaultBatchName(now = new Date()) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `Lô video ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+}
+
 export function parseScheduleTimes(value: string) {
   const matches = value
     .split(/[,;\s]+/)
@@ -77,6 +89,54 @@ export function parseScheduleTimes(value: string) {
     .filter(Boolean);
   const valid = matches.filter((item) => /^([01]\d|2[0-3]):[0-5]\d$/.test(item));
   return [...new Set(valid)].sort();
+}
+
+function minuteOfDay(value: string) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) return -1;
+  const [hour, minute] = value.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+export function buildRandomSchedule(
+  itemCount: number,
+  startDate: string,
+  videosPerDay: number,
+  fromTime: string,
+  toTime: string,
+  options: { now?: number; random?: () => number } = {},
+) {
+  if (itemCount <= 0) return [];
+  const fromMinute = minuteOfDay(fromTime);
+  const toMinute = minuteOfDay(toTime);
+  if (fromMinute < 0 || toMinute < 0 || toMinute <= fromMinute) return [];
+  const perDay = Math.max(1, Math.min(10, Math.trunc(videosPerDay || 1)));
+  if (toMinute - fromMinute + 1 < perDay) return [];
+  const start = new Date(`${startDate}T00:00:00`);
+  if (!Number.isFinite(start.getTime())) return [];
+
+  const random = options.random || Math.random;
+  const minimum = (options.now ?? Date.now()) + 120_000;
+  const maximum = (options.now ?? Date.now()) + 365 * 24 * 60 * 60 * 1000;
+  const values: string[] = [];
+  let dayOffset = 0;
+  while (values.length < itemCount && dayOffset <= 365) {
+    const candidates: number[] = [];
+    for (let minute = fromMinute; minute <= toMinute; minute += 1) {
+      const candidate = new Date(start);
+      candidate.setDate(start.getDate() + dayOffset);
+      candidate.setHours(Math.floor(minute / 60), minute % 60, 0, 0);
+      const timestamp = candidate.getTime();
+      if (timestamp > minimum && timestamp <= maximum) candidates.push(timestamp);
+    }
+    for (let index = candidates.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.max(0, Math.min(0.999999, random())) * (index + 1));
+      [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
+    }
+    const daily = candidates.slice(0, Math.min(perDay, itemCount - values.length)).sort((left, right) => left - right);
+    values.push(...daily.map((timestamp) => localDateTimeValue(new Date(timestamp))));
+    dayOffset += 1;
+  }
+  return values.length === itemCount ? values : [];
 }
 
 export function sourceFileName(job: Job) {

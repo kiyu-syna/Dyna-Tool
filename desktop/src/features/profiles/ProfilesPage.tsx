@@ -257,7 +257,7 @@ export default function ProfilesPage() {
                   />
                 </label>
                 <div className="full caption-source-options">
-                  <span>{l("Mô tả gốc theo nguồn", "Original caption by source", "按来源使用原始文案")}</span>
+                  <span>{l("Mô tả", "Caption", "文案")}</span>
                   <label className="switch-row">
                     <input
                       type="checkbox"
@@ -299,6 +299,42 @@ export default function ProfilesPage() {
                         "Douyin · 使用原始中文文案",
                       )}
                     </span>
+                  </label>
+                  <label className="switch-row">
+                    <input
+                      type="checkbox"
+                      checked={profile.caption_options?.telegram_use_custom_caption === true}
+                      onChange={(event) =>
+                        update({
+                          caption_options: {
+                            ...(profile.caption_options || {}),
+                            telegram_use_custom_caption: event.target.checked,
+                          },
+                        })
+                      }
+                    />
+                    <span>
+                      {l(
+                        "Dùng caption bạn nhập bằng cách gửi qua Telegram",
+                        "Use the caption you send through Telegram",
+                        "使用您通过 Telegram 发送的文案",
+                      )}
+                    </span>
+                  </label>
+                  <label className="switch-row">
+                    <input
+                      type="checkbox"
+                      checked={profile.caption_options?.telegram_pin_caption_message === true}
+                      onChange={(event) =>
+                        update({
+                          caption_options: {
+                            ...(profile.caption_options || {}),
+                            telegram_pin_caption_message: event.target.checked,
+                          },
+                        })
+                      }
+                    />
+                    <span>{l("Ghim tin nhắn", "Pin the message", "置顶消息")}</span>
                   </label>
                 </div>
                 <label className="switch-row">

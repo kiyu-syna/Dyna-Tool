@@ -4,8 +4,9 @@ from contextlib import ExitStack
 from datetime import datetime
 
 from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped
-from profile_automation.watchers.douyin_profile_monitor import DouyinVideo
-from core.utils import logger, console, notify_intervention
+from profile_automation.watchers.douyin_video import DouyinVideo
+from core.utils import logger, console
+from services.integrations.intervention_notifier import notify_intervention
 from profile_automation.browser_utils import is_captcha_present, set_video_file_background
 import core.config as config
 from services.browser.browser_profile_service import (

@@ -6,8 +6,8 @@ from typing import List, Optional
 from urllib.parse import parse_qs, quote, urlparse
 
 from core.utils import console, logger
-from profile_automation.tracking_sources import tracking_source_key
-from profile_automation.watchers.douyin_profile_monitor import ProfileState
+from application.tracking.sources import tracking_source_key
+from profile_automation.watchers.profile_state import ProfileState
 from services.browser.browser_profile_service import (
     connected_browser_profile,
     configure_lightweight_scan_page,

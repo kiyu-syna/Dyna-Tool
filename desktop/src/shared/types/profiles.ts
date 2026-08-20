@@ -118,6 +118,8 @@ export type ProfileConfig = {
   caption_options?: {
     tiktok_use_original_desc?: boolean;
     douyin_use_original_desc?: boolean;
+    telegram_use_custom_caption?: boolean;
+    telegram_pin_caption_message?: boolean;
   };
   tiktok?: {
     enabled?: boolean;

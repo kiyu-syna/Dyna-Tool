@@ -1,9 +1,13 @@
 import tempfile
 import unittest
+from unittest.mock import Mock
 
+from profile_automation.watchers.douyin_console import _analyze_aweme_payload
 from profile_automation.watchers.douyin_profile_monitor import (
     DouyinProfileMonitor,
-    _analyze_aweme_payload,
+    _decode_douyin_response,
+)
+from profile_automation.watchers.douyin_video import (
     _is_photo_aweme,
     _parse_aweme,
 )
@@ -115,6 +119,34 @@ class DouyinProfileMonitorTests(unittest.TestCase):
             )
 
         self.assertIs(monitor.profile_config, profile)
+
+    def test_empty_douyin_response_reports_http_details(self):
+        response = Mock(
+            status=200,
+            headers={
+                "content-type": "application/json",
+                "content-length": "0",
+            },
+        )
+        response.text.return_value = ""
+
+        with self.assertRaisesRegex(
+            ValueError,
+            r"response rá»—ng \(HTTP 200, content-type=application/json, content-length=0\)",
+        ):
+            _decode_douyin_response(response)
+
+    def test_valid_douyin_response_is_decoded(self):
+        response = Mock(
+            status=200,
+            headers={"content-type": "application/json"},
+        )
+        response.text.return_value = '{"status_code":0,"aweme_list":[]}'
+
+        data = _decode_douyin_response(response)
+
+        self.assertEqual(data["status_code"], 0)
+        self.assertEqual(data["aweme_list"], [])
 
 
 if __name__ == "__main__":
