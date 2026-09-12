@@ -201,6 +201,11 @@ class ProfileManagementService:
             profile = json.load(handle)
         if not isinstance(profile, dict):
             raise ValueError(f"Cấu hình Profile {profile_id} không hợp lệ.")
+        profile["initial_scan_mode"] = str(
+            profile.get("initial_scan_mode") or "skip_existing"
+        ).strip().casefold()
+        if profile["initial_scan_mode"] not in {"skip_existing", "process_latest"}:
+            profile["initial_scan_mode"] = "skip_existing"
         profile["browser"] = self._normalize_browser_config(profile.get("browser"))
         return self._with_decrypted_browser_secret(profile)
 
@@ -222,6 +227,7 @@ class ProfileManagementService:
             },
             "check_interval_minutes": 30,
             "processing_priority": 100,
+            "initial_scan_mode": "skip_existing",
             "browser": self._normalize_browser_config({}),
             "tracking_sources": [],
             "douyin": {
@@ -294,6 +300,12 @@ class ProfileManagementService:
         if not 0 <= processing_priority <= 1000:
             raise ValueError("Độ ưu tiên xử lý phải nằm trong khoảng 0 đến 1000.")
         profile["processing_priority"] = processing_priority
+        initial_scan_mode = str(
+            profile.get("initial_scan_mode") or "skip_existing"
+        ).strip().casefold()
+        if initial_scan_mode not in {"skip_existing", "process_latest"}:
+            raise ValueError("Chế độ quét lần đầu không hợp lệ.")
+        profile["initial_scan_mode"] = initial_scan_mode
         existing_browser: dict[str, Any] = {}
         existing_path = self._profile_path(profile_id)
         if existing_path.is_file():

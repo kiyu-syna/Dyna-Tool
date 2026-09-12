@@ -42,7 +42,7 @@ node_modules/
 dist/
 build/
 desktop/release*/
-runtime/
+/runtime/
 tmp/
 *.tsbuildinfo
 desktop/vite.config.js

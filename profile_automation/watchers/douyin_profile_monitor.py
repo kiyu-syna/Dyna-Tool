@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
+import time
 from contextlib import ExitStack
 
 from playwright.sync_api import Response
@@ -16,7 +18,6 @@ from profile_automation.watchers.douyin_video import DouyinVideo, _parse_aweme
 from profile_automation.watchers.profile_state import ProfileState
 from services.browser.browser_profile_service import (
     connected_browser_profile as connected_gemlogin_profile,
-    configure_lightweight_scan_page,
     create_background_page,
     is_browser_connection_error as is_gemlogin_connection_error,
 )
@@ -36,30 +37,50 @@ def _decode_douyin_response(response: Response) -> dict:
     text = response.text()
     status = int(getattr(response, "status", 0) or 0)
     headers = dict(getattr(response, "headers", {}) or {})
-    content_type = str(headers.get("content-type") or "?")
     content_length = str(headers.get("content-length") or len(text))
     if not text.strip():
         raise ValueError(
-            "Douyin tráº£ response rá»—ng "
-            f"(HTTP {status}, content-type={content_type}, content-length={content_length})."
+            f"Douyin trả dữ liệu rỗng (HTTP {status}, độ dài={content_length})."
         )
     try:
         data = json.loads(text)
     except json.JSONDecodeError as exc:
-        preview = " ".join(text[:160].split())
         raise ValueError(
-            "Douyin tráº£ response khÃ´ng pháº£i JSON "
-            f"(HTTP {status}, content-type={content_type}, body={preview!r})."
+            f"Douyin trả dữ liệu không đúng định dạng JSON (HTTP {status})."
         ) from exc
     if not isinstance(data, dict):
-        raise ValueError("Douyin tráº£ JSON khÃ´ng pháº£i object.")
+        raise ValueError("Dữ liệu JSON của Douyin không đúng cấu trúc.")
     return data
+
+
+_SENSITIVE_DOUYIN_QUERY_KEYS = (
+    "msToken",
+    "a_bogus",
+    "x-secsdk-web-signature",
+    "verifyFp",
+    "fp",
+    "uifid",
+)
+
+
+def _loggable_douyin_url(url: str) -> str:
+    result = str(url or "")
+    for key in _SENSITIVE_DOUYIN_QUERY_KEYS:
+        result = re.sub(
+            rf"([?&]{re.escape(key)}=)[^&]*",
+            rf"\1<redacted>",
+            result,
+            flags=re.IGNORECASE,
+        )
+    return result
 
 
 class DouyinProfileMonitor:
     """Collect videos from one Douyin source through intercepted responses."""
 
     AWEME_POST_PATTERN = "/aweme/v1/web/aweme/post/"
+    REJECTED_RESPONSE_GRACE_SECONDS = 5.0
+    FIRST_PAGE_NAVIGATION_ATTEMPTS = 2
 
     def __init__(
         self,
@@ -82,29 +103,27 @@ class DouyinProfileMonitor:
         self.profile_config = profile_config or {}
         resolved_source_key = source_key or tracking_source_key("douyin", sec_uid)
         self.state = ProfileState(profile_id, resolved_source_key, state_dir)
-        self._captured_responses: list[dict] = []
+        self._captured_responses: list[Response] = []
         self._capture_lock = threading.Lock()
+        self._last_capture_http_statuses: list[int] = []
+        self.last_scan_succeeded = False
 
     def _on_response(self, response: Response) -> None:
-        if self.AWEME_POST_PATTERN not in response.url:
+        url = str(getattr(response, "url", "") or "")
+        if self.AWEME_POST_PATTERN not in url:
             return
+        with self._capture_lock:
+            self._captured_responses.append(response)
+
+    @staticmethod
+    def _remove_response_listener(page, listener) -> None:
         try:
-            logger.info("[BẮT GÓI] Phát hiện response: %s", response.url[:120])
-            text = response.text()
-            if not text:
-                return
-            data = json.loads(text)
-            aweme_list = data.get("aweme_list", [])
-            logger.info(
-                "[BẮT GÓI] status=%s, aweme=%s",
-                data.get("status_code"),
-                len(aweme_list),
-            )
-            if data.get("status_code") == 0 and "aweme_list" in data:
-                with self._capture_lock:
-                    self._captured_responses.append(data)
-        except Exception as exc:
-            logger.error("[LỖI BẮT GÓI] Không phân tích được JSON: %s", exc)
+            page.remove_listener("response", listener)
+        except Exception:
+            try:
+                page.off("response", listener)
+            except Exception:
+                pass
 
     def _capture_page(
         self,
@@ -112,31 +131,138 @@ class DouyinProfileMonitor:
         profile_url: str,
         page_count: int,
         timeout_per_page: float,
+        reload_page: bool = False,
     ) -> tuple[Response, dict] | None:
+        with self._capture_lock:
+            self._captured_responses.clear()
+        self._last_capture_http_statuses = []
+        response_listener = self._on_response
+        page.on("response", response_listener)
+        deadline = time.monotonic() + timeout_per_page
+        next_response_index = 0
+        seen_statuses: list[int] = []
+        rejected_response_deadline: float | None = None
         try:
-            with page.expect_response(
-                lambda response: self.AWEME_POST_PATTERN in response.url,
-                timeout=int(timeout_per_page * 1000),
-            ) as response_info:
-                if page_count == 1:
+            if reload_page:
+                try:
+                    page.goto(profile_url, wait_until="commit", timeout=15000)
+                except Exception as exc:
+                    logger.debug(
+                        "[Profile %s] navigate lại profile: %s",
+                        self.profile_id,
+                        exc,
+                    )
+            elif page_count == 1:
+                try:
+                    page.goto(profile_url, wait_until="commit", timeout=15000)
+                except Exception as exc:
+                    logger.debug("[Profile %s] goto: %s", self.profile_id, exc)
+            else:
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+
+            while True:
+                with self._capture_lock:
+                    pending = self._captured_responses[next_response_index:]
+                    next_response_index = len(self._captured_responses)
+
+                for response in pending:
+                    status = int(getattr(response, "status", 0) or 0)
+                    seen_statuses.append(status)
+                    self._last_capture_http_statuses.append(status)
                     try:
-                        page.goto(profile_url, wait_until="commit", timeout=15000)
+                        data = _decode_douyin_response(response)
                     except Exception as exc:
-                        logger.debug("[Profile %s] goto: %s", self.profile_id, exc)
-                else:
-                    page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            response = response_info.value
-            return response, _decode_douyin_response(response)
+                        if is_gemlogin_connection_error(exc, self.profile_config):
+                            raise
+                        logger.warning(
+                            "[Profile %s] Douyin trả dữ liệu không đọc được (HTTP %s): %s",
+                            self.profile_id,
+                            status,
+                            exc,
+                        )
+                        if rejected_response_deadline is None:
+                            rejected_response_deadline = (
+                                time.monotonic()
+                                + self.REJECTED_RESPONSE_GRACE_SECONDS
+                            )
+                        continue
+
+                    aweme_list = data.get("aweme_list", [])
+                    if (
+                        status == 200
+                        and data.get("status_code") == 0
+                        and "aweme_list" in data
+                        and isinstance(aweme_list, list)
+                    ):
+                        if len(seen_statuses) > 1:
+                            logger.info(
+                                "[Profile %s] Đã nhận dữ liệu Douyin hợp lệ sau %s lần phản hồi.",
+                                self.profile_id,
+                                len(seen_statuses),
+                            )
+                        return response, data
+
+                    try:
+                        body_preview = " ".join(response.text()[:500].split())
+                    except Exception:
+                        body_preview = "<không đọc được body>"
+                    logger.warning(
+                        "[Profile %s] Bỏ qua dữ liệu Douyin không hợp lệ "
+                        "(HTTP %s, mã trạng thái=%s).",
+                        self.profile_id,
+                        status,
+                        data.get("status_code"),
+                    )
+                    logger.debug(
+                        "[Profile %s] Nội dung phản hồi Douyin bị bỏ qua: %r",
+                        self.profile_id,
+                        body_preview,
+                    )
+                    if rejected_response_deadline is None:
+                        rejected_response_deadline = (
+                            time.monotonic()
+                            + self.REJECTED_RESPONSE_GRACE_SECONDS
+                        )
+
+                effective_deadline = min(
+                    deadline,
+                    rejected_response_deadline or deadline,
+                )
+                remaining = effective_deadline - time.monotonic()
+                if remaining <= 0:
+                    break
+                page.wait_for_timeout(min(250, max(1, int(remaining * 1000))))
+
+            if not seen_statuses:
+                logger.warning(
+                    "[Profile %s] Không nhận được dữ liệu video Douyin ở trang %s "
+                    "trong %.1f giây.",
+                    self.profile_id,
+                    page_count,
+                    timeout_per_page,
+                )
+            else:
+                logger.warning(
+                    "[Profile %s] Douyin đã phản hồi %s lần ở trang %s "
+                    "nhưng không có dữ liệu video hợp lệ (HTTP=%s).",
+                    self.profile_id,
+                    len(seen_statuses),
+                    page_count,
+                    seen_statuses,
+                )
+            return None
         except Exception as exc:
             if is_gemlogin_connection_error(exc, self.profile_config):
                 raise
             logger.warning(
-                "[Profile %s] Không bắt được gói tin trang %s: %s",
+                "[Profile %s] Lỗi trong lúc chờ dữ liệu Douyin ở trang %s: %s",
                 self.profile_id,
                 page_count,
                 exc,
             )
             return None
+        finally:
+            self._remove_response_listener(page, response_listener)
 
     def _parse_page(
         self,
@@ -163,14 +289,19 @@ class DouyinProfileMonitor:
         pages_to_fetch: int = 1,
         timeout_per_page: float = 20.0,
     ) -> list[DouyinVideo]:
+        self.last_scan_succeeded = False
         all_videos: list[DouyinVideo] = []
+        raw_aweme_count = 0
+        successful_pages = 0
         profile_url = f"https://www.douyin.com/user/{self.sec_uid}"
-
         with connected_gemlogin_profile(
             self.gemlogin_profile_id,
             self.api_url,
             profile_config=self.profile_config,
-            resource_saving=True,
+            # Preserve Chrome's normal network/runtime behavior. Douyin signs
+            # this request in-page, so browser-wide resource saving and request
+            # interception can invalidate a request that DevTools accepts.
+            resource_saving=False,
             close_profile_on_exit=True,
         ) as browser, ExitStack() as page_cleanup:
             if not browser.contexts:
@@ -182,7 +313,6 @@ class DouyinProfileMonitor:
             context = browser.contexts[0]
             page = create_background_page(browser, context)
             page_cleanup.callback(_close_page_quietly, page)
-            configure_lightweight_scan_page(page)
             console.print(
                 f"[cyan]🔍 [Profile {self.profile_id}] Mở profile: {profile_url}[/]"
             )
@@ -191,19 +321,41 @@ class DouyinProfileMonitor:
                 page_count = 0
                 while True:
                     page_count += 1
-                    captured = self._capture_page(
-                        page,
-                        profile_url,
-                        page_count,
-                        timeout_per_page,
+                    navigation_attempts = (
+                        self.FIRST_PAGE_NAVIGATION_ATTEMPTS
+                        if page_count == 1
+                        else 1
                     )
+                    captured = None
+                    for navigation_attempt in range(1, navigation_attempts + 1):
+                        captured = self._capture_page(
+                            page,
+                            profile_url,
+                            page_count,
+                            timeout_per_page,
+                            reload_page=navigation_attempt > 1,
+                        )
+                        if captured is not None:
+                            break
+                        if 403 not in self._last_capture_http_statuses:
+                            break
+                        if navigation_attempt < navigation_attempts:
+                            logger.warning(
+                                "[Profile %s] Douyin từ chối truy cập (HTTP 403), "
+                                "đang tải lại trang (lần %s/%s).",
+                                self.profile_id,
+                                navigation_attempt,
+                                navigation_attempts,
+                            )
                     if captured is None:
                         break
                     response, data = captured
                     aweme_list = data.get("aweme_list", [])
+                    successful_pages += 1
+                    raw_aweme_count += len(aweme_list)
                     if data.get("status_code") != 0 or not aweme_list:
                         logger.warning(
-                            "[Profile %s] Response không có video.",
+                            "[Profile %s] Douyin không trả về video nào.",
                             self.profile_id,
                         )
                         break
@@ -231,12 +383,29 @@ class DouyinProfileMonitor:
                         break
             except Exception as exc:
                 logger.exception(
-                    "[Profile %s] Lỗi fetch_latest_videos: %s",
+                    "[Profile %s] Lỗi khi lấy danh sách video Douyin: %s",
                     self.profile_id,
                     exc,
                 )
             finally:
                 _close_page_quietly(page)
+                self.last_scan_succeeded = successful_pages > 0
+                if successful_pages:
+                    logger.info(
+                        "[Profile %s] QUÉT DOUYIN THÀNH CÔNG: nhận %s mục | "
+                        "lấy %s video hợp lệ | không đưa vào danh sách %s | trang %s.",
+                        self.profile_id,
+                        raw_aweme_count,
+                        len(all_videos),
+                        max(0, raw_aweme_count - len(all_videos)),
+                        successful_pages,
+                    )
+                else:
+                    logger.warning(
+                        "[Profile %s] QUÉT DOUYIN KHÔNG THÀNH CÔNG: "
+                        "không lấy được trang dữ liệu hợp lệ.",
+                        self.profile_id,
+                    )
                 logger.info("[Profile %s] Đã đóng tab quét Douyin.", self.profile_id)
 
         console.print(
@@ -248,22 +417,46 @@ class DouyinProfileMonitor:
         is_first_run = not self.state.path.exists()
         if is_first_run:
             console.print(
-                f"[yellow]⚠️ [Profile {self.profile_id}] Đang tạo baseline...[/]"
+                f"[yellow]⚠️ [Profile {self.profile_id}] Đang tạo mốc ban đầu...[/]"
             )
             all_videos = self.fetch_latest_videos(pages_to_fetch=3)
             for video in all_videos:
                 self.state.mark_seen(video.aweme_id, video.create_time)
+            logger.info(
+                "[Profile %s] KẾT QUẢ QUÉT DOUYIN: tạo mốc ban đầu với %s video | "
+                "video mới đưa vào xử lý 0.",
+                self.profile_id,
+                len(all_videos),
+            )
             return []
 
         videos = self.fetch_latest_videos(pages_to_fetch=1)
-        new_videos = [
-            video
-            for video in videos
-            if self.state.is_new_video(video.aweme_id, video.create_time)
-            and video.like_count >= self.min_likes
-            and video.duration_seconds <= self.max_duration_sec
-        ]
+        already_seen_count = 0
+        below_likes_count = 0
+        over_duration_count = 0
+        new_videos: list[DouyinVideo] = []
+        for video in videos:
+            if not self.state.is_new_video(video.aweme_id, video.create_time):
+                already_seen_count += 1
+                continue
+            if video.like_count < self.min_likes:
+                below_likes_count += 1
+                continue
+            if video.duration_seconds > self.max_duration_sec:
+                over_duration_count += 1
+                continue
+            new_videos.append(video)
         new_videos.sort(key=lambda video: video.create_time)
+        logger.info(
+            "[Profile %s] KẾT QUẢ QUÉT DOUYIN: kiểm tra %s video | MỚI %s | "
+            "đã xử lý %s | loại do thiếu lượt thích %s | loại do quá dài %s.",
+            self.profile_id,
+            len(videos),
+            len(new_videos),
+            already_seen_count,
+            below_likes_count,
+            over_duration_count,
+        )
         if new_videos:
             console.print(
                 f"[bold green]🆕 [Profile {self.profile_id}] "
@@ -276,7 +469,7 @@ class DouyinProfileMonitor:
         latest_count: int | None = None,
     ) -> list[DouyinVideo] | None:
         videos = self.fetch_latest_videos(pages_to_fetch=1)
-        if not videos:
+        if not self.last_scan_succeeded:
             return None
         newest_videos = sorted(
             videos,

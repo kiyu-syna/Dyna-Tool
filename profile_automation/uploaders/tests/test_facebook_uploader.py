@@ -1,8 +1,10 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from profile_automation.uploaders.facebook_uploader import (
     _click_visible_text_button,
+    _facebook_publish_confirmation_signal,
+    _wait_for_facebook_publish_confirmation,
     _wait_for_reel_safe,
 )
 
@@ -71,6 +73,43 @@ class FacebookUploaderTests(unittest.TestCase):
         )
 
         self.assertFalse(clicked)
+
+    def test_publish_confirmation_accepts_visible_success_text(self):
+        page = Mock()
+
+        def get_by_text(text, exact=False):
+            item = Mock()
+            item.is_visible.return_value = text == "View reel"
+            matches = Mock()
+            matches.count.return_value = 1
+            matches.nth.return_value = item
+            return matches
+
+        page.get_by_text.side_effect = get_by_text
+        page.url = "https://www.facebook.com/me"
+
+        signal = _facebook_publish_confirmation_signal(page)
+
+        self.assertEqual(signal, 'text="View reel"')
+
+    def test_publish_confirmation_wait_polls_until_signal_appears(self):
+        page = Mock()
+        with (
+            patch(
+                "profile_automation.uploaders.facebook_uploader._facebook_publish_confirmation_signal",
+                side_effect=["", 'text="Reel published"'],
+            ) as confirmation,
+            patch(
+                "profile_automation.uploaders.facebook_uploader.time.monotonic",
+                side_effect=[10, 10],
+            ),
+            patch("profile_automation.uploaders.facebook_uploader.time.sleep") as sleep,
+        ):
+            signal = _wait_for_facebook_publish_confirmation(page)
+
+        self.assertEqual(signal, 'text="Reel published"')
+        self.assertEqual(confirmation.call_count, 2)
+        sleep.assert_called_once_with(2)
 
 
 if __name__ == "__main__":

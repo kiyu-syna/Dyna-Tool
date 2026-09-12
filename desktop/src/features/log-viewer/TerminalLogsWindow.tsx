@@ -1,8 +1,9 @@
-import { Search, Terminal } from "lucide-react";
+import { Search, Terminal, Trash2 } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePolling } from "../../shared/hooks/usePolling";
 import { LanguageProvider, languageTag, normalizeLanguage, useI18n } from "../../shared/i18n";
+import { request } from "../../shared/api/client";
 import type { LogSnapshot } from "../../shared/types";
 import "./log-viewer.css";
 
@@ -37,12 +38,13 @@ export default function TerminalLogsWindow() {
   );
 }
 
-function TerminalLogs() {
+export function TerminalLogs({ embedded = false }: { embedded?: boolean }) {
   const { locale, l } = useI18n();
   const logs = usePolling<LogSnapshot>(LOG_PATH, 2000, LOG_POLLING);
   const [scope, setScope] = useState("all");
   const [search, setSearch] = useState("");
   const [levels, setLevels] = useState<string[]>(["INFO", "WARNING", "ERROR", "CRITICAL"]);
+  const [clearing, setClearing] = useState(false);
   const streamRef = useRef<HTMLDivElement | null>(null);
   const pinnedToBottom = useRef(true);
 
@@ -82,12 +84,51 @@ function TerminalLogs() {
     setLevels((current) => (current.includes(level) ? current.filter((item) => item !== level) : [...current, level]));
   }
 
+  async function clearLogs() {
+    if (
+      !window.confirm(
+        l(
+          "Xóa toàn bộ nhật ký hiện tại? Thao tác này không thể hoàn tác.",
+          "Clear all current logs? This action cannot be undone.",
+          "清除当前所有日志？此操作无法撤销。",
+        ),
+      )
+    )
+      return;
+
+    setClearing(true);
+    try {
+      await request("/api/logs", { method: "DELETE" });
+      if (logs.data) {
+        logs.setData({
+          ...logs.data,
+          lines: [],
+          entries: [],
+          total: 0,
+          cursor: "",
+          reset: true,
+          updated_at: new Date().toISOString(),
+        });
+      }
+      await logs.refresh();
+    } catch (caught) {
+      window.alert(
+        l("Không thể xóa nhật ký: ", "Could not clear logs: ", "无法清除日志：") +
+          (caught instanceof Error ? caught.message : String(caught)),
+      );
+    } finally {
+      setClearing(false);
+    }
+  }
+
   return (
-    <main className="terminal-log-window">
-      <div className="terminal-native-titlebar">
-        <Terminal size={14} />
-        <span>Dyna Logs</span>
-      </div>
+    <main className={`terminal-log-window${embedded ? " embedded" : ""}`}>
+      {!embedded && (
+        <div className="terminal-native-titlebar">
+          <Terminal size={14} />
+          <span>Dyna Logs</span>
+        </div>
+      )}
       <section className="terminal-toolbar">
         <select
           value={scope}
@@ -121,6 +162,18 @@ function TerminalLogs() {
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          className="terminal-tool-button danger"
+          onClick={() => void clearLogs()}
+          disabled={clearing}
+          title={l("Xóa toàn bộ nhật ký", "Clear all logs", "清除所有日志")}
+        >
+          <Trash2 size={13} />
+          {clearing
+            ? l("Đang xóa...", "Clearing...", "正在清除...")
+            : l("Xóa log", "Clear logs", "清除日志")}
+        </button>
       </section>
       <div
         className="terminal-stream"
@@ -138,12 +191,12 @@ function TerminalLogs() {
           <div className="terminal-virtual-list" style={{ height: rowVirtualizer.getTotalSize() }}>
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const entry = filtered[virtualRow.index];
+              const uploadBoundary =
+                entry.message.includes("BẮT ĐẦU ĐĂNG") || entry.message.includes("KẾT THÚC ĐĂNG");
               return (
                 <div
                   key={entry.id}
-                  ref={rowVirtualizer.measureElement}
-                  data-index={virtualRow.index}
-                  className={`terminal-line terminal-virtual-row ${entry.level.toLowerCase()}`}
+                  className={`terminal-line terminal-virtual-row ${entry.level.toLowerCase()}${uploadBoundary ? " upload-boundary" : ""}`}
                   style={{ transform: `translateY(${virtualRow.start}px)` }}
                 >
                   <time>{entry.time || "--:--:--"}</time>

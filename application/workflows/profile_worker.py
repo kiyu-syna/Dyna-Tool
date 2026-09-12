@@ -313,18 +313,18 @@ class ProfileWorker:
                 media_info,
             )
             logger.info(
-                "[Profile %s] Video %s hợp lệ: %sx%s, %.1fs, audio=%s, %s byte.",
+                "[Profile %s] Video %s hợp lệ: %sx%s, %.1f giây, âm thanh=%s, %s byte.",
                 self.profile_id,
                 video.aweme_id,
                 media_info["width"],
                 media_info["height"],
                 media_info["duration_seconds"],
-                media_info["has_audio"],
+                "có" if media_info["has_audio"] else "không",
                 media_info["file_size"],
             )
             return None
         except (FFprobeNotFoundError, InvalidVideoFileError) as exc:
-            error = f"Kiểm tra file video thất bại: {exc}"
+            error = f"Kiểm tra tệp video thất bại: {exc}"
             if isinstance(exc, InvalidVideoFileError) and discard_invalid_download(
                 video_path
             ):
@@ -423,7 +423,7 @@ class ProfileWorker:
             if cleanup_completed_download(video_path):
                 self.job_store.set_download_path(self.profile_id, video.aweme_id, "")
             else:
-                logger.debug("Không thể xóa file video đã hoàn tất %s.", video_path)
+                logger.debug("Không thể xóa tệp video đã hoàn tất %s.", video_path)
             return {"status": "completed", "results": results}
 
         failed_platforms = [
@@ -537,7 +537,7 @@ class ProfileWorker:
             return {"status": "stopped", "results": {}}
         except InterruptedError:
             logger.info(
-                "[Profile %s] Dừng chờ caption Telegram cho video %s.",
+                "[Profile %s] Dừng chờ mô tả Telegram cho video %s.",
                 self.profile_id,
                 video.aweme_id,
             )

@@ -76,3 +76,9 @@ class ProfileState:
     def is_new_video(self, video_id: str, _create_time: int) -> bool:
         with self._lock:
             return video_id not in set(self._data.get("seen_ids", []))
+
+    def touch(self) -> None:
+        """Record a successful comparison even when it found no new video."""
+        with self._lock:
+            self._data["last_check"] = datetime.now().isoformat()
+            self._save()

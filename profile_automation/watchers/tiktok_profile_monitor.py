@@ -253,6 +253,7 @@ class TikTokProfileMonitor:
         self.profile_config = profile_config or {}
         resolved_source_key = source_key or _default_source_key(self.sec_uid, self.unique_id)
         self.state = ProfileState(self.profile_id, resolved_source_key, state_dir)
+        self.last_scan_succeeded = False
 
     def _matches_post_response(self, response) -> bool:
         url = str(getattr(response, "url", "") or "")
@@ -279,11 +280,13 @@ class TikTokProfileMonitor:
         pages_to_fetch: int = 1,
         timeout_per_page: float = 20.0,
     ) -> List[TikTokVideo]:
+        self.last_scan_succeeded = False
         if not self.unique_id:
             raise ValueError("Thiếu TikTok unique_id để mở trang profile nguồn.")
 
         all_videos: List[TikTokVideo] = []
         known_ids = set()
+        successful_pages = 0
         profile_url = f"https://www.tiktok.com/@{quote(self.unique_id, safe='._-')}"
 
         with connected_browser_profile(
@@ -294,7 +297,7 @@ class TikTokProfileMonitor:
             close_profile_on_exit=True,
         ) as browser, ExitStack() as page_cleanup:
             if not browser.contexts:
-                logger.error("[Profile %s] Browser không có context để quét TikTok.", self.profile_id)
+                logger.error("[Profile %s] Trình duyệt không có phiên để quét TikTok.", self.profile_id)
                 return []
 
             context = browser.contexts[0]
@@ -325,7 +328,7 @@ class TikTokProfileMonitor:
                         if is_browser_connection_error(exc, self.profile_config):
                             raise
                         logger.warning(
-                            "[Profile %s] Không bắt được item_list trang %s: %s",
+                            "[Profile %s] Không lấy được danh sách video ở trang %s: %s",
                             self.profile_id,
                             page_count,
                             exc,
@@ -342,6 +345,8 @@ class TikTokProfileMonitor:
                         )
                         break
 
+                    successful_pages += 1
+
                     pinned_count = sum(1 for item in items if _is_pinned_item(item))
                     photo_count = sum(1 for item in items if _is_photo_item(item))
                     parsed = parse_tiktok_item_list(data, limit=0)
@@ -354,7 +359,7 @@ class TikTokProfileMonitor:
                             break
 
                     logger.info(
-                        "[Profile %s] TikTok trang %s: %s item, bỏ %s ghim, bỏ %s photo, lấy %s video.",
+                        "[Profile %s] TikTok trang %s: %s mục, bỏ %s video ghim, bỏ %s bài ảnh, lấy %s video.",
                         self.profile_id,
                         page_count,
                         len(items),
@@ -372,6 +377,7 @@ class TikTokProfileMonitor:
             finally:
                 _close_page_quietly(page)
 
+        self.last_scan_succeeded = successful_pages > 0
         return all_videos[:MAX_ITEM_IDS_PER_SCAN]
 
     def get_new_videos(self) -> List[TikTokVideo]:
@@ -381,8 +387,8 @@ class TikTokProfileMonitor:
             for video in videos:
                 self.state.mark_seen(video.aweme_id, video.create_time)
             console.print(
-                f"[green]✅ [Profile {self.profile_id}] Đã tạo baseline TikTok với "
-                f"{len(videos)} video thường; photo và video ghim đã bỏ qua.[/]"
+                f"[green]✅ [Profile {self.profile_id}] Đã tạo mốc ban đầu TikTok với "
+                f"{len(videos)} video thường; bài ảnh và video ghim đã được bỏ qua.[/]"
             )
             return []
 
@@ -405,7 +411,7 @@ class TikTokProfileMonitor:
         latest_count: Optional[int] = None,
     ) -> Optional[List[TikTokVideo]]:
         videos = self.fetch_latest_videos(pages_to_fetch=1)
-        if not videos:
+        if not self.last_scan_succeeded:
             return None
 
         newest_videos = sorted(videos, key=lambda video: video.create_time, reverse=True)

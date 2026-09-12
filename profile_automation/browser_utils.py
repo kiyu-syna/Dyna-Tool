@@ -108,13 +108,13 @@ def set_video_file_background(page, video_path, trigger_file_chooser=None, timeo
                 timeout_ms=timeout_ms,
             ):
                 logger.info(
-                    "Da gan video bang duong dan cuc bo qua CDP: %s",
+                    "Đã gắn video bằng đường dẫn nội bộ qua CDP: %s",
                     absolute_path,
                 )
                 return
         except Exception as exc:
             cdp_error = exc
-            logger.debug("Gan video qua CDP that bai, thu Playwright: %s", exc)
+            logger.debug("Gắn video qua CDP thất bại, đang thử Playwright: %s", exc)
 
     chooser_error = None
     if trigger_file_chooser is not None:
@@ -125,7 +125,7 @@ def set_video_file_background(page, video_path, trigger_file_chooser=None, timeo
             return
         except Exception as exc:
             chooser_error = exc
-            logger.debug("Khong bat duoc file chooser, thu gan truc tiep input file: %s", exc)
+            logger.debug("Không mở được hộp chọn tệp, đang thử gắn trực tiếp: %s", exc)
 
     file_inputs = page.locator('input[type="file"]')
     for index in range(file_inputs.count()):
@@ -137,15 +137,15 @@ def set_video_file_background(page, video_path, trigger_file_chooser=None, timeo
             file_input.set_input_files(absolute_path)
             return
         except Exception as exc:
-            logger.debug("Khong the gan video vao input file thu %s: %s", index, exc)
+            logger.debug("Không thể gắn video vào ô chọn tệp thứ %s: %s", index, exc)
 
     try:
         if _set_video_file_via_cdp(page, absolute_path, timeout_ms=timeout_ms):
-            logger.info("Da gan video bang input file cuc bo qua CDP: %s", absolute_path)
+            logger.info("Đã gắn video vào ô chọn tệp nội bộ qua CDP: %s", absolute_path)
             return
     except Exception as exc:
         cdp_error = exc
-        logger.debug("Gan video qua input file CDP that bai: %s", exc)
+        logger.debug("Gắn video vào ô chọn tệp qua CDP thất bại: %s", exc)
 
     if cdp_error is not None:
         raise RuntimeError(

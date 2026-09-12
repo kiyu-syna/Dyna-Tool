@@ -9,7 +9,10 @@ import "@fontsource/inter/vietnamese-700.css";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { installTauriBridge } from "./shared/platform/tauriBridge";
 import "./styles/index.css";
+
+installTauriBridge();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

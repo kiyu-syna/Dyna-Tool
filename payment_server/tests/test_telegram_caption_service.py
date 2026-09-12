@@ -10,6 +10,10 @@ class TelegramCaptionServiceTests(unittest.IsolatedAsyncioTestCase):
         self.service = telegram_bot_service.TelegramBotService()
         self.db = SimpleNamespace(
             telegram_links=SimpleNamespace(find_one=AsyncMock()),
+            telegram_link_codes=SimpleNamespace(
+                find_one=AsyncMock(),
+                delete_many=AsyncMock(),
+            ),
             telegram_caption_requests=SimpleNamespace(
                 find_one=AsyncMock(),
                 insert_one=AsyncMock(),
@@ -91,6 +95,31 @@ class TelegramCaptionServiceTests(unittest.IsolatedAsyncioTestCase):
 
         self.db.telegram_caption_requests.find_one.assert_not_awaited()
         self.db.telegram_caption_requests.update_one.assert_not_awaited()
+
+    async def test_start_relinks_chat_from_previous_account(self):
+        self.db.telegram_link_codes.find_one.return_value = {
+            "username": "new-account",
+        }
+        self.db.telegram_links.find_one.return_value = {
+            "username": "old-account",
+            "chat_id": "12345",
+        }
+        self.db.telegram_links.delete_one = AsyncMock()
+        self.db.telegram_links.update_one = AsyncMock()
+        self.service._api = AsyncMock(return_value=True)
+
+        with patch.object(telegram_bot_service, "get_db", return_value=self.db):
+            await self.service._handle_message(
+                {
+                    "text": "/start LINKCODE",
+                    "chat": {"id": "12345", "title": "Test"},
+                    "from": {"first_name": "Tester"},
+                }
+            )
+
+        self.db.telegram_links.delete_one.assert_awaited_once_with({"chat_id": "12345"})
+        self.db.telegram_links.update_one.assert_awaited_once()
+        self.assertIn("Đã liên kết", self.service._api.await_args.args[1]["text"])
 
 
 if __name__ == "__main__":

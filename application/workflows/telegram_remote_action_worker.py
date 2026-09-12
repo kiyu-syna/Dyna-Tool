@@ -37,7 +37,7 @@ class TelegramRemoteActionWorker:
                 if request:
                     self._process(request)
             except Exception:
-                logger.exception("Telegram remote-action worker failed")
+                logger.exception("Tiến trình nhận lệnh từ Telegram gặp lỗi")
             threading.Event().wait(POLL_SECONDS)
 
     def _process(self, request: dict[str, Any]) -> None:
@@ -76,6 +76,6 @@ class TelegramRemoteActionWorker:
                     raise ValueError("Thao tác Telegram không được hỗ trợ")
                 results.append({"type": action_type, "ok": True, "error": ""})
             except Exception as exc:
-                logger.warning("Telegram action failed type=%s: %s", action_type, exc)
+                logger.warning("Không thực hiện được lệnh Telegram loại %s: %s", action_type, exc)
                 results.append({"type": action_type or "unknown", "ok": False, "error": str(exc)[:800]})
         telegram_service.complete_remote_action(request_id, results)

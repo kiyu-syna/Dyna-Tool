@@ -60,6 +60,18 @@ class ProfileManagementServiceTests(unittest.TestCase):
         self.assertFalse(saved["caption_options"]["tiktok_use_original_desc"])
         self.assertFalse(saved["caption_options"]["douyin_use_original_desc"])
 
+    def test_initial_scan_mode_defaults_and_validation(self):
+        profile = self._profile("1")
+        self.assertEqual(profile["initial_scan_mode"], "skip_existing")
+
+        profile["initial_scan_mode"] = "process_latest"
+        saved = self.service.save("1", profile)
+        self.assertEqual(saved["initial_scan_mode"], "process_latest")
+
+        profile["initial_scan_mode"] = "invalid"
+        with self.assertRaisesRegex(ValueError, "quét lần đầu"):
+            self.service.save("1", profile)
+
     def test_duplicate_source_in_another_profile_is_rejected(self):
         first = self._profile("1", "shared-source")
         self.service.save("1", first)

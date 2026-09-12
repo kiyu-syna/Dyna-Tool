@@ -136,7 +136,7 @@ def record_browser_diagnostic(
 
     record = {**metadata, "metadata_path": str(metadata_path)}
     logger.info(
-        "[Diagnostic] Saved profile=%s video=%s platform=%s at %s",
+        "[Chẩn đoán] Đã lưu dữ liệu: Profile %s | video %s | nền tảng %s | %s",
         profile_id or "-",
         video_id or "-",
         platform,

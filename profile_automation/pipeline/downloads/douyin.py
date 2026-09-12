@@ -412,8 +412,8 @@ def _download_douyin_url(
         os.replace(partial_path, save_path)
         elapsed = max(time.monotonic() - started_at, 0.001)
         logger.info(
-            "[%s Direct Download] Đã tải và xác thực %s byte, %sx%s, %.1fs "
-            "trong %.1fs (%.1f KB/s): %s",
+            "[Tải trực tiếp %s] Đã tải và xác thực %s byte, %sx%s, %.1f giây "
+            "trong %.1f giây (%.1f KB/giây): %s",
             platform_label,
             bytes_written,
             media_info["width"],

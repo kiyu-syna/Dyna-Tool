@@ -13,6 +13,75 @@ from services.browser.windows_secret_service import (
 )
 
 
+SUPPORTED_NATIVE_BROWSER_NAMES = {"chrome.exe", "msedge.exe"}
+_STOCK_BROWSER_MARKERS = (
+    "\\google\\chrome\\application\\chrome.exe",
+    "\\microsoft\\edge\\application\\msedge.exe",
+)
+
+
+def _normalized_executable_text(executable: Path) -> str:
+    return str(executable).replace("/", "\\").casefold()
+
+
+def looks_like_stock_browser_path(executable: Path) -> bool:
+    if executable.name.casefold() not in SUPPORTED_NATIVE_BROWSER_NAMES:
+        return False
+    normalized = _normalized_executable_text(executable)
+    if "browser-runtimes" in normalized:
+        return False
+    return any(marker in normalized for marker in _STOCK_BROWSER_MARKERS)
+
+
+def installed_supported_browser_candidates() -> list[Path]:
+    """Return stock Chrome/Edge installs in a stable preference order."""
+    program_files = Path(str(os.environ.get("ProgramFiles") or r"C:\Program Files"))
+    program_files_x86 = Path(
+        str(os.environ.get("ProgramFiles(x86)") or r"C:\Program Files (x86)")
+    )
+    local_app_data = Path(str(os.environ.get("LOCALAPPDATA") or ""))
+    candidates = (
+        program_files / "Google" / "Chrome" / "Application" / "chrome.exe",
+        program_files_x86 / "Google" / "Chrome" / "Application" / "chrome.exe",
+        local_app_data / "Google" / "Chrome" / "Application" / "chrome.exe",
+        program_files / "Microsoft" / "Edge" / "Application" / "msedge.exe",
+        program_files_x86 / "Microsoft" / "Edge" / "Application" / "msedge.exe",
+        local_app_data / "Microsoft" / "Edge" / "Application" / "msedge.exe",
+    )
+    result: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        normalized = os.path.normcase(os.path.abspath(str(candidate)))
+        if normalized in seen or not candidate.is_file():
+            continue
+        seen.add(normalized)
+        result.append(candidate.resolve())
+    return result
+
+
+def _is_stock_supported_browser(executable: Path) -> bool:
+    if not looks_like_stock_browser_path(executable):
+        return False
+    if (executable.parent / "dyna-runtime.json").is_file():
+        return False
+    if not executable.is_file():
+        return False
+    return True
+
+
+def _replacement_stock_browser(executable_path: Path) -> Path | None:
+    if not looks_like_stock_browser_path(executable_path):
+        return None
+    candidates = installed_supported_browser_candidates()
+    if not candidates:
+        return None
+    configured_name = executable_path.name.casefold()
+    for candidate in candidates:
+        if candidate.name.casefold() == configured_name:
+            return candidate
+    return candidates[0]
+
+
 @dataclass(frozen=True)
 class LocalProxyConfig:
     server: str
@@ -162,6 +231,7 @@ def _gemlogin_copy_expected_major(user_data_dir: Path) -> int | None:
     if not (user_data_dir / "key.txt").is_file():
         return None
     last_browser = user_data_dir / "Last Browser"
+    is_foreign_browser = False
     if last_browser.is_file():
         try:
             value = last_browser.read_bytes().decode("utf-16-le").strip("\x00\r\n ")
@@ -174,12 +244,42 @@ def _gemlogin_copy_expected_major(user_data_dir: Path) -> int | None:
             match = re.search(pattern, value)
             if match:
                 return int(match.group(1))
-    last_version = user_data_dir / "Last Version"
-    if last_version.is_file():
+        normalized_value = value.replace("/", "\\").lower()
+        if any(
+            marker in normalized_value
+            for marker in ("google\\chrome", "msedge", "brave", "application\\chrome.exe")
+        ):
+            is_foreign_browser = True
+
+    for backup_path in sorted(user_data_dir.glob("Local State.dyna*backup*"), reverse=True):
         try:
-            return int(last_version.read_text(encoding="ascii").strip().split(".", 1)[0])
-        except (OSError, UnicodeError, ValueError):
+            backup_data = _read_json(backup_path)
+            stats = str(
+                backup_data.get("user_experience_metrics", {})
+                .get("stability", {})
+                .get("stats_version")
+                or backup_data.get("optimization_guide", {})
+                .get("on_device", {})
+                .get("last_version")
+                or backup_data.get("toast", {})
+                .get("non_milestone_update_toast_version")
+                or ""
+            )
+            match = re.search(r"(\d+)\.", stats)
+            if match:
+                return int(match.group(1))
+        except Exception:
             pass
+
+    if not is_foreign_browser:
+        last_version = user_data_dir / "Last Version"
+        if last_version.is_file():
+            try:
+                major = int(last_version.read_text(encoding="ascii").strip().split(".", 1)[0])
+                if major < 150:
+                    return major
+            except (OSError, UnicodeError, ValueError):
+                pass
     return None
 
 
@@ -190,7 +290,7 @@ def _executable_major_version(executable_path: Path) -> int | None:
 
             info = win32api.GetFileVersionInfo(str(executable_path), "\\")
             return int(win32api.HIWORD(info["FileVersionMS"]))
-        except (ImportError, OSError, KeyError, TypeError, ValueError):
+        except Exception:
             pass
     manifest_path = executable_path.parent / "dyna-runtime.json"
     if manifest_path.is_file():
@@ -212,6 +312,8 @@ def _ensure_gemlogin_runtime_compatible(
     user_data_dir: Path,
     executable_path: Path,
 ) -> None:
+    if _is_stock_supported_browser(executable_path):
+        return
     expected_major = _gemlogin_copy_expected_major(user_data_dir)
     if expected_major is None:
         return
@@ -251,7 +353,12 @@ def _resolve_local_chromium_config(
     if not user_data_dir.is_dir():
         raise LocalChromiumError(f"User Data Directory không tồn tại: {user_data_dir}")
     if not executable_path.is_file():
-        raise LocalChromiumError(f"Chromium executable không tồn tại: {executable_path}")
+        replacement = _replacement_stock_browser(executable_path)
+        if replacement is None:
+            raise LocalChromiumError(
+                f"Chromium executable không tồn tại: {executable_path}"
+            )
+        executable_path = replacement
 
     profile_directory = str(browser.get("profile_directory") or "Default").strip()
     if not profile_directory or any(

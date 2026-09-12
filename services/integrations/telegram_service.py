@@ -34,11 +34,11 @@ def _request(method: str, path: str, *, body: dict[str, Any] | None = None, time
     try:
         response = requests.request(method, f"{license_service.get_api_base_url()}{path}", headers=headers, json=body, timeout=timeout)
         if response.status_code >= 400:
-            logger.warning("Telegram server relay rejected %s: %s", path, response.status_code)
+            logger.warning("Máy chủ Telegram từ chối yêu cầu %s (HTTP %s).", path, response.status_code)
             return None
         return response.json()
     except (requests.RequestException, ValueError) as exc:
-        logger.warning("Telegram server relay unavailable: %s", exc)
+        logger.warning("Không kết nối được máy chủ Telegram: %s", exc)
         return None
 
 

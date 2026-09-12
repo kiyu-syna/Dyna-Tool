@@ -1,32 +1,25 @@
-import { ChevronLeft, Crown, LayoutDashboard, LogOut, Send, Settings } from "lucide-react";
+import { ChevronLeft, Crown, LayoutDashboard, Send, Settings } from "lucide-react";
 import { useMemo } from "react";
 import appMark from "../assets/dyna-mark.png";
 import facebookIcon from "../assets/facebook-icon.png";
 import wechatIcon from "../assets/wechat-icon.png";
 import { useI18n } from "../shared/i18n";
-import type { AuthUser } from "../shared/types";
 import { createNavigationGroups } from "./navigation";
 import type { PageKey } from "./types";
 
 interface SidebarProps {
   page: PageKey;
   collapsed: boolean;
-  user: AuthUser;
-  licenseLabel: string;
   onPage(page: PageKey): void;
   onCollapse(): void;
-  onLogout(): void;
   onOpenWeChat(): void;
 }
 
 export default function Sidebar({
   page,
   collapsed,
-  user,
-  licenseLabel,
   onPage,
   onCollapse,
-  onLogout,
   onOpenWeChat,
 }: SidebarProps) {
   const { l } = useI18n();
@@ -59,15 +52,11 @@ export default function Sidebar({
           <section className="nav-group" key={group.label}>
             <h2>{group.label}</h2>
             {group.items.map(({ key, label, icon: Icon }) => {
-              const opensLogWindow = key === "logs";
               return (
                 <button
                   key={key}
-                  className={!opensLogWindow && page === key ? "active" : ""}
-                  onClick={() => {
-                    if (opensLogWindow) void window.dyna?.openLogWindow();
-                    else onPage(key);
-                  }}
+                  className={page === key ? "active" : ""}
+                  onClick={() => onPage(key)}
                   title={collapsed ? label : undefined}
                 >
                   <Icon size={18} />
@@ -89,28 +78,14 @@ export default function Sidebar({
           <Settings size={18} />
           <span>{l("Cài đặt", "Settings", "设置")}</span>
         </button>
-        <div className="account-compact" title={user.username || ""}>
-          <span>{(user.display_name || user.username || "U").slice(0, 1).toUpperCase()}</span>
-          <div className="account-copy">
-            <strong>{user.display_name || user.username}</strong>
-            <small>
-              {l("Đã đăng nhập", "Signed in", "已登录")}
-              <b aria-hidden="true"> · </b>
-              <em>{licenseLabel}</em>
-            </small>
-          </div>
-          <button
-            className="account-upgrade"
-            onClick={() => onPage("premium")}
-            title={l("Xem gói và nâng cấp", "View plans and upgrade", "查看套餐并升级")}
-          >
-            <Crown size={13} />
-            <span>{l("Nâng cấp", "Upgrade", "升级")}</span>
-          </button>
-          <button className="icon-button" onClick={onLogout} title={l("Đăng xuất", "Sign out", "退出登录")}>
-            <LogOut size={15} />
-          </button>
-        </div>
+        <button
+          className={`sidebar-footer-nav ${page === "premium" ? "active" : ""}`}
+          onClick={() => onPage("premium")}
+          title={collapsed ? l("Nâng cấp", "Upgrade", "升级") : undefined}
+        >
+          <Crown size={18} />
+          <span>{l("Nâng cấp", "Upgrade", "升级")}</span>
+        </button>
         <div className="sidebar-support">
           <strong>{l("Hỗ trợ & Góp ý", "Support & Feedback", "支持与反馈")}</strong>
           <div className="sidebar-support-actions">

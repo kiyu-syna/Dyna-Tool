@@ -327,6 +327,19 @@ class TelegramBotService:
             if not row:
                 await self._api("sendMessage", {"chat_id": chat_id, "text": "Mã liên kết không hợp lệ hoặc đã hết hạn. Hãy tạo mã mới trong Dyna."})
                 return
+            # A Telegram chat can be linked to only one Dyna account.  When a
+            # user has moved to a new account, remove the old mapping first so
+            # the unique chat_id index does not discard the /start update with
+            # an unhelpful E11000 error.
+            existing_link = await db.telegram_links.find_one({"chat_id": chat_id})
+            if existing_link and str(existing_link.get("username") or "").casefold() != str(row["username"] or "").casefold():
+                await db.telegram_links.delete_one({"chat_id": chat_id})
+                logger.info(
+                    "Telegram chat %s chuyển liên kết từ %s sang %s",
+                    chat_id,
+                    existing_link.get("username") or "<unknown>",
+                    row["username"],
+                )
             await db.telegram_links.update_one({"username": row["username"]}, {"$set": {
                 "username": row["username"], "chat_id": chat_id,
                 "chat_name": str(chat.get("title") or (message.get("from") or {}).get("first_name") or "Telegram"),

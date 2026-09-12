@@ -239,6 +239,24 @@ export default function ProfilesPage() {
                     <option value="low">{l("Thấp", "Low", "低")}</option>
                   </select>
                 </label>
+                <label>
+                  <span>{l("Nguồn mới lần đầu", "First scan behavior", "首次扫描行为")}</span>
+                  <select
+                    value={profile.initial_scan_mode || "skip_existing"}
+                    onChange={(event) =>
+                      update({
+                        initial_scan_mode: event.target.value as "skip_existing" | "process_latest",
+                      })
+                    }
+                  >
+                    <option value="skip_existing">
+                      {l("Bỏ qua video hiện có", "Skip existing videos", "跳过现有视频")}
+                    </option>
+                    <option value="process_latest">
+                      {l("Đăng video mới nhất", "Publish latest video", "发布最新视频")}
+                    </option>
+                  </select>
+                </label>
                 <label className="full">
                   <span>{l("Thư mục lưu video", "Video folder", "视频保存文件夹")}</span>
                   <input

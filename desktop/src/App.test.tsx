@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
@@ -9,41 +9,33 @@ vi.mock("./shared/api/client", async (importOriginal) => {
   return { ...original, request: vi.fn() };
 });
 
+vi.mock("./app/AppShell", () => ({
+  default: () => <main>Dyna workspace</main>,
+}));
+
 const requestMock = vi.mocked(request);
 
 describe("App startup", () => {
   beforeEach(() => {
     localStorage.setItem("dyna-language", "en");
-    requestMock.mockImplementation(async (path) => {
-      if (path === "/api/settings") return { settings: {} } as never;
-      if (path === "/api/auth/status") {
-        return { authenticated: false, user: null } as never;
-      }
-      if (path.startsWith("/api/license")) return { is_active: false } as never;
-      throw new Error(`Unexpected request: ${path}`);
-    });
+    requestMock.mockReset();
+    requestMock.mockResolvedValue({ settings: {} } as never);
   });
 
-  it("shows the sign-in UI when no authenticated session exists", async () => {
+  it("opens the workspace without requesting an account session", async () => {
     render(<App />);
 
-    expect(screen.getByText("Checking your session...")).toBeInTheDocument();
-    expect(await screen.findByRole("region", { name: "Sign in to Dyna" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Sign in" })).toHaveLength(2);
+    expect(screen.getByText("Dyna workspace")).toBeInTheDocument();
+    await waitFor(() => expect(requestMock).toHaveBeenCalledWith("/api/settings"));
+    expect(requestMock).not.toHaveBeenCalledWith("/api/auth/status");
   });
 
-  it("shows a retry action when session loading fails", async () => {
-    requestMock.mockImplementation(async (path) => {
-      if (path === "/api/auth/status") throw new Error("Backend unavailable");
-      if (path === "/api/settings") return { settings: {} } as never;
-      if (path.startsWith("/api/license")) return { is_active: false } as never;
-      throw new Error(`Unexpected request: ${path}`);
-    });
+  it("keeps the workspace open when optional settings fail", async () => {
+    requestMock.mockRejectedValue(new Error("Backend unavailable"));
 
     render(<App />);
 
-    expect(await screen.findByText("Cannot start Dyna")).toBeInTheDocument();
-    expect(screen.getByText("Backend unavailable")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
+    expect(screen.getByText("Dyna workspace")).toBeInTheDocument();
+    await waitFor(() => expect(requestMock).toHaveBeenCalledWith("/api/settings"));
   });
 });

@@ -1,51 +1,47 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import BrowserPage from "../features/browser/BrowserPage";
+import { TerminalLogs } from "../features/log-viewer/TerminalLogsWindow";
 import OverviewPage from "../features/overview/OverviewPage";
+import PremiumPage from "../features/premium/PremiumPage";
+import ProfilesPage from "../features/profiles/ProfilesPage";
+import PublishCenterPage from "../features/publishing/PublishCenterPage";
+import SettingsPage from "../features/settings/SettingsPage";
+import TrackingPage from "../features/tracking/TrackingPage";
 import type { Language } from "../shared/i18n";
-import type { AuthUser } from "../shared/types";
 import Sidebar from "./Sidebar";
 import type { PageKey, Theme } from "./types";
 import WeChatDialog from "./WeChatDialog";
 import WindowTitleBar from "./WindowTitleBar";
 
 const AssistantWidget = lazy(() => import("../features/assistant/AssistantWidget"));
-const BrowserPage = lazy(() => import("../features/browser/BrowserPage"));
-const PremiumPage = lazy(() => import("../features/premium/PremiumPage"));
-const ProfilesPage = lazy(() => import("../features/profiles/ProfilesPage"));
-const PublishCenterPage = lazy(() => import("../features/publishing/PublishCenterPage"));
-const SettingsPage = lazy(() => import("../features/settings/SettingsPage"));
-const TrackingPage = lazy(() => import("../features/tracking/TrackingPage"));
-const VideoAiPage = lazy(() => import("../features/video-ai/VideoAiPage"));
-
-function PageFallback() {
-  return (
-    <div className="page-load-fallback" aria-label="Đang tải trang">
-      <span />
-    </div>
-  );
-}
 
 interface AppShellProps {
-  user: AuthUser;
-  licenseLabel: string;
   theme: Theme;
   language: Language;
   onTheme(theme: Theme): void;
   onLanguage(language: Language): void;
-  onLogout(): void;
 }
 
 export default function AppShell({
-  user,
-  licenseLabel,
   theme,
   language,
   onTheme,
   onLanguage,
-  onLogout,
 }: AppShellProps) {
   const [page, setPage] = useState<PageKey>("overview");
+  const [visitedPages, setVisitedPages] = useState<Set<PageKey>>(() => new Set(["overview"]));
   const [collapsed, setCollapsed] = useState(false);
   const [wechatQrOpen, setWechatQrOpen] = useState(false);
+
+  function navigate(nextPage: PageKey) {
+    setVisitedPages((current) => {
+      if (current.has(nextPage)) return current;
+      const next = new Set(current);
+      next.add(nextPage);
+      return next;
+    });
+    setPage(nextPage);
+  }
 
   useEffect(() => {
     return window.dyna?.onNavigate?.((nextPage) => {
@@ -53,14 +49,13 @@ export default function AppShell({
         nextPage === "overview" ||
         nextPage === "tracking" ||
         nextPage === "publish" ||
-        nextPage === "video-ai" ||
         nextPage === "profiles" ||
         nextPage === "browser" ||
         nextPage === "logs" ||
         nextPage === "premium" ||
         nextPage === "settings"
       ) {
-        setPage(nextPage);
+        navigate(nextPage);
       }
     });
   }, []);
@@ -72,27 +67,26 @@ export default function AppShell({
         <Sidebar
           page={page}
           collapsed={collapsed}
-          user={user}
-          licenseLabel={licenseLabel}
-          onPage={setPage}
+          onPage={navigate}
           onCollapse={() => setCollapsed((value) => !value)}
-          onLogout={onLogout}
           onOpenWeChat={() => setWechatQrOpen(true)}
         />
         <main className="main-area">
           <div className="content-scroll">
-            <Suspense fallback={<PageFallback />}>
-              {page === "overview" && <OverviewPage onOpenTracking={() => setPage("tracking")} />}
-              {page === "tracking" && <TrackingPage />}
-              {page === "publish" && <PublishCenterPage />}
-              {page === "video-ai" && <VideoAiPage />}
-              {page === "profiles" && <ProfilesPage />}
-              {page === "browser" && <BrowserPage />}
-              {page === "premium" && <PremiumPage />}
-              {page === "settings" && (
+            {visitedPages.has("overview") && (
+              <div hidden={page !== "overview"}><OverviewPage onOpenTracking={() => navigate("tracking")} /></div>
+            )}
+            {visitedPages.has("tracking") && <div hidden={page !== "tracking"}><TrackingPage /></div>}
+            {visitedPages.has("publish") && <div hidden={page !== "publish"}><PublishCenterPage /></div>}
+            {visitedPages.has("profiles") && <div hidden={page !== "profiles"}><ProfilesPage /></div>}
+            {visitedPages.has("browser") && <div hidden={page !== "browser"}><BrowserPage /></div>}
+            {visitedPages.has("logs") && <div hidden={page !== "logs"}><TerminalLogs embedded /></div>}
+            {visitedPages.has("premium") && <div hidden={page !== "premium"}><PremiumPage /></div>}
+            {visitedPages.has("settings") && (
+              <div hidden={page !== "settings"}>
                 <SettingsPage theme={theme} language={language} onTheme={onTheme} onLanguage={onLanguage} />
-              )}
-            </Suspense>
+              </div>
+            )}
           </div>
         </main>
       </div>

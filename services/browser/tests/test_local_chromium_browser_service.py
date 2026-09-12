@@ -1,5 +1,6 @@
 import json
 import tempfile
+import threading
 import unittest
 from contextlib import nullcontext
 from pathlib import Path
@@ -67,6 +68,42 @@ class LocalChromiumBrowserServiceTests(unittest.TestCase):
         }
         return profile, user_data_dir, executable
 
+    def test_missing_stock_chrome_falls_back_to_installed_edge(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            profile["browser"]["executable_path"] = str(
+                Path(directory) / "Google" / "Chrome" / "Application" / "chrome.exe"
+            )
+            edge = Path(directory) / "Microsoft" / "Edge" / "Application" / "msedge.exe"
+            edge.parent.mkdir(parents=True)
+            edge.write_bytes(b"fake")
+
+            with patch(
+                "services.browser.local_chromium_config.installed_supported_browser_candidates",
+                return_value=[edge],
+            ):
+                config = service.resolve_local_chromium_config(profile)
+
+            self.assertEqual(config.executable_path, edge.resolve())
+
+    def test_missing_managed_runtime_does_not_fall_back_to_stock_browser(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            profile["browser"]["executable_path"] = (
+                r"C:\Users\Tester\AppData\Local\Dyna\browser-runtimes\iron-141\chrome.exe"
+            )
+            edge = Path(directory) / "msedge.exe"
+            edge.write_bytes(b"fake")
+
+            with (
+                patch(
+                    "services.browser.local_chromium_config.installed_supported_browser_candidates",
+                    return_value=[edge],
+                ),
+                self.assertRaisesRegex(service.LocalChromiumError, "không tồn tại"),
+            ):
+                service.resolve_local_chromium_config(profile)
+
     def test_resolve_accepts_complete_copied_user_data_dir(self):
         with tempfile.TemporaryDirectory() as directory:
             profile, user_data_dir, executable = self._profile_copy(Path(directory))
@@ -132,6 +169,84 @@ class LocalChromiumBrowserServiceTests(unittest.TestCase):
             self.assertIn("--force-prefers-reduced-motion", options["args"])
             self.assertNotIn("--disable-gpu", options["args"])
             self.assertNotIn("ignore_default_args", options)
+
+    def test_launch_exposes_loopback_cdp_for_concurrent_scan(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            config = service.resolve_local_chromium_config(profile)
+
+            options = service.local_chromium_launch_options(config)
+
+            self.assertIn("--remote-debugging-address=127.0.0.1", options["args"])
+            self.assertIn("--remote-debugging-port=0", options["args"])
+
+    def test_in_use_profile_attaches_over_cdp_without_closing_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, user_data_dir, _ = self._profile_copy(Path(directory))
+            config = service.resolve_local_chromium_config(profile)
+            (user_data_dir / "DevToolsActivePort").write_text(
+                "43210\n/devtools/browser/test\n",
+                encoding="utf-8",
+            )
+            context = Mock()
+            owner_browser = Mock()
+            owner_browser.contexts = [context]
+            owner_browser.is_connected.return_value = True
+            playwright = Mock()
+            playwright.chromium.connect_over_cdp.return_value = owner_browser
+            manager = Mock()
+            manager.start.return_value = playwright
+
+            service._register_active_session(config)
+            try:
+                with (
+                    patch.object(
+                        service,
+                        "inspect_local_chromium_profile",
+                        return_value={
+                            "ready": False,
+                            "code": "profile_in_use",
+                            "message": "Chromium profile đang được sử dụng.",
+                            "suggested_action": "Đóng Chromium rồi thử lại.",
+                        },
+                    ),
+                    patch.object(service, "sync_playwright", return_value=manager),
+                    service.connected_local_chromium_profile(profile) as browser,
+                ):
+                    self.assertEqual(browser.contexts, [context])
+                    self.assertTrue(browser.is_connected())
+            finally:
+                service._wait_for_active_session_attachments(config)
+
+            playwright.chromium.connect_over_cdp.assert_called_once_with(
+                "http://127.0.0.1:43210",
+                timeout=60_000,
+            )
+            playwright.stop.assert_called_once_with()
+            owner_browser.close.assert_not_called()
+
+    def test_owner_waits_until_attached_browser_releases_session(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            config = service.resolve_local_chromium_config(profile)
+            owner_finished = threading.Event()
+
+            service._register_active_session(config)
+            self.assertTrue(service._reserve_active_session(config))
+
+            def finish_owner() -> None:
+                service._wait_for_active_session_attachments(config)
+                owner_finished.set()
+
+            owner_thread = threading.Thread(target=finish_owner, daemon=True)
+            owner_thread.start()
+            self.assertFalse(owner_finished.wait(0.05))
+
+            service._release_active_session(config)
+
+            self.assertTrue(owner_finished.wait(1))
+            owner_thread.join(timeout=1)
+            self.assertNotIn(config.key, service._ACTIVE_SESSIONS)
 
     def test_headless_uses_normal_chrome_user_agent_for_site_compatibility(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -208,7 +323,7 @@ Browser logs:
             )
 
             with (
-                patch.object(service, "_executable_major_version", return_value=148),
+                patch("services.browser.local_chromium_config._executable_major_version", return_value=148),
                 self.assertRaisesRegex(service.LocalChromiumError, "yêu cầu Iron/Chromium 141"),
             ):
                 service.resolve_local_chromium_config(profile)
@@ -276,7 +391,7 @@ Browser logs:
             stale_lock.write_text("owned", encoding="utf-8")
             process = Mock(pid=4321)
 
-            with patch.object(service, "_browser_processes_using", return_value=[process]):
+            with patch("services.browser.local_chromium_recovery._browser_processes_using", return_value=[process]):
                 result = service.inspect_local_chromium_profile(
                     profile,
                     repair_stale_locks=True,
@@ -341,6 +456,31 @@ Browser logs:
             self.assertEqual(manager.started, 1)
             self.assertTrue(context.closed)
             self.assertTrue(playwright.stopped)
+
+    def test_profile_lock_is_checked_after_playwright_has_stopped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            profile, _, _ = self._profile_copy(Path(directory))
+            config = service.resolve_local_chromium_config(profile)
+            context = _FakeContext()
+            playwright = _FakePlaywright(context)
+            manager = _FakeManager(playwright)
+            close_checks = []
+
+            def wait_until_unlocked(*_args, **_kwargs):
+                close_checks.append(playwright.stopped)
+                return True
+
+            with (
+                patch.object(service, "resolve_local_chromium_config", return_value=config),
+                patch.object(service, "_cross_process_profile_lock", side_effect=lambda *_: nullcontext()),
+                patch.object(service, "ensure_local_profile_unlocked"),
+                patch.object(service, "wait_for_local_profile_unlocked", side_effect=wait_until_unlocked),
+                patch.object(service, "sync_playwright", return_value=manager),
+                service.connected_local_chromium_profile(profile),
+            ):
+                pass
+
+            self.assertEqual(close_checks, [False, True])
 
 
 if __name__ == "__main__":

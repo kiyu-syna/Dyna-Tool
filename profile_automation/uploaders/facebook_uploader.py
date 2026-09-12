@@ -1,14 +1,16 @@
 import os
 import time
 from contextlib import ExitStack
+from pathlib import Path
 from urllib.parse import urlparse
 
 from playwright.sync_api import Locator, Page
 
 import core.config as config
-from core.utils import console, logger
+from core.utils import logger
 from profile_automation.browser_utils import set_video_file_background
 from profile_automation.uploaders.base_uploader import BaseUploader
+from profile_automation.uploaders.upload_log import log_upload_section
 from profile_automation.watchers.douyin_video import DouyinVideo
 from services.browser.browser_profile_service import (
     browser_profile_label,
@@ -19,6 +21,17 @@ from services.integrations.diagnostic_artifact_service import attach_response_tr
 
 
 DEFAULT_PROFILE_URL = "https://www.facebook.com/me"
+FACEBOOK_PUBLISH_SUCCESS_TEXTS = (
+    "Your reel is being published",
+    "Your reel was published",
+    "Reel published",
+    "View reel",
+    "Thước phim của bạn đang được đăng",
+    "Đã đăng thước phim",
+    "Xem thước phim",
+)
+
+
 def _close_page_quietly(page) -> None:
     if page is None:
         return
@@ -121,27 +134,72 @@ def _has_enabled_visible_aria_button(page: Page, labels: tuple[str, ...]) -> boo
     return False
 
 
-def _wait_for_upload_complete(page: Page, timeout_seconds: int = 900) -> None:
+def _facebook_publish_confirmation_signal(page: Page) -> str:
+    for text in FACEBOOK_PUBLISH_SUCCESS_TEXTS:
+        try:
+            if _has_visible_match(page.get_by_text(text, exact=False)):
+                return f'text="{text}"'
+        except Exception:
+            continue
+    try:
+        current_url = str(page.url or "")
+    except Exception:
+        current_url = ""
+    if "/reel/" in current_url.casefold():
+        return f'url="{current_url}"'
+    return ""
+
+
+def _wait_for_facebook_publish_confirmation(
+    page: Page,
+    timeout_seconds: float = 45,
+) -> str:
+    deadline = time.monotonic() + max(0, float(timeout_seconds))
+    while True:
+        signal = _facebook_publish_confirmation_signal(page)
+        if signal:
+            return signal
+        if time.monotonic() >= deadline:
+            return ""
+        time.sleep(2)
+
+
+def _wait_for_upload_complete(
+    page: Page,
+    timeout_seconds: int = 900,
+    on_progress=None,
+) -> None:
     complete = page.locator(
         'div:has(> span > i[aria-label="Đã tải lên xong"]):has-text("100%"), '
         'div:has(> span > i[aria-label="Upload complete"]):has-text("100%")'
     )
     deadline = time.monotonic() + timeout_seconds
+    last_log_at = 0.0
     while time.monotonic() < deadline:
         try:
             if _has_visible_match(complete):
                 return
         except Exception:
             pass
+        now = time.monotonic()
+        if on_progress is not None and now - last_log_at >= 30:
+            elapsed = int(timeout_seconds - max(0, deadline - now))
+            on_progress(elapsed, timeout_seconds)
+            last_log_at = now
         time.sleep(1)
     raise TimeoutError("Facebook không báo tải video xong 100% trong thời gian chờ.")
 
 
-def _wait_for_reel_safe(page: Page, timeout_seconds: int = 900) -> None:
+def _wait_for_reel_safe(
+    page: Page,
+    timeout_seconds: int = 900,
+    on_progress=None,
+) -> None:
     safe_messages = page.get_by_text(
         "Thước phim của bạn an toàn để đăng!", exact=False
     ).or_(page.get_by_text("Your reel is safe to publish", exact=False))
     deadline = time.monotonic() + timeout_seconds
+    last_log_at = 0.0
     while time.monotonic() < deadline:
         try:
             if _has_visible_match(safe_messages):
@@ -151,13 +209,14 @@ def _wait_for_reel_safe(page: Page, timeout_seconds: int = 900) -> None:
             # that the upload/processing gate has finished and the reel can move
             # to the next composer screen.
             if _has_enabled_visible_aria_button(page, ("Tiếp", "Next")):
-                logger.info(
-                    "Facebook đã bật nút Tiếp; tiếp tục dù không hiện thông báo "
-                    "thước phim an toàn."
-                )
                 return
         except Exception:
             pass
+        now = time.monotonic()
+        if on_progress is not None and now - last_log_at >= 30:
+            elapsed = int(timeout_seconds - max(0, deadline - now))
+            on_progress(elapsed, timeout_seconds)
+            last_log_at = now
         time.sleep(1)
     raise TimeoutError("Facebook không xác nhận thước phim an toàn trong thời gian chờ.")
 
@@ -165,6 +224,7 @@ def _wait_for_reel_safe(page: Page, timeout_seconds: int = 900) -> None:
 class FacebookUploader(BaseUploader):
     def upload(self, video_path: str, video: DouyinVideo, profile: dict) -> bool:
         profile_id = str(profile.get("id", "1"))
+        video_id = str(video.aweme_id)
         facebook_cfg = profile.get("facebook", {})
         gemlogin_profile_id = str(
             facebook_cfg.get("gemlogin_profile_id") or profile_id
@@ -172,67 +232,115 @@ class FacebookUploader(BaseUploader):
         profile_url = str(
             facebook_cfg.get("profile_url") or DEFAULT_PROFILE_URL
         ).strip()
+        browser_label = browser_profile_label(gemlogin_profile_id, profile)
+        started_at = time.monotonic()
+        file_name = Path(video_path).name
+        try:
+            file_size_mb = os.path.getsize(video_path) / (1024 * 1024)
+        except OSError:
+            file_size_mb = 0
 
+        def progress(step: int, message: str, *args, level: str = "info") -> None:
+            getattr(logger, level)(
+                f"[Đăng Facebook][Profile %s][Video %s][Bước {step}/7] {message}",
+                profile_id,
+                video_id,
+                *args,
+            )
+
+        log_upload_section("Facebook", profile_id, video_id, "Bắt đầu")
+        logger.info(
+            "[Đăng Facebook][Profile %s][Video %s] THÔNG TIN | tệp=%s | dung lượng=%.1f MB | trình duyệt=%s",
+            profile_id,
+            video_id,
+            file_name,
+            file_size_mb,
+            browser_label,
+        )
+
+        progress(1, "Kiểm tra tệp và cấu hình trang Facebook.")
         if not os.path.isfile(video_path):
-            logger.error("[Profile %s] Không tìm thấy video Facebook: %s", profile_id, video_path)
+            logger.error(
+                "[Đăng Facebook][Profile %s][Video %s] THẤT BẠI | không tìm thấy tệp=%s",
+                profile_id,
+                video_id,
+                video_path,
+            )
+            log_upload_section(
+                "Facebook", profile_id, video_id, "Kết thúc", status="Thất bại", level="error"
+            )
             return False
         if not _is_http_url(profile_url):
-            logger.error("[Profile %s] URL trang Facebook không hợp lệ: %s", profile_id, profile_url)
+            logger.error(
+                "[Đăng Facebook][Profile %s][Video %s] THẤT BẠI | URL không hợp lệ=%s",
+                profile_id,
+                video_id,
+                profile_url,
+            )
+            log_upload_section(
+                "Facebook", profile_id, video_id, "Kết thúc", status="Thất bại", level="error"
+            )
             return False
-
-        logger.info("==========================================================")
-        logger.info(
-            "BẮT ĐẦU ĐĂNG FACEBOOK REELS - PROFILE %s (%s)",
-            profile_id,
-            browser_profile_label(gemlogin_profile_id, profile),
-        )
-        logger.info("==========================================================")
 
         page = None
         response_trace: dict = {}
         upload_succeeded = False
+        publish_confirmation = ""
         try:
+            progress(2, "Đang kết nối Chromium %s.", browser_label)
             with connected_gemlogin_profile(
                 gemlogin_profile_id,
                 config.API_URL,
                 profile_config=profile,
             ) as browser, ExitStack() as page_cleanup:
+                progress(2, "Đã kết nối Chromium thành công.")
                 if not browser.contexts:
-                    logger.error("[Profile %s] Trình duyệt không có context.", profile_id)
-                    return False
+                    raise RuntimeError("Không tìm thấy phiên trình duyệt sau khi kết nối CDP.")
 
                 context = browser.contexts[0]
+                progress(3, "Đang tạo tab nền và mở trang Facebook: %s", profile_url)
                 page = create_background_page(browser, context)
                 page_cleanup.callback(_close_page_quietly, page)
                 response_trace = attach_response_trace(page)
-                logger.info("[Profile %s] Mở trang Facebook: %s", profile_id, profile_url)
                 page.goto(profile_url, wait_until="domcontentloaded", timeout=60000)
+                progress(3, "Trang Facebook đã tải xong.")
 
+                progress(4, "Đang đưa tệp video vào trình soạn Facebook Reels.")
                 set_video_file_background(
                     page,
                     video_path,
                     lambda: _click_aria_button(page, ("Ảnh/video", "Photo/video"), timeout_ms=60000),
                 )
-                logger.info("[Profile %s] Đã chọn video Facebook bằng Playwright ở chế độ nền.", profile_id)
+                progress(4, "Facebook đã nhận tệp; đang chờ tải lên 100%%.")
 
-                # Step 4: wait until Facebook confirms that the file reached 100%.
-                console.print("   ➔ Đang chờ Facebook tải video lên 100%...")
-                _wait_for_upload_complete(page)
-                logger.info("[Profile %s] Facebook đã tải video lên 100%%.", profile_id)
+                _wait_for_upload_complete(
+                    page,
+                    on_progress=lambda elapsed, timeout: progress(
+                        4,
+                        "Vẫn đang tải video (%s/%s giây).",
+                        elapsed,
+                        timeout,
+                    ),
+                )
+                progress(4, "Facebook xác nhận tải video xong 100%%.")
 
-                # Step 5: Facebook's safety scan must finish before continuing.
-                console.print("   ➔ Đang chờ Facebook xác nhận thước phim an toàn...")
-                _wait_for_reel_safe(page)
+                progress(5, "Đang chờ Facebook xử lý và kiểm tra thước phim.")
+                _wait_for_reel_safe(
+                    page,
+                    on_progress=lambda elapsed, timeout: progress(
+                        5,
+                        "Vẫn đang chờ kiểm tra thước phim (%s/%s giây).",
+                        elapsed,
+                        timeout,
+                    ),
+                )
+                progress(5, "Facebook cho phép chuyển sang bước tiếp theo.")
 
-                # Steps 6-7: the two screens expose the same aria-label. Resolve the
-                # currently visible/enabled button after each transition.
                 for step in range(2):
                     _click_aria_button(page, ("Tiếp", "Next"), timeout_ms=60000)
-                    logger.info("[Profile %s] Đã nhấn Tiếp %s/2.", profile_id, step + 1)
+                    progress(6, "Đã nhấn Tiếp %s/2.", step + 1)
                     time.sleep(2)
 
-                # Step 8: enter the caption on the Reel description screen, which
-                # only appears after the second Next click.
                 caption_box = page.locator(
                     'div[contenteditable="true"][role="textbox"]'
                     '[aria-placeholder="Mô tả thước phim của bạn..."]:visible, '
@@ -246,11 +354,20 @@ class FacebookUploader(BaseUploader):
                 caption = _build_facebook_caption(video, profile)
                 if caption:
                     page.keyboard.insert_text(caption)
-                logger.info("[Profile %s] Đã nhập mô tả Facebook Reels.", profile_id)
+                use_original = bool(
+                    profile.get("_runtime_use_original_desc", False)
+                    or facebook_cfg.get("use_original_desc", False)
+                )
+                progress(
+                    6,
+                    "Đã nhập mô tả (%s ký tự, nguồn=%s).",
+                    len(caption),
+                    "mô tả gốc" if use_original else "mô tả cấu hình",
+                )
 
-                # Steps 9-10: publish, dismiss the scheduling prompt, then wait.
+                progress(7, "Đang tìm và nhấn nút Đăng Facebook Reels.")
                 _click_aria_button(page, ("Đăng", "Post", "Publish"), timeout_ms=60000)
-                logger.info("[Profile %s] Đã nhấn Đăng Facebook Reels.", profile_id)
+                progress(7, "Đã nhấn Đăng; đang xử lý hộp thoại sau đăng.")
                 dismissed_later_prompt = _click_visible_text_button(
                     page,
                     ("Lúc khác", "Not now", "Maybe later"),
@@ -258,22 +375,28 @@ class FacebookUploader(BaseUploader):
                     required=False,
                 )
                 if dismissed_later_prompt:
-                    logger.info(
-                        "[Profile %s] Đã nhấn Lúc khác sau khi đăng Facebook Reels.",
-                        profile_id,
-                    )
+                    progress(7, "Đã đóng lời nhắc bằng nút Lúc khác.")
                 else:
-                    logger.info(
-                        "[Profile %s] Facebook không hiện nút Lúc khác; tiếp tục hoàn tất.",
-                        profile_id,
+                    progress(7, "Facebook không hiện lời nhắc Lúc khác; tiếp tục xác nhận.")
+                publish_confirmation = _wait_for_facebook_publish_confirmation(page)
+                if publish_confirmation:
+                    progress(7, "Facebook đã xác nhận đăng (%s).", publish_confirmation)
+                else:
+                    progress(
+                        7,
+                        "Không đọc được thông báo xác nhận sau 45 giây; lệnh Đăng đã được gửi.",
+                        level="warning",
                     )
-                time.sleep(10)
                 upload_succeeded = True
-                console.print("[bold green]✅ Facebook Reels đã hoàn tất luồng đăng.[/]")
-                page.close()
 
         except Exception as exc:
-            logger.exception("[Profile %s] Đăng Facebook Reels thất bại: %s", profile_id, exc)
+            logger.exception(
+                "[Đăng Facebook][Profile %s][Video %s] THẤT BẠI sau %.1f giây | lỗi=%s",
+                profile_id,
+                video_id,
+                time.monotonic() - started_at,
+                exc,
+            )
             record_browser_diagnostic(
                 page=page,
                 profile_id=profile_id,
@@ -287,4 +410,39 @@ class FacebookUploader(BaseUploader):
             if page is not None:
                 _close_page_quietly(page)
 
+        if upload_succeeded and publish_confirmation:
+            logger.info(
+                "[Đăng Facebook][Profile %s][Video %s] HOÀN TẤT THÀNH CÔNG sau %.1f giây | xác nhận=%s",
+                profile_id,
+                video_id,
+                time.monotonic() - started_at,
+                publish_confirmation,
+            )
+        elif upload_succeeded:
+            logger.warning(
+                "[Đăng Facebook][Profile %s][Video %s] HOÀN TẤT GỬI ĐĂNG sau %.1f giây | chưa đọc được xác nhận hiển thị từ Facebook.",
+                profile_id,
+                video_id,
+                time.monotonic() - started_at,
+            )
+        log_upload_section(
+            "Facebook",
+            profile_id,
+            video_id,
+            "Kết thúc",
+            status=(
+                "Thành công"
+                if upload_succeeded and publish_confirmation
+                else "Đã gửi đăng"
+                if upload_succeeded
+                else "Thất bại"
+            ),
+            level=(
+                "info"
+                if upload_succeeded and publish_confirmation
+                else "warning"
+                if upload_succeeded
+                else "error"
+            ),
+        )
         return upload_succeeded

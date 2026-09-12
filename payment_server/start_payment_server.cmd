@@ -5,6 +5,8 @@ title Dyna Payment Server
 cd /d "%~dp0"
 set "PYTHON=%~dp0..\.venv\Scripts\python.exe"
 
+for /f "tokens=5" %%P in ('netstat -ano ^| findstr ":8000" ^| findstr "LISTENING"') do goto already_running
+
 if not exist "%PYTHON%" (
   echo.
   echo [LOI] Khong tim thay Python tai:
@@ -14,6 +16,18 @@ if not exist "%PYTHON%" (
   pause
   exit /b 1
 )
+
+goto start_server
+
+:already_running
+echo.
+echo [CANH BAO] Payment Server da dang chay tren port 8000.
+echo Khong khoi dong them instance de tranh Telegram 409 Conflict.
+echo Hay dong instance dang chay truoc khi thu lai.
+pause
+exit /b 0
+
+:start_server
 
 echo.
 echo ========================================

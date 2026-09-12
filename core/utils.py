@@ -35,22 +35,26 @@ console_log_handler = RichHandler(
     markup=True,
     console=console,
 )
-file_log_handler = RotatingFileHandler(
-    log_directory / "system.log",
-    maxBytes=5 * 1024 * 1024,
-    backupCount=5,
-    encoding="utf-8",
-)
-file_log_handler.setFormatter(
-    logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
+log_handlers = [console_log_handler]
+file_log_handler = None
+if os.environ.get("DYNA_DISABLE_FILE_LOGGING", "").strip() != "1":
+    file_log_handler = RotatingFileHandler(
+        log_directory / "system.log",
+        maxBytes=5 * 1024 * 1024,
+        backupCount=5,
+        encoding="utf-8",
     )
-)
+    file_log_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s | %(levelname)s | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
+    log_handlers.append(file_log_handler)
 
 logging.basicConfig(
     level="INFO",
     format="%(message)s",
-    handlers=[console_log_handler, file_log_handler],
+    handlers=log_handlers,
 )
 logger = logging.getLogger("rich")

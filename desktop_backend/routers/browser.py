@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
 from desktop_backend.schemas import BrowserRuntimeInstallPayload, LocalProfileCheckPayload, LocalProfileSetupPayload
-from services.browser.browser_runtime_service import BrowserRuntimeError
+from services.browser.browser_runtime_service import BrowserRuntimeError, list_browser_runtimes
 from application.workflows.local_profile_setup_service import LocalProfileSetupError
 
 
@@ -80,4 +80,3 @@ def register_routes(app, context, protected, *, hooks) -> None:
         except (ValueError, LocalProfileSetupError) as exc:
             raise HTTPException(status_code=409, detail=str(exc))
         return {"ok": True, "state": state}
-

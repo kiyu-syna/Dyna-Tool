@@ -82,7 +82,7 @@ def verify_session() -> bool:
         _current_user = data
         return True
     except Exception as e:
-        logger.warning(f"Verify session lỗi: {e}")
+        logger.warning(f"Kiểm tra phiên đăng nhập gặp lỗi: {e}")
     return False
 
 

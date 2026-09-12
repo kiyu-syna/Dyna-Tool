@@ -12,6 +12,7 @@ import "./tracking.css";
 function runtimeTone(status: string) {
   if (status === "running") return "success" as const;
   if (status === "starting") return "info" as const;
+  if (status === "degraded") return "warning" as const;
   if (status === "stopping") return "warning" as const;
   if (status === "error") return "danger" as const;
   return "neutral" as const;
@@ -29,6 +30,7 @@ function runtimeLabel(
         stopped: l("Sẵn sàng", "Ready", "就绪"),
         starting: l("Đang khởi động", "Starting", "正在启动"),
         running: l("Đang chạy", "Running", "运行中"),
+        degraded: l("Có nguồn lỗi", "Degraded", "部分来源异常"),
         stopping: l("Đang dừng", "Stopping", "正在停止"),
         error: l("Lỗi", "Error", "错误"),
       } as Record<string, string>
@@ -219,6 +221,18 @@ export default function TrackingPage() {
                             text={runtimeLabel(state, profile.running, l)}
                             tone={runtimeTone(state?.status || (profile.running ? "running" : "stopped"))}
                           />
+                          {Boolean(state?.failing_source_count) && (
+                            <small>
+                              {state?.failing_source_count}/{state?.source_count}{" "}
+                              {l("nguồn lỗi", "sources failing", "个来源异常")}
+                            </small>
+                          )}
+                          {state?.last_successful_scan_at && (
+                            <small title={state.last_successful_scan_at}>
+                              {l("Quét OK", "Last OK", "最近成功")}{" "}
+                              {new Date(state.last_successful_scan_at).toLocaleTimeString()}
+                            </small>
+                          )}
                           {state?.current_source && <small>{state.current_source}</small>}
                         </div>
                       </td>

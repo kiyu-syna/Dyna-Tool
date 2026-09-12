@@ -1,7 +1,9 @@
+import os
 import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from application.workflows.local_profile_setup_service import (
     LocalProfileSetupError,
@@ -217,6 +219,41 @@ class LocalProfileSetupServiceTests(unittest.TestCase):
         self.assertEqual(saved["browser"]["user_data_dir"], str(user_data.resolve()))
         self.assertEqual(len(list(user_data.glob("Local State.dyna-backup-*.json"))), 1)
 
+    def test_native_login_falls_back_to_installed_stock_browser(self):
+        launched = []
+        missing_chrome = self.root / "Google" / "Chrome" / "Application" / "chrome.exe"
+        edge = self.root / "Microsoft" / "Edge" / "Application" / "msedge.exe"
+        edge.parent.mkdir(parents=True)
+        edge.write_bytes(b"fake-edge")
+
+        def launch(command, **_kwargs):
+            process = _FakeNativeProcess(command)
+            launched.append(process)
+            return process
+
+        service = LocalProfileSetupService(
+            self.profiles,
+            profile_root=self.root / "browser-profiles",
+            runtime_root=self.root / "runtimes",
+            native_login=True,
+            native_launcher=launch,
+        )
+        with patch(
+            "application.workflows.local_profile_setup_service.installed_supported_browser_candidates",
+            return_value=[edge],
+        ):
+            started = service.start("9", executable_path=str(missing_chrome))
+
+        self.assertEqual(
+            os.path.normcase(os.path.abspath(started["executable_path"])),
+            os.path.normcase(os.path.abspath(str(edge))),
+        )
+        self.assertEqual(started["browser_name"], "Microsoft Edge")
+        self._wait_status(service, "running")
+        service.finish("9")
+        self._wait_status(service, "completed")
+        self.assertTrue(launched)
+
     def test_native_login_uses_stock_browser_without_playwright_flags(self):
         launched = []
 
@@ -233,7 +270,11 @@ class LocalProfileSetupServiceTests(unittest.TestCase):
             native_launcher=launch,
         )
 
-        started = service.start("9", executable_path=str(self.executable))
+        with patch(
+            "application.workflows.local_profile_setup_service.installed_supported_browser_candidates",
+            return_value=[],
+        ):
+            started = service.start("9", executable_path=str(self.executable))
         self.assertEqual(started["login_mode"], "native")
         running = self._wait_status(service, "running")
         self.assertEqual(running["fingerprint_mode"], "system")

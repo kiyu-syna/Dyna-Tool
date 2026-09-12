@@ -62,7 +62,11 @@ class UploadPipeline:
 
         for platform in enabled_platform_names(profile, source_platform):
             if should_cancel and should_cancel():
-                logger.info("[Upload pipeline] Video %s cancelled before %s upload.", video.aweme_id, platform)
+                logger.info(
+                    "[Tiến trình đăng] Video %s đã bị hủy trước khi đăng lên %s.",
+                    video.aweme_id,
+                    platform,
+                )
                 break
             if platform in successful_platforms:
                 results[platform] = True

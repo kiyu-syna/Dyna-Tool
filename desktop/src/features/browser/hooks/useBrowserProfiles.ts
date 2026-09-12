@@ -70,8 +70,11 @@ export function useBrowserProfiles({
       });
     return () => {
       cancelled = true;
+      if (loadedSignature.current === profileSignature) {
+        loadedSignature.current = "";
+      }
     };
-  }, [profileSignature, summaries, setMessage, setMessageError]);
+  }, [profileSignature]);
 
   async function reloadProfile(profileId: string) {
     try {

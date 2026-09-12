@@ -16,6 +16,9 @@ from services.browser.browser_runtime_service import (
     list_browser_runtimes,
     verify_browser_runtime,
 )
+from services.browser.local_chromium_recovery import (
+    _browser_processes_using,
+)
 from services.browser.local_chromium_browser_service import (
     LocalChromiumConfig,
     classify_local_chromium_error,
@@ -27,6 +30,10 @@ from services.browser.local_chromium_browser_service import (
     resolve_local_chromium_config,
     summarize_local_chromium_error,
 )
+from services.browser.local_chromium_config import (
+    _is_stock_supported_browser,
+    installed_supported_browser_candidates,
+)
 from application.tracking.profile_management_service import ProfileManagementService
 
 
@@ -37,7 +44,6 @@ LOGIN_URLS = (
     "https://www.douyin.com/",
 )
 ACTIVE_SETUP_STATUSES = {"starting", "running", "closing"}
-SUPPORTED_NATIVE_BROWSER_NAMES = {"chrome.exe", "msedge.exe"}
 
 
 class LocalProfileSetupError(RuntimeError):
@@ -53,42 +59,6 @@ def default_local_profile_root() -> Path:
 
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
-
-
-def _installed_supported_browser_candidates() -> list[Path]:
-    """Return stock Chrome/Edge installs in a stable preference order."""
-    program_files = Path(str(os.environ.get("ProgramFiles") or r"C:\Program Files"))
-    program_files_x86 = Path(
-        str(os.environ.get("ProgramFiles(x86)") or r"C:\Program Files (x86)")
-    )
-    local_app_data = Path(str(os.environ.get("LOCALAPPDATA") or ""))
-    candidates = (
-        program_files / "Google" / "Chrome" / "Application" / "chrome.exe",
-        program_files_x86 / "Google" / "Chrome" / "Application" / "chrome.exe",
-        local_app_data / "Google" / "Chrome" / "Application" / "chrome.exe",
-        program_files / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-        program_files_x86 / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-        local_app_data / "Microsoft" / "Edge" / "Application" / "msedge.exe",
-    )
-    result: list[Path] = []
-    seen: set[str] = set()
-    for candidate in candidates:
-        normalized = os.path.normcase(os.path.abspath(str(candidate)))
-        if normalized in seen or not candidate.is_file():
-            continue
-        seen.add(normalized)
-        result.append(candidate.resolve())
-    return result
-
-
-def _is_stock_supported_browser(executable: Path) -> bool:
-    if executable.name.casefold() not in SUPPORTED_NATIVE_BROWSER_NAMES:
-        return False
-    if (executable.parent / "dyna-runtime.json").is_file():
-        return False
-    return "browser-runtimes" not in {
-        part.casefold() for part in executable.resolve().parts
-    }
 
 
 def _native_browser_label(executable: Path) -> str:
@@ -153,6 +123,19 @@ class LocalProfileSetupService:
             profile,
             repair_stale_locks=repair_stale_locks,
         )
+        if result.get("ready"):
+            try:
+                config = resolve_local_chromium_config(profile)
+            except Exception:
+                return {"profile_id": profile_id, **result}
+            current = str((profile.get("browser") or {}).get("executable_path") or "")
+            if os.path.normcase(os.path.abspath(current)) != os.path.normcase(
+                str(config.executable_path)
+            ):
+                browser = dict(profile.get("browser") or {})
+                browser["executable_path"] = str(config.executable_path)
+                profile["browser"] = browser
+                self.profiles.save(profile_id, profile)
         return {"profile_id": profile_id, **result}
 
     def _set(self, profile_id: str, **changes: Any) -> None:
@@ -168,17 +151,24 @@ class LocalProfileSetupService:
         configured = str(executable_path or "").strip()
         configured_executable = Path(configured) if configured else None
         if (
-            self._native_login
-            and configured_executable is not None
-            and configured_executable.is_absolute()
+            configured_executable is not None
             and configured_executable.is_file()
-            and _is_stock_supported_browser(configured_executable)
+            and (not self._native_login or _is_stock_supported_browser(configured_executable))
         ):
+            if (configured_executable.parent / "dyna-runtime.json").is_file():
+                verify_browser_runtime(configured_executable, verify_hashes=False)
             return configured_executable.resolve()
+
         if self._native_login:
-            supported = _installed_supported_browser_candidates()
+            supported = installed_supported_browser_candidates()
             if supported:
                 return supported[0]
+
+        if configured_executable is not None and configured_executable.is_file():
+            if (configured_executable.parent / "dyna-runtime.json").is_file():
+                verify_browser_runtime(configured_executable, verify_hashes=False)
+            return configured_executable.resolve()
+
         if configured:
             executable = configured_executable
             assert executable is not None
@@ -505,35 +495,24 @@ class LocalProfileSetupService:
                 suggested_action="",
             )
 
-            initialization_deadline = time.monotonic() + min(
-                max(5.0, launch_timeout_ms / 1000),
-                30.0,
-            )
             while not stop_event.wait(0.25):
                 if process.poll() is None:
                     continue
-                if self._native_profile_ready(user_data_dir, profile_directory):
-                    break
-                if time.monotonic() >= initialization_deadline:
-                    raise LocalProfileSetupError(
-                        f"{_native_browser_label(executable_path)} đã đóng trước khi tạo xong hồ sơ."
-                    )
+                try:
+                    active_processes = _browser_processes_using(user_data_dir)
+                except Exception:
+                    active_processes = []
+                if active_processes:
+                    continue
+                break
 
             if stop_event.is_set():
-                ready_deadline = time.monotonic() + 10
-                while (
-                    not self._native_profile_ready(user_data_dir, profile_directory)
-                    and process.poll() is None
-                    and time.monotonic() < ready_deadline
-                ):
-                    time.sleep(0.1)
-
-            self._close_native_browser(
-                process,
-                user_data_dir,
-                executable_path,
-                profile_directory,
-            )
+                self._close_native_browser(
+                    process,
+                    user_data_dir,
+                    executable_path,
+                    profile_directory,
+                )
             process = None
             if not self._native_profile_ready(user_data_dir, profile_directory):
                 raise LocalProfileSetupError(

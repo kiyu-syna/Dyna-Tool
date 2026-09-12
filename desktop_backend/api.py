@@ -142,7 +142,7 @@ class ApiContext:
             from core.utils import logger
 
             logger.info(
-                "[Local Upload] Resumed %s imported job(s) after Dyna startup.",
+                "[Đăng video nội bộ] Đã khôi phục %s tác vụ sau khi Dyna khởi động.",
                 resumed_imported_jobs,
             )
         threading.Thread(
@@ -362,7 +362,8 @@ def create_app(
 
 def _bound_socket(host: str, port: int) -> socket.socket:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if os.name == "nt" and hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
     sock.bind((host, port))
     return sock
 

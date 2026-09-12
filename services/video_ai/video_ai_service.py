@@ -1083,7 +1083,7 @@ class VideoAiService:
                 try:
                     self._ensure_vieneu_engine()
                 except Exception:
-                    logger.exception("[Video AI] VieNeu-TTS prepare failed")
+                    logger.exception("[Video AI] Không thể chuẩn bị VieNeu-TTS")
                 finally:
                     with self._lock:
                         self._vieneu_prepare_thread = None
@@ -2290,7 +2290,7 @@ class VideoAiService:
             except VideoAiCancelled:
                 self._mark_cancelled(project_id)
             except Exception as exc:
-                logger.exception("[Video AI] %s job failed for %s", name, project_id)
+                logger.exception("[Video AI] Tác vụ %s thất bại cho dự án %s", name, project_id)
                 self._mark_failed(project_id, str(exc))
             finally:
                 with self._lock:

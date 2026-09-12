@@ -7,6 +7,8 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && electron . --dev\"",
+    "dev:web": "vite --host 127.0.0.1",
+    "dev:tauri": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 dev",
     "build": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json --noEmit && vite build",
     "lint": "eslint src vite.config.ts electron --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" vite.config.ts",
@@ -14,12 +16,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "package:win": "powershell -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
+    "package:tauri": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 build --bundles nsis",
     "preview": "vite preview --host 127.0.0.1",
     "start": "electron ."
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
     "@tanstack/react-virtual": "^3.14.7",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-dialog": "^2.7.3",
+    "@tauri-apps/plugin-opener": "^2.5.5",
     "lucide-react": "^0.468.0",
     "opencc-js": "^1.0.5",
     "react": "^19.0.0",
@@ -27,6 +33,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@tauri-apps/cli": "^2.11.4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

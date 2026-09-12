@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from profile_automation.uploaders.youtube_uploader import (
     YOUTUBE_CHECK_COMPLETE,
@@ -7,6 +7,8 @@ from profile_automation.uploaders.youtube_uploader import (
     YOUTUBE_CHECK_PENDING,
     _classify_youtube_check_status,
     _select_public_visibility,
+    _wait_for_youtube_publish_confirmation,
+    _youtube_publish_confirmation_signal,
 )
 
 
@@ -29,6 +31,43 @@ class YouTubeUploaderTests(unittest.TestCase):
         result = _classify_youtube_check_status(["Đang kiểm tra 5% ... Còn 10 phút"])
 
         self.assertEqual(result, YOUTUBE_CHECK_PENDING)
+
+    def test_publish_confirmation_accepts_visible_success_text(self):
+        page = Mock()
+
+        def get_by_text(text, exact=False):
+            item = Mock()
+            item.is_visible.return_value = text == "Video published"
+            matches = Mock()
+            matches.count.return_value = 1
+            matches.nth.return_value = item
+            return matches
+
+        page.get_by_text.side_effect = get_by_text
+        page.url = "https://studio.youtube.com/channel/test/videos/upload"
+
+        signal = _youtube_publish_confirmation_signal(page)
+
+        self.assertEqual(signal, 'text="Video published"')
+
+    def test_publish_confirmation_wait_polls_until_signal_appears(self):
+        page = Mock()
+        with (
+            patch(
+                "profile_automation.uploaders.youtube_uploader._youtube_publish_confirmation_signal",
+                side_effect=["", 'text="Đã xuất bản video"'],
+            ) as confirmation,
+            patch(
+                "profile_automation.uploaders.youtube_uploader.time.monotonic",
+                side_effect=[10, 10],
+            ),
+            patch("profile_automation.uploaders.youtube_uploader.time.sleep") as sleep,
+        ):
+            signal = _wait_for_youtube_publish_confirmation(page)
+
+        self.assertEqual(signal, 'text="Đã xuất bản video"')
+        self.assertEqual(confirmation.call_count, 2)
+        sleep.assert_called_once_with(2)
 
     @staticmethod
     def _public_radio(initially_checked: bool):

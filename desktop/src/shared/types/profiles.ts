@@ -18,11 +18,27 @@ export type ProfileSummary = {
 
 export type RuntimeProfileState = {
   profile_id: string;
-  status: "stopped" | "starting" | "running" | "stopping" | "error" | string;
+  status: "stopped" | "starting" | "running" | "degraded" | "stopping" | "error" | string;
   active: boolean;
   message: string;
   current_source: string;
   source_count: number;
+  healthy_source_count: number;
+  failing_source_count: number;
+  last_successful_scan_at: string;
+  source_health: Record<
+    string,
+    {
+      source_key: string;
+      platform: string;
+      label: string;
+      last_attempt_at: string;
+      last_success_at?: string;
+      attempt_count: number;
+      consecutive_failures: number;
+      last_error: string;
+    }
+  >;
   started_at: string;
   updated_at: string;
   last_error: string;
@@ -79,6 +95,7 @@ export type ProfileConfig = {
   default_caption?: string;
   check_interval_minutes?: number;
   processing_priority?: number;
+  initial_scan_mode?: "skip_existing" | "process_latest";
   save_dir?: string;
   browser?: {
     provider?: "gemlogin" | "local_chromium";
