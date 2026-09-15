@@ -1,11 +1,18 @@
 import { FlaskConical, Play, Square } from "lucide-react";
 import { useState } from "react";
 import { request } from "../../shared/api/client";
-import { EmptyState, PlatformMarks, Section, SkeletonRows, StatusPill } from "../../shared/components/Common";
+import { EmptyState, Modal, PlatformMarks, Section, SkeletonRows, StatusPill } from "../../shared/components/Common";
 import VideoQueueSection from "../../shared/components/VideoQueueSection";
 import { usePolling } from "../../shared/hooks/usePolling";
 import { useI18n } from "../../shared/i18n";
-import type { ProfileSummary, RuntimeProfileState, RuntimeSnapshot, TestUploadState } from "../../shared/types";
+import type {
+  BrowserDiagnostic,
+  BrowserDiagnosticHistory,
+  ProfileSummary,
+  RuntimeProfileState,
+  RuntimeSnapshot,
+  TestUploadState,
+} from "../../shared/types";
 import { SeenStateModal, TestUploadModal } from "./components/TrackingModals";
 import "./tracking.css";
 
@@ -50,10 +57,29 @@ export default function TrackingPage() {
   const profiles = usePolling<{ profiles: ProfileSummary[] }>("/api/profiles", 5000);
   const runtime = usePolling<RuntimeSnapshot>("/api/runtime", 1500);
   const testUploads = usePolling<{ profiles: Record<string, TestUploadState> }>("/api/runtime/test-uploads", 2500);
+  const diagnosticHistory = usePolling<BrowserDiagnosticHistory>("/api/diagnostics/history?limit=12", 5000);
   const [busyAction, setBusyAction] = useState("");
   const [actionError, setActionError] = useState("");
   const [seenProfile, setSeenProfile] = useState<ProfileSummary | null>(null);
   const [testProfile, setTestProfile] = useState<ProfileSummary | null>(null);
+  const [selectedDiagnostic, setSelectedDiagnostic] = useState<BrowserDiagnostic | null>(null);
+  const [diagnosticImage, setDiagnosticImage] = useState("");
+  const [diagnosticImageError, setDiagnosticImageError] = useState("");
+
+  async function openDiagnostic(item: BrowserDiagnostic) {
+    setSelectedDiagnostic(item);
+    setDiagnosticImage("");
+    setDiagnosticImageError("");
+    if (!item.screenshot_available) return;
+    try {
+      const result = await request<{ data_url: string }>(
+        `/api/diagnostics/history/${encodeURIComponent(item.event_id)}/screenshot`,
+      );
+      setDiagnosticImage(result.data_url);
+    } catch (caught) {
+      setDiagnosticImageError(caught instanceof Error ? caught.message : String(caught));
+    }
+  }
 
   async function runtimeAction(path: string, actionKey: string) {
     setBusyAction(actionKey);
@@ -93,6 +119,9 @@ export default function TrackingPage() {
   const systemResources = runtime.data?.resources?.system;
   const ramTone = resourceTone(systemResources?.ram_percent);
   const workload = runtime.data?.resources?.workload || {};
+  const latestTestResult = Object.values(testUploads.data?.profiles || {})
+    .filter((state) => !state.active && ["completed", "completed_with_errors", "failed"].includes(state.status))
+    .sort((left, right) => right.updated_at.localeCompare(left.updated_at))[0];
   const workloadLabel = (key: string, label: string) => {
     const item = workload[key];
     return item
@@ -161,6 +190,23 @@ export default function TrackingPage() {
         }
       >
         {actionError && <div className="action-error">{actionError}</div>}
+        {latestTestResult && (
+          <div
+            className={`test-upload-result ${latestTestResult.status === "completed" ? "success" : "warning"}`}
+            role="status"
+          >
+            <strong>
+              {l("Kết quả đăng thử", "Test-publish result", "测试发布结果")} — {latestTestResult.message}
+            </strong>
+            {latestTestResult.last_error && <span>{latestTestResult.last_error}</span>}
+            {Object.entries(latestTestResult.results || {}).map(([platform, result]) => (
+              <span key={platform}>
+                {platform === "facebook" ? "Facebook Reels" : platform === "youtube" ? "YouTube Shorts" : "TikTok"}:{" "}
+                {result?.ok ? l("Thành công", "Succeeded", "成功") : result?.message || l("Thất bại", "Failed", "失败")}
+              </span>
+            ))}
+          </div>
+        )}
         {profiles.loading && !profiles.data ? (
           <SkeletonRows />
         ) : profiles.error && !profiles.data ? (
@@ -310,6 +356,46 @@ export default function TrackingPage() {
         )}
       </Section>
 
+      <Section
+        title={l("Lịch sử lỗi tự động", "Automatic error history", "自动错误历史")}
+        action={
+          <span className="runtime-summary">
+            {diagnosticHistory.data?.items?.length || 0} {l("lỗi gần nhất", "recent errors", "条最近错误")}
+          </span>
+        }
+      >
+        {diagnosticHistory.error && !diagnosticHistory.data ? (
+          <EmptyState error message={diagnosticHistory.error} />
+        ) : !diagnosticHistory.data?.items?.length ? (
+          <EmptyState message={l("Chưa có ảnh lỗi nào.", "No error screenshots yet.", "暂无错误截图。")} />
+        ) : (
+          <div className="diagnostic-history-grid">
+            {diagnosticHistory.data.items.map((item) => (
+              <button
+                type="button"
+                className="diagnostic-history-card"
+                key={item.event_id}
+                onClick={() => void openDiagnostic(item)}
+              >
+                <div>
+                  <strong>{item.platform.toUpperCase()}</strong>
+                  <time>{new Date(item.occurred_at).toLocaleString()}</time>
+                </div>
+                <span>
+                  Profile {item.profile_id || "-"} · Video {item.video_id || "-"}
+                </span>
+                <p>{item.error || l("Lỗi không xác định", "Unknown error", "未知错误")}</p>
+                <small>
+                  {item.screenshot_available
+                    ? l("Bấm để xem ảnh", "Click to view screenshot", "点击查看截图")
+                    : item.screenshot_error || l("Không có ảnh", "No screenshot", "无截图")}
+                </small>
+              </button>
+            ))}
+          </div>
+        )}
+      </Section>
+
       <VideoQueueSection onChanged={profiles.refresh} showFilters />
       {seenProfile && (
         <SeenStateModal
@@ -325,6 +411,35 @@ export default function TrackingPage() {
           onClose={() => setTestProfile(null)}
           onConfirm={() => void startTestUpload()}
         />
+      )}
+      {selectedDiagnostic && (
+        <Modal
+          title={`${selectedDiagnostic.platform.toUpperCase()} · Profile ${selectedDiagnostic.profile_id || "-"}`}
+          onClose={() => setSelectedDiagnostic(null)}
+          className="diagnostic-image-modal"
+        >
+          <div className="diagnostic-image-detail">
+            <p>{selectedDiagnostic.error}</p>
+            {diagnosticImageError ? (
+              <div className="action-error">{diagnosticImageError}</div>
+            ) : diagnosticImage ? (
+              <img
+                src={diagnosticImage}
+                alt={l("Ảnh màn hình lúc xảy ra lỗi", "Screenshot at failure", "错误发生时的截图")}
+              />
+            ) : selectedDiagnostic.screenshot_available ? (
+              <span>{l("Đang tải ảnh...", "Loading screenshot...", "正在加载截图...")}</span>
+            ) : (
+              <span>
+                {l(
+                  "Không chụp được ảnh cho lỗi này.",
+                  "No screenshot was captured for this error.",
+                  "此错误未能截取屏幕。",
+                )}
+              </span>
+            )}
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -88,6 +88,23 @@ export type TestUploadState = {
   updated_at: string;
 };
 
+export type BrowserDiagnostic = {
+  event_id: string;
+  occurred_at: string;
+  profile_id: string;
+  video_id: string;
+  platform: string;
+  url: string;
+  error: string;
+  last_response: Record<string, unknown>;
+  screenshot_available: boolean;
+  screenshot_error: string;
+};
+
+export type BrowserDiagnosticHistory = {
+  items: BrowserDiagnostic[];
+};
+
 export type ProfileConfig = {
   id: string;
   name: string;

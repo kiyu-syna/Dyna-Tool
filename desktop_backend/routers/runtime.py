@@ -3,6 +3,10 @@ from fastapi import HTTPException
 import core.config as config
 from desktop_backend.schemas import DiagnosticPayload, TestUploadPayload
 from application.tracking.profile_diagnostics_service import run_profile_diagnostics
+from services.integrations.diagnostic_artifact_service import (
+    browser_diagnostic_screenshot,
+    list_browser_diagnostics,
+)
 from services.runtime.overview_service import build_overview_snapshot
 
 
@@ -67,6 +71,17 @@ def register_routes(app, context, protected, *, _profile_summary) -> None:
             raise HTTPException(status_code=404, detail="Không tìm thấy Profile.")
         return result
 
+    @app.get("/api/diagnostics/history", dependencies=protected)
+    def diagnostic_history(limit: int = 30) -> dict:
+        return {"items": list_browser_diagnostics(limit=limit)}
+
+    @app.get("/api/diagnostics/history/{event_id}/screenshot", dependencies=protected)
+    def diagnostic_screenshot(event_id: str) -> dict:
+        result = browser_diagnostic_screenshot(event_id)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Không tìm thấy ảnh chẩn đoán.")
+        return result
+
     @app.post("/api/runtime/profiles/{profile_id}/start", dependencies=protected)
     def start_runtime_profile(profile_id: str) -> dict:
         try:
@@ -94,4 +109,3 @@ def register_routes(app, context, protected, *, _profile_summary) -> None:
         context.manual_publish.stop_scheduler()
         context.local_profiles.shutdown()
         return {"ok": True, **context.runtime.shutdown()}
-

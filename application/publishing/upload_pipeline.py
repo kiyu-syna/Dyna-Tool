@@ -1,7 +1,9 @@
+import gc
+
 from profile_automation.uploaders.tiktok_uploader import TikTokUploader
 from profile_automation.uploaders.facebook_uploader import FacebookUploader
 from profile_automation.uploaders.youtube_uploader import YouTubeUploader
-from profile_automation.uploaders.base_uploader import UploadSkipped
+from profile_automation.uploaders.base_uploader import UploadSkipped, UploadUnconfirmed
 from profile_automation.watchers.douyin_video import DouyinVideo
 from core.utils import logger
 from services.runtime.workload_coordinator import WorkloadCancelled, workload_slot
@@ -107,6 +109,17 @@ class UploadPipeline:
                 )
                 if on_platform_status:
                     on_platform_status(platform, "skipped", reason)
+            except UploadUnconfirmed as exc:
+                reason = str(exc)
+                results[platform] = False
+                logger.warning(
+                    "[Tiến trình đăng] %s chưa xác nhận đăng video %s: %s",
+                    platform,
+                    video.aweme_id,
+                    reason,
+                )
+                if on_platform_status:
+                    on_platform_status(platform, "failed", reason)
             except WorkloadCancelled:
                 if on_platform_status:
                     on_platform_status(platform, "pending", "")
@@ -116,5 +129,7 @@ class UploadPipeline:
                 results[platform] = False
                 if on_platform_status:
                     on_platform_status(platform, "failed", str(e))
+            finally:
+                gc.collect()
 
         return results

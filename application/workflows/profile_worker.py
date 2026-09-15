@@ -146,6 +146,19 @@ class ProfileWorker:
                 "results": {},
             }
 
+        if str(job.get("status") or "").startswith("failed"):
+            logger.warning(
+                "[Profile %s] Không tự đăng lại video %s đang lỗi; "
+                "chỉ nút Thử lại trên hàng đợi mới được phép chạy lại.",
+                self.profile_id,
+                video.aweme_id,
+            )
+            return source_platform, target_platforms, {
+                "status": job.get("status"),
+                "results": {},
+                "error": str(job.get("last_error") or ""),
+            }
+
         if not target_platforms:
             reason = (
                 "Không có nền tảng đích hợp lệ; nền tảng trùng với nguồn video "

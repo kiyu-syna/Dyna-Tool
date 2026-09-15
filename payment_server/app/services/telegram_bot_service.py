@@ -84,6 +84,27 @@ class TelegramBotService:
             raise RuntimeError(str(data.get("description") or "Telegram API request failed"))
         return data.get("result")
 
+    async def _api_multipart(
+        self,
+        method: str,
+        *,
+        data: dict[str, Any],
+        files: dict[str, tuple[str, bytes, str]],
+    ) -> Any:
+        token = get_settings().TELEGRAM_BOT_TOKEN.strip()
+        if not token:
+            raise RuntimeError("Telegram shared bot is not configured on the server")
+        async with httpx.AsyncClient(timeout=55) as client:
+            response = await client.post(
+                f"https://api.telegram.org/bot{token}/{method}",
+                data=data,
+                files=files,
+            )
+        payload = response.json()
+        if not response.is_success or not payload.get("ok"):
+            raise RuntimeError(str(payload.get("description") or "Telegram API request failed"))
+        return payload.get("result")
+
     async def connection_status(self, username: str) -> dict[str, Any]:
         link = await get_db().telegram_links.find_one({"username": username})
         settings = get_settings()
@@ -121,6 +142,23 @@ class TelegramBotService:
                 {"text": "Huỷ video", "callback_data": f"job:{profile_id}:{video_id}"},
             ]]}
         await self._api("sendMessage", payload)
+        return True
+
+    async def send_diagnostic_image(
+        self,
+        username: str,
+        text: str,
+        image: bytes,
+        filename: str = "diagnostic.png",
+    ) -> bool:
+        link = await get_db().telegram_links.find_one({"username": username})
+        if not link or not self.configured:
+            return False
+        await self._api_multipart(
+            "sendPhoto",
+            data={"chat_id": str(link["chat_id"]), "caption": text[:1024]},
+            files={"photo": (filename or "diagnostic.png", image, "image/png")},
+        )
         return True
 
     async def create_caption_request(self, username: str, payload: dict[str, Any]) -> dict[str, Any]:

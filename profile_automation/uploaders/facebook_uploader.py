@@ -9,7 +9,7 @@ from playwright.sync_api import Locator, Page
 import core.config as config
 from core.utils import logger
 from profile_automation.browser_utils import set_video_file_background
-from profile_automation.uploaders.base_uploader import BaseUploader
+from profile_automation.uploaders.base_uploader import BaseUploader, UploadUnconfirmed
 from profile_automation.uploaders.upload_log import log_upload_section
 from profile_automation.watchers.douyin_video import DouyinVideo
 from services.browser.browser_profile_service import (
@@ -387,6 +387,15 @@ class FacebookUploader(BaseUploader):
                         "Không đọc được thông báo xác nhận sau 45 giây; lệnh Đăng đã được gửi.",
                         level="warning",
                     )
+                    record_browser_diagnostic(
+                        page=page,
+                        profile_id=profile_id,
+                        video_id=video_id,
+                        platform="facebook",
+                        error=RuntimeError("Facebook không xác nhận đăng trong 45 giây."),
+                        url=profile_url,
+                        last_response=response_trace,
+                    )
                 upload_succeeded = True
 
         except Exception as exc:
@@ -433,7 +442,7 @@ class FacebookUploader(BaseUploader):
             status=(
                 "Thành công"
                 if upload_succeeded and publish_confirmation
-                else "Đã gửi đăng"
+                else "Chưa xác nhận"
                 if upload_succeeded
                 else "Thất bại"
             ),
@@ -445,4 +454,9 @@ class FacebookUploader(BaseUploader):
                 else "error"
             ),
         )
+        if upload_succeeded and not publish_confirmation:
+            raise UploadUnconfirmed(
+                "Facebook đã nhận thao tác Đăng nhưng không xác nhận trong 45 giây; "
+                "chưa thể kết luận video đã được đăng."
+            )
         return upload_succeeded

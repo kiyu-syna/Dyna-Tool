@@ -5,6 +5,10 @@ class UploadSkipped(RuntimeError):
     """The platform intentionally skipped this video and must not retry it."""
 
 
+class UploadUnconfirmed(RuntimeError):
+    """The publish action was sent, but the platform never confirmed completion."""
+
+
 class BaseUploader:
     def upload(self, video_path: str, video: DouyinVideo, profile: dict) -> bool:
         """

@@ -1,10 +1,10 @@
 # Dyna Tool
 
-Dyna Tool là ứng dụng desktop hỗ trợ tự động hóa tải, xử lý và đăng video lên nhiều nền tảng. Dự án gồm giao diện Electron/React, backend Python và payment server dùng FastAPI.
+Dyna Tool là ứng dụng desktop hỗ trợ tự động hóa tải, xử lý và đăng video lên nhiều nền tảng. Dự án gồm giao diện Tauri/React, backend Python và payment server dùng FastAPI. Electron vẫn được giữ làm phương án dự phòng.
 
 ## Tính năng chính
 
-- Giao diện desktop Electron + React.
+- Giao diện desktop Tauri + React.
 - Tải và xử lý video dọc/YouTube Shorts.
 - Tự động hóa Douyin/TikTok theo profile.
 - Hỗ trợ upload lên TikTok, YouTube và Facebook.
@@ -20,7 +20,7 @@ Dyna Tool/
 ├── core/                   # Cấu hình và tiện ích dùng chung
 ├── services/               # Dịch vụ theo miền: account, browser, publishing...
 ├── profile_automation/     # Pipeline, trình duyệt, watcher và uploader theo profile
-├── desktop/                # Electron + React frontend
+├── desktop/                # Tauri + React frontend (có Electron dự phòng)
 ├── desktop_backend/        # API backend cho ứng dụng desktop
 ├── payment_server/         # FastAPI payment API
 ├── extensions/             # Browser extensions
@@ -99,7 +99,7 @@ nhà cung cấp (nếu có), nên server không cần khởi động lại để
 Riêng khi thêm, xóa hoặc đổi key trong `.env`, hãy khởi động lại Payment Server
 để nạp cấu hình mới.
 
-Không đặt các khóa này trong `settings.json`, mã React/Electron hoặc app desktop. Máy chủ tự xoay khóa và nhà cung cấp khi gặp hết hạn mức, giới hạn tốc độ, lỗi mạng hoặc lỗi tạm thời. `AI_REQUESTS_PER_MINUTE` giới hạn chi phí theo từng tài khoản Dyna; `AI_REQUIRE_ACTIVE_LICENSE=true` chỉ cho tài khoản Premium còn hiệu lực sử dụng.
+Không đặt các khóa này trong `settings.json`, mã React/Tauri hoặc app desktop. Máy chủ tự xoay khóa và nhà cung cấp khi gặp hết hạn mức, giới hạn tốc độ, lỗi mạng hoặc lỗi tạm thời. `AI_REQUESTS_PER_MINUTE` giới hạn chi phí theo từng tài khoản Dyna; `AI_REQUIRE_ACTIVE_LICENSE=true` chỉ cho tài khoản Premium còn hiệu lực sử dụng.
 
 Các file local khác như `auth.json`, `settings.json`, `state.json`, log và trạng thái runtime cũng được bỏ qua bởi `.gitignore`. Sao chép `config/settings.example.json` thành `config/settings.json` khi cần tùy chỉnh cấu hình chạy local.
 
@@ -118,21 +118,22 @@ cd payment_server
 ..\.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-Build frontend trước khi chạy ứng dụng chính:
-
-```powershell
-cd desktop
-npm run build
-cd ..
-python main.py
-```
-
-Trong lúc phát triển frontend, có thể dùng:
+Chạy ứng dụng desktop Tauri khi phát triển:
 
 ```powershell
 cd desktop
 npm run dev
 ```
+
+`npm run dev`, `npm start` và `npm run dev:tauri` đều chạy Tauri. Không cần build EXE để dùng chế độ này.
+
+Nếu đã có binary Tauri debug hoặc release, có thể mở từ thư mục gốc bằng:
+
+```powershell
+python main.py
+```
+
+Electron chưa bị xóa. Khi cần quay lại Electron, dùng `npm run dev:electron`; hoặc trong PowerShell chạy `$env:DYNA_DESKTOP_SHELL = "electron"` trước `python main.py`. Script đóng gói Electron cũ nằm tại `npm run package:electron`; script đóng gói Tauri là `npm run package:win` / `npm run package:tauri`.
 
 Payment API có health check tại `http://localhost:8000/health` và tài liệu API tại `http://localhost:8000/docs`.
 

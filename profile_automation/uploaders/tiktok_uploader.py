@@ -4,7 +4,7 @@ import time
 from contextlib import ExitStack
 from pathlib import Path
 
-from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped
+from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped, UploadUnconfirmed
 from profile_automation.uploaders.upload_log import log_upload_section
 from profile_automation.watchers.douyin_video import DouyinVideo
 from core.utils import logger
@@ -312,6 +312,16 @@ class TikTokUploader(BaseUploader):
                             "Không đọc được thông báo xác nhận sau 45 giây; yêu cầu đăng đã được gửi.",
                             level="warning",
                         )
+                        record_browser_diagnostic(
+                            page=page,
+                            profile_id=profile_id,
+                            video_id=video_id,
+                            platform="tiktok",
+                            error=RuntimeError("TikTok không xác nhận đăng trong 45 giây."),
+                            url=UPLOAD_URL,
+                            last_response=response_trace,
+                        )
+                        diagnostic_recorded = True
                     upload_succeeded = True
                 except UploadSkipped:
                     raise
@@ -384,7 +394,12 @@ class TikTokUploader(BaseUploader):
             profile_id,
             video_id,
             "Kết thúc",
-            status="Thành công" if publish_confirmation else "Đã gửi yêu cầu đăng",
+            status="Thành công" if publish_confirmation else "Chưa xác nhận",
             level="info" if publish_confirmation else "warning",
         )
+        if upload_succeeded and not publish_confirmation:
+            raise UploadUnconfirmed(
+                "TikTok đã nhận thao tác Đăng nhưng không xác nhận trong 45 giây; "
+                "chưa thể kết luận video đã được đăng."
+            )
         return upload_succeeded

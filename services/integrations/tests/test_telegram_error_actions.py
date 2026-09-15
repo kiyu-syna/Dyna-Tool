@@ -1,5 +1,7 @@
 import unittest
 import threading
+import tempfile
+from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -93,6 +95,28 @@ class TelegramRelayTests(unittest.TestCase):
         self.assertIn("Hồ sơ: 2", text)
         self.assertIn("Nền tảng: youtube", text)
         self.assertIn("chooser timeout", text)
+
+    @patch.object(telegram_service, "_request")
+    @patch.object(telegram_service, "_request_file", return_value={"delivered": True})
+    def test_diagnostic_sends_the_captured_image(self, request_file, request):
+        with tempfile.TemporaryDirectory() as directory:
+            screenshot = Path(directory) / "screenshot.png"
+            screenshot.write_bytes(b"png")
+
+            telegram_service.send_diagnostic_notification(
+                {
+                    "profile_id": "2",
+                    "video_id": "123",
+                    "platform": "tiktok",
+                    "error": "confirmation timeout",
+                    "screenshot_path": str(screenshot),
+                }
+            )
+
+        request_file.assert_called_once()
+        self.assertEqual(request_file.call_args.args[0], "/api/telegram/diagnostics")
+        self.assertEqual(request_file.call_args.kwargs["image_path"], str(screenshot))
+        request.assert_not_called()
 
     @patch.object(telegram_service, "_request")
     def test_caption_request_includes_pin_preference(self, request):

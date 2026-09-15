@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from urllib.parse import quote
 
@@ -9,7 +9,7 @@ from urllib.parse import quote
 import core.config as config
 from core.utils import logger
 from profile_automation.browser_utils import set_video_file_background
-from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped
+from profile_automation.uploaders.base_uploader import BaseUploader, UploadSkipped, UploadUnconfirmed
 from profile_automation.uploaders.upload_log import log_upload_section
 from profile_automation.watchers.douyin_video import DouyinVideo
 from services.publishing.youtube_shorts_converter import (
@@ -39,6 +39,7 @@ YOUTUBE_PUBLISH_SUCCESS_TEXTS = (
     "Video published",
     "Published",
     "Your video has been published",
+    "Đã đăng video",
     "Đã xuất bản video",
     "Video đã được xuất bản",
     "Đã xuất bản",
@@ -73,6 +74,43 @@ def _close_page_quietly(page) -> None:
             page.close()
     except Exception:
         pass
+
+
+@contextmanager
+def _record_page_error_before_close(
+    page,
+    *,
+    profile_id: str,
+    video_id: str,
+    url: str,
+    last_response: dict,
+    state: dict,
+):
+    """Persist the live YouTube page before ExitStack closes it."""
+    try:
+        yield
+    except UploadSkipped:
+        raise
+    except Exception as exc:
+        record_browser_diagnostic(
+            page=page,
+            profile_id=profile_id,
+            video_id=video_id,
+            platform="youtube",
+            error=exc,
+            url=url,
+            last_response=last_response,
+        )
+        state["recorded"] = True
+        raise
+
+
+def _youtube_upload_textbox(page, *, required: bool):
+    required_value = "true" if required else "false"
+    return page.locator(
+        "ytcp-uploads-dialog:visible "
+        f'div#textbox[contenteditable="true"][aria-required="{required_value}"]'
+    ).last
 
 
 def _youtube_publish_confirmation_signal(page) -> str:
@@ -340,6 +378,7 @@ class YouTubeUploader(BaseUploader):
 
         page = None
         response_trace: dict = {}
+        diagnostic_state = {"recorded": False}
         try:
             progress(3, "Đang kết nối Chromium %s.", browser_label)
             with connected_gemlogin_profile(
@@ -357,6 +396,20 @@ class YouTubeUploader(BaseUploader):
                 page_cleanup.callback(_close_page_quietly, page)
                 response_trace = attach_response_trace(page)
                 upload_url = UPLOAD_URL.format(channel_id=quote(channel_id, safe=""))
+                page_cleanup.enter_context(
+                    _record_page_error_before_close(
+                        page,
+                        profile_id=profile_id,
+                        video_id=video_id,
+                        url=upload_url,
+                        last_response=response_trace,
+                        state=diagnostic_state,
+                    )
+                )
+                try:
+                    page.emulate_media(color_scheme="light", reduced_motion="reduce")
+                except Exception as exc:
+                    logger.debug("Không thể cố định giao diện YouTube Studio: %s", exc)
                 page.goto(upload_url, wait_until="domcontentloaded", timeout=60000)
                 progress(4, "YouTube Studio đã tải xong.")
 
@@ -380,24 +433,13 @@ class YouTubeUploader(BaseUploader):
                 time.sleep(5)
                 title, hashtags = _build_youtube_text(str(converted_path), video, profile)
 
-                title_box = page.locator(
-                    'div#textbox[contenteditable="true"][aria-required="true"]'
-                ).first
+                title_box = _youtube_upload_textbox(page, required=True)
                 title_box.wait_for(state="visible", timeout=60000)
-                title_box.click()
-                page.keyboard.press("Control+A")
-                page.keyboard.press("Backspace")
-                page.keyboard.insert_text(title)
+                title_box.fill(title, force=True, timeout=60000)
 
-                description_box = page.locator(
-                    'div#textbox[contenteditable="true"][aria-required="false"]'
-                ).first
+                description_box = _youtube_upload_textbox(page, required=False)
                 description_box.wait_for(state="visible", timeout=30000)
-                description_box.click()
-                page.keyboard.press("Control+A")
-                page.keyboard.press("Backspace")
-                if hashtags:
-                    page.keyboard.insert_text(hashtags)
+                description_box.fill(hashtags, force=True, timeout=30000)
                 use_original = bool(
                     profile.get("_runtime_use_original_desc", False)
                     or youtube_cfg.get("use_original_desc", False)
@@ -454,6 +496,15 @@ class YouTubeUploader(BaseUploader):
                         "Không đọc được thông báo xác nhận sau 45 giây; lệnh xuất bản đã được gửi.",
                         level="warning",
                     )
+                    record_browser_diagnostic(
+                        page=page,
+                        profile_id=profile_id,
+                        video_id=video_id,
+                        platform="youtube",
+                        error=RuntimeError("YouTube không xác nhận xuất bản trong 45 giây."),
+                        url=UPLOAD_URL.format(channel_id=quote(channel_id, safe="")),
+                        last_response=response_trace,
+                    )
                 upload_succeeded = True
 
         except UploadSkipped as exc:
@@ -476,15 +527,16 @@ class YouTubeUploader(BaseUploader):
                 time.monotonic() - started_at,
                 exc,
             )
-            record_browser_diagnostic(
-                page=page,
-                profile_id=profile_id,
-                video_id=str(video.aweme_id),
-                platform="youtube",
-                error=exc,
-                url=UPLOAD_URL.format(channel_id=quote(channel_id, safe="")),
-                last_response=response_trace,
-            )
+            if not diagnostic_state["recorded"]:
+                record_browser_diagnostic(
+                    page=page,
+                    profile_id=profile_id,
+                    video_id=str(video.aweme_id),
+                    platform="youtube",
+                    error=exc,
+                    url=UPLOAD_URL.format(channel_id=quote(channel_id, safe="")),
+                    last_response=response_trace,
+                )
         finally:
             if page is not None:
                 _close_page_quietly(page)
@@ -518,7 +570,7 @@ class YouTubeUploader(BaseUploader):
             status=(
                 "Thành công"
                 if upload_succeeded and publish_confirmation
-                else "Đã gửi xuất bản"
+                else "Chưa xác nhận"
                 if upload_succeeded
                 else "Thất bại"
             ),
@@ -530,4 +582,9 @@ class YouTubeUploader(BaseUploader):
                 else "error"
             ),
         )
+        if upload_succeeded and not publish_confirmation:
+            raise UploadUnconfirmed(
+                "YouTube đã nhận thao tác Xuất bản nhưng không xác nhận trong 45 giây; "
+                "chưa thể kết luận video đã được đăng."
+            )
         return upload_succeeded

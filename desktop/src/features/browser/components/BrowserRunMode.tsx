@@ -53,12 +53,12 @@ export default function BrowserRunMode({ profileId, headless, onChange }: Browse
             onChange={() => onChange("offscreen")}
           />
           <span>
-            <strong>{l("Mở ngoài màn hình", "Open off-screen", "在屏幕外打开")}</strong>
+            <strong>{l("Mở cửa sổ trên màn hình", "Show browser window", "显示浏览器窗口")}</strong>
             <small>
               {l(
-                "Vẫn mở giao diện trình duyệt nhưng đặt cửa sổ ngoài vùng nhìn thấy; tương thích tốt hơn với đăng nhập, CAPTCHA và thao tác trên trang.",
-                "Keeps the browser UI running outside the visible area for better compatibility with sign-in, CAPTCHA, and page interactions.",
-                "保留浏览器界面但将窗口置于可视区域之外，更兼容登录、验证码和页面操作。",
+                "Mở giao diện trình duyệt trực tiếp trên màn hình, tương thích tốt nhất và dễ dàng theo dõi tiến trình hoặc xử lý CAPTCHA.",
+                "Opens the browser window directly on screen for the best compatibility, live monitoring, and CAPTCHA handling.",
+                "直接在屏幕上打开浏览器窗口，兼容性最佳，便于观察进度或处理验证码。",
               )}
             </small>
           </span>

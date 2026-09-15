@@ -4,7 +4,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from services.integrations.diagnostic_artifact_service import record_browser_diagnostic
+from services.integrations.diagnostic_artifact_service import (
+    browser_diagnostic_screenshot,
+    list_browser_diagnostics,
+    record_browser_diagnostic,
+)
 
 
 class _FakePage:
@@ -37,6 +41,15 @@ class DiagnosticArtifactTests(unittest.TestCase):
             self.assertIn("youtube", str(metadata_path))
             self.assertEqual(payload["last_response"]["status"], 500)
             self.assertEqual(payload["url"], _FakePage.url)
+
+            history = list_browser_diagnostics(limit=10)
+            self.assertEqual(history[0]["event_id"], record["event_id"])
+            self.assertTrue(history[0]["screenshot_available"])
+            self.assertEqual(history[0]["screenshot_path"], "")
+
+            screenshot = browser_diagnostic_screenshot(record["event_id"])
+            self.assertIsNotNone(screenshot)
+            self.assertTrue(screenshot["data_url"].startswith("data:image/png;base64,"))
 
 
 if __name__ == "__main__":

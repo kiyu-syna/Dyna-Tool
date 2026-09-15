@@ -1,6 +1,6 @@
 """Authenticated desktop API for the shared, server-owned Telegram bot."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.services.telegram_bot_service import get_telegram_bot_service
@@ -64,6 +64,27 @@ async def notification(payload: NotificationRequest, user: dict = Depends(requir
     try:
         delivered = await get_telegram_bot_service().send_notification(
             _username(user), payload.text, cancel_job=payload.cancel_job,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    return {"delivered": delivered}
+
+
+@router.post("/diagnostics")
+async def diagnostic_image(
+    text: str = Form(min_length=1, max_length=1024),
+    image: UploadFile = File(...),
+    user: dict = Depends(require_user),
+):
+    image_bytes = await image.read(10 * 1024 * 1024 + 1)
+    if len(image_bytes) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Ảnh chẩn đoán vượt quá 10 MB")
+    try:
+        delivered = await get_telegram_bot_service().send_diagnostic_image(
+            _username(user),
+            text,
+            image_bytes,
+            image.filename or "diagnostic.png",
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

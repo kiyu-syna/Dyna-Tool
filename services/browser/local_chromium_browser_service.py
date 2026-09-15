@@ -244,6 +244,10 @@ def _launch_args(
                 "--no-service-autorun",
                 "--renderer-process-limit=2",
                 "--force-prefers-reduced-motion",
+                "--disable-background-networking",
+                "--disable-breakpad",
+                "--disable-domain-reliability",
+                "--js-flags=--max-old-space-size=256",
                 "--disable-features=OptimizationHints,MediaRouter,Translate,AutofillServerCommunication",
             )
         )
@@ -458,7 +462,14 @@ def connected_local_chromium_profile(
 
     with _profile_lock(config.key), _cross_process_profile_lock(config.key):
         if not wait_for_local_profile_unlocked(config):
-            ensure_local_profile_unlocked(config)
+            if _browser_processes_using(config.user_data_dir):
+                ensure_local_profile_unlocked(config)
+            else:
+                LOGGER.info(
+                    "Dọn file khóa tồn đọng trước khi mở Chromium: %s",
+                    config.key,
+                )
+                quarantine_stale_profile_locks(config)
         manager, playwright, context, browser = _launch_persistent_browser(
             config,
             max_attempts=max_attempts,

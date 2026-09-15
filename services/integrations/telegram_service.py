@@ -7,6 +7,7 @@ uses the authenticated Dyna API and therefore remains safe in packaged apps.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 import time
 from datetime import datetime
 from typing import Any
@@ -39,6 +40,35 @@ def _request(method: str, path: str, *, body: dict[str, Any] | None = None, time
         return response.json()
     except (requests.RequestException, ValueError) as exc:
         logger.warning("Không kết nối được máy chủ Telegram: %s", exc)
+        return None
+
+
+def _request_file(
+    path: str,
+    *,
+    text: str,
+    image_path: str,
+    timeout: float = 30,
+) -> dict[str, Any] | None:
+    headers = _headers()
+    if not headers:
+        return None
+    screenshot = Path(image_path)
+    try:
+        with screenshot.open("rb") as handle:
+            response = requests.post(
+                f"{license_service.get_api_base_url()}{path}",
+                headers=headers,
+                data={"text": text[:1024]},
+                files={"image": (screenshot.name, handle, "image/png")},
+                timeout=timeout,
+            )
+        if response.status_code >= 400:
+            logger.warning("Máy chủ Telegram từ chối ảnh chẩn đoán (HTTP %s).", response.status_code)
+            return None
+        return response.json()
+    except (OSError, requests.RequestException, ValueError) as exc:
+        logger.warning("Không gửi được ảnh chẩn đoán lên Telegram: %s", exc)
         return None
 
 
@@ -216,4 +246,14 @@ def send_screenshot_notification(image_path, caption):
 
 
 def send_diagnostic_notification(record: dict) -> None:
-    _notify(f"CHẨN ĐOÁN TỰ ĐỘNG\n\nHồ sơ: {record.get('profile_id') or '-'}\nVideo: {record.get('video_id') or '-'}\nNền tảng: {record.get('platform') or '-'}\nLỗi: {record.get('error') or '-'}")
+    text = f"CHẨN ĐOÁN TỰ ĐỘNG\n\nHồ sơ: {record.get('profile_id') or '-'}\nVideo: {record.get('video_id') or '-'}\nNền tảng: {record.get('platform') or '-'}\nLỗi: {record.get('error') or '-'}"
+    screenshot_path = str(record.get("screenshot_path") or "")
+    if screenshot_path and Path(screenshot_path).is_file():
+        result = _request_file(
+            "/api/telegram/diagnostics",
+            text=text,
+            image_path=screenshot_path,
+        )
+        if result is not None:
+            return
+    _notify(text)

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import base64
 import os
 import re
 import threading
@@ -150,3 +151,55 @@ def record_browser_diagnostic(
         except Exception as exc:
             logger.warning("Không thể gửi dữ liệu chẩn đoán lên Telegram: %s", exc)
     return record
+
+
+def list_browser_diagnostics(*, limit: int = 30) -> list[dict[str, Any]]:
+    """Return recent persisted browser errors without loading screenshot bytes."""
+    root = logs_dir() / "diagnostics"
+    records: list[dict[str, Any]] = []
+    if not root.is_dir():
+        return records
+    metadata_files = sorted(
+        root.rglob("diagnostic.json"),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
+    for metadata_path in metadata_files[: max(1, min(int(limit), 100))]:
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        screenshot_path = metadata_path.parent / "screenshot.png"
+        records.append(
+            {
+                **payload,
+                "screenshot_available": screenshot_path.is_file(),
+                "screenshot_path": "",
+                "metadata_path": "",
+            }
+        )
+    return records
+
+
+def browser_diagnostic_screenshot(event_id: str) -> dict[str, str] | None:
+    """Load one screenshot by its opaque event id for authenticated UI display."""
+    safe_event_id = _segment(event_id, "")
+    if not safe_event_id or safe_event_id != str(event_id or ""):
+        return None
+    for metadata_path in (logs_dir() / "diagnostics").rglob("diagnostic.json"):
+        try:
+            payload = json.loads(metadata_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if str(payload.get("event_id") or "") != safe_event_id:
+            continue
+        screenshot_path = metadata_path.parent / "screenshot.png"
+        try:
+            image_bytes = screenshot_path.read_bytes()
+        except OSError:
+            return None
+        return {
+            "event_id": safe_event_id,
+            "data_url": "data:image/png;base64," + base64.b64encode(image_bytes).decode("ascii"),
+        }
+    return None

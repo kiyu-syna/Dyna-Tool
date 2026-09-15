@@ -167,13 +167,52 @@ class ProfileTestUploadService:
 
             succeeded = sum(bool(item.get("ok")) for item in results.values())
             failed = len(results) - succeeded
+            summary = f"Hoàn tất test: {succeeded} thành công, {failed} thất bại."
             self._update(
                 profile_id,
                 status="completed" if failed == 0 else "completed_with_errors",
                 active=False,
-                message=f"Hoàn tất test: {succeeded} thành công, {failed} thất bại.",
+                message=summary,
                 results=results,
             )
+            result_details = "; ".join(
+                f"{platform}: {'thành công' if item.get('ok') else item.get('message') or 'thất bại'}"
+                for platform, item in results.items()
+            )
+            log = logger.info if failed == 0 else logger.warning
+            log(
+                "[ĐĂNG THỬ] Profile %s | Video %s | %s%s",
+                profile_id,
+                video.aweme_id,
+                summary,
+                f" | {result_details}" if result_details else "",
+            )
+            try:
+                from services.integrations.telegram_service import send_video_upload_summary_notification
+
+                platform_states = {
+                    platform: {
+                        "status": "success" if item.get("ok") else "failed",
+                        "last_error": "" if item.get("ok") else str(item.get("message") or "Đăng thất bại."),
+                    }
+                    for platform, item in results.items()
+                }
+                send_video_upload_summary_notification(
+                    profile_id,
+                    str(profile.get("name") or profile_id),
+                    str(
+                        source.get("display_name")
+                        or source.get("unique_id")
+                        or source.get("target_sec_uid")
+                        or source_name
+                    ),
+                    video,
+                    list(results),
+                    {platform: bool(item.get("ok")) for platform, item in results.items()},
+                    platform_states=platform_states,
+                )
+            except Exception:
+                logger.exception("[ĐĂNG THỬ] Không gửi được thông báo tổng kết Telegram")
         except Exception as exc:
             error = str(exc)
             logger.error(f"[ĐĂNG THỬ] Profile {profile_id}: {error}")

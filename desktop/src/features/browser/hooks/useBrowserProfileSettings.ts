@@ -42,7 +42,7 @@ export function useBrowserProfileSettings({
       browser: {
         ...(profile.browser || {}),
         headless: mode === "headless",
-        background: mode === "offscreen",
+        background: false,
       },
     }));
   }

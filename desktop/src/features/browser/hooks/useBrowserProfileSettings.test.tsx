@@ -29,6 +29,9 @@ describe("useBrowserProfileSettings", () => {
     act(() => result.current.setBrowserRunMode("1", "headless"));
     expect(result.current.profiles["1"].browser).toMatchObject({ headless: true, background: false });
 
+    act(() => result.current.setBrowserRunMode("1", "offscreen"));
+    expect(result.current.profiles["1"].browser).toMatchObject({ headless: false, background: false });
+
     act(() =>
       result.current.updateProxyEndpoint("1", {
         scheme: "socks5",

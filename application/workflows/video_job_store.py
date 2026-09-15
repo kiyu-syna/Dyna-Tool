@@ -408,6 +408,8 @@ class VideoJobStore:
             job = data["jobs"].get(key)
             if not job or job.get("dismissed_at"):
                 return False
+            if str(job.get("status") or "").startswith("failed"):
+                return False
             owner_pid = int(job.get("owner_pid") or 0)
             owner_instance_id = str(job.get("owner_instance_id") or "")
             if job.get("active"):

@@ -1,6 +1,6 @@
 import unittest
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, PropertyMock, patch
 
 from app.services import telegram_bot_service
 
@@ -51,6 +51,33 @@ class TelegramCaptionServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(stored["pinned"])
         self.assertTrue(result["pinned"])
         self.assertEqual(self.service._api.await_args_list[1].args[0], "pinChatMessage")
+
+    async def test_diagnostic_image_is_sent_as_telegram_photo(self):
+        self.db.telegram_links.find_one.return_value = {"chat_id": "12345"}
+        self.service._api_multipart = AsyncMock(return_value={"message_id": 78})
+
+        with (
+            patch.object(telegram_bot_service, "get_db", return_value=self.db),
+            patch.object(
+                telegram_bot_service.TelegramBotService,
+                "configured",
+                new_callable=PropertyMock,
+                return_value=True,
+            ),
+        ):
+            delivered = await self.service.send_diagnostic_image(
+                "tester",
+                "Lỗi TikTok",
+                b"png",
+                "screenshot.png",
+            )
+
+        self.assertTrue(delivered)
+        self.assertEqual(self.service._api_multipart.await_args.args[0], "sendPhoto")
+        self.assertEqual(
+            self.service._api_multipart.await_args.kwargs["files"]["photo"],
+            ("screenshot.png", b"png", "image/png"),
+        )
 
     async def test_only_reply_to_prompt_selects_caption_and_unpins_it(self):
         self.db.telegram_caption_requests.find_one.return_value = {

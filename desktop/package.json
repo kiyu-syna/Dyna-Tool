@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "productName": "Dyna",
   "private": true,
-  "description": "Electron and React desktop interface for Dyna Tool",
+  "description": "Tauri and React desktop interface for Dyna Tool (Electron fallback retained)",
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && electron . --dev\"",
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 dev",
+    "dev:electron": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && electron . --dev\"",
     "dev:web": "vite --host 127.0.0.1",
     "dev:tauri": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 dev",
     "build": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json --noEmit && vite build",
@@ -15,10 +16,12 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" vite.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "package:win": "powershell -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
+    "package:win": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 build --bundles nsis",
+    "package:electron": "powershell -ExecutionPolicy Bypass -File scripts/package-windows.ps1",
     "package:tauri": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 build --bundles nsis",
     "preview": "vite preview --host 127.0.0.1",
-    "start": "electron ."
+    "start": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 dev",
+    "start:electron": "electron ."
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

@@ -36,7 +36,7 @@
     "user_data_dir": "C:\\profiles\\dyna-recovered-20260718-1054\\3",
     "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "profile_directory": "Default",
-    "headless": true,
+    "headless": false,
     "background": false,
     "launch_timeout_ms": 60000,
     "login_mode": "native",

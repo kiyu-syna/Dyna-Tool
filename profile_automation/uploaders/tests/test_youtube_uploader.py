@@ -6,9 +6,11 @@ from profile_automation.uploaders.youtube_uploader import (
     YOUTUBE_CHECK_COPYRIGHT,
     YOUTUBE_CHECK_PENDING,
     _classify_youtube_check_status,
+    _record_page_error_before_close,
     _select_public_visibility,
     _wait_for_youtube_publish_confirmation,
     _youtube_publish_confirmation_signal,
+    _youtube_upload_textbox,
 )
 
 
@@ -50,6 +52,24 @@ class YouTubeUploaderTests(unittest.TestCase):
 
         self.assertEqual(signal, 'text="Video published"')
 
+    def test_publish_confirmation_accepts_current_vietnamese_success_heading(self):
+        page = Mock()
+
+        def get_by_text(text, exact=False):
+            item = Mock()
+            item.is_visible.return_value = text == "Đã đăng video"
+            matches = Mock()
+            matches.count.return_value = 1
+            matches.nth.return_value = item
+            return matches
+
+        page.get_by_text.side_effect = get_by_text
+        page.url = "https://studio.youtube.com/channel/test/videos/upload"
+
+        signal = _youtube_publish_confirmation_signal(page)
+
+        self.assertEqual(signal, 'text="Đã đăng video"')
+
     def test_publish_confirmation_wait_polls_until_signal_appears(self):
         page = Mock()
         with (
@@ -68,6 +88,40 @@ class YouTubeUploaderTests(unittest.TestCase):
         self.assertEqual(signal, 'text="Đã xuất bản video"')
         self.assertEqual(confirmation.call_count, 2)
         sleep.assert_called_once_with(2)
+
+    def test_upload_textbox_is_scoped_to_the_visible_upload_dialog(self):
+        page = Mock()
+        matches = Mock()
+        expected = Mock()
+        matches.last = expected
+        page.locator.return_value = matches
+
+        result = _youtube_upload_textbox(page, required=True)
+
+        self.assertIs(result, expected)
+        page.locator.assert_called_once_with(
+            'ytcp-uploads-dialog:visible div#textbox[contenteditable="true"][aria-required="true"]'
+        )
+
+    @patch("profile_automation.uploaders.youtube_uploader.record_browser_diagnostic")
+    def test_page_error_is_recorded_before_cleanup(self, record):
+        state = {"recorded": False}
+        page = Mock()
+
+        with self.assertRaisesRegex(RuntimeError, "textbox timeout"):
+            with _record_page_error_before_close(
+                page,
+                profile_id="3",
+                video_id="video-1",
+                url="https://studio.youtube.com/upload",
+                last_response={"status": 200},
+                state=state,
+            ):
+                raise RuntimeError("textbox timeout")
+
+        self.assertTrue(state["recorded"])
+        self.assertIs(record.call_args.kwargs["page"], page)
+        self.assertEqual(str(record.call_args.kwargs["error"]), "textbox timeout")
 
     @staticmethod
     def _public_radio(initially_checked: bool):

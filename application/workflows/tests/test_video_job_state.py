@@ -144,6 +144,7 @@ class VideoJobStoreTests(unittest.TestCase):
         self.store.set_status("1", self.video.aweme_id, "failed_upload", error="Đăng thất bại")
 
         self.assertEqual(self.store.list_pending_videos("1"), [])
+        self.assertFalse(self.store.claim("1", self.video.aweme_id))
 
         retried = self.store.retry_job("1", self.video.aweme_id)
         self.assertEqual(retried["status"], "downloaded")
@@ -151,6 +152,8 @@ class VideoJobStoreTests(unittest.TestCase):
         self.assertEqual(retried["platforms"]["facebook"]["status"], "pending")
         self.assertEqual(retried["last_error"], "")
         self.assertEqual(self.store.list_pending_videos("1")[0].aweme_id, self.video.aweme_id)
+        self.assertTrue(self.store.claim("1", self.video.aweme_id))
+        self.store.release("1", self.video.aweme_id)
 
         cancelled = self.store.cancel_job("1", self.video.aweme_id, "User cancelled")
         self.assertEqual(cancelled["status"], "cancelled")
@@ -441,7 +444,7 @@ class UploadPipelineResumeTests(unittest.TestCase):
         self.assertTrue(all_enabled_uploads_succeeded(results, profile))
         self.assertEqual(statuses, [("facebook", "uploading"), ("facebook", "success")])
 
-    def test_worker_keeps_file_then_retries_only_failed_platform(self):
+    def test_worker_keeps_file_then_manual_retry_runs_only_failed_platform(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             video_path = os.path.join(temp_dir, "video.mp4")
             with open(video_path, "wb") as file_handle:
@@ -488,6 +491,7 @@ class UploadPipelineResumeTests(unittest.TestCase):
                 return_value=media_info,
             ):
                 first = worker.process_video(video, source, monitor)
+                worker.job_store.retry_job("1", video.aweme_id)
                 second = worker.process_video(video, source, monitor)
 
             self.assertEqual(first["status"], "failed_upload")
