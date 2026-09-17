@@ -332,6 +332,72 @@ class TrackingRuntimeServiceTests(unittest.TestCase):
         self.assertTrue(self.runtime._states["1"]["stop_event"].is_set())
         close_browsers.assert_called_once_with("1")
 
+    def test_persistent_watcher_session_acquire_and_close_no_deadlock(self):
+        fake_page = Mock(is_closed=Mock(return_value=False))
+        fake_context = Mock()
+        fake_browser = Mock(is_connected=Mock(return_value=True), contexts=[fake_context])
+        fake_cm = Mock()
+        fake_cm.__enter__ = Mock(return_value=fake_browser)
+        fake_cm.__exit__ = Mock(return_value=None)
+
+        session = runtime_module.PersistentWatcherSession("1", {"id": "1"}, "http://localhost:1234")
+        with (
+            patch.object(runtime_module, "connected_browser_profile", return_value=fake_cm),
+            patch.object(runtime_module, "create_background_page", return_value=fake_page),
+        ):
+            # First acquire
+            page1 = session.acquire_page()
+            self.assertIs(page1, fake_page)
+            self.assertTrue(session.is_alive())
+
+            # Second acquire should reuse the same page without deadlock
+            page2 = session.acquire_page()
+            self.assertIs(page2, fake_page)
+
+            # Close should succeed without deadlock
+            session.close()
+            self.assertFalse(session.is_alive())
+
+    def test_monitor_initial_scan_checks_all_sources_in_sequence(self):
+        stop_event = threading.Event()
+        scanned_sources = []
+
+        def get_new_videos(source_key):
+            scanned_sources.append(source_key)
+            if len(scanned_sources) >= 2:
+                stop_event.set()
+            return []
+
+        def create_monitor(source):
+            key = source["source_key"]
+            state_path = self.profile_dir / f"seen_{key}.json"
+            state_path.write_text("{}", encoding="utf-8")
+            monitor = Mock()
+            monitor.state = SimpleNamespace(path=state_path, touch=Mock())
+            monitor.last_scan_succeeded = True
+            monitor.get_new_videos = Mock(side_effect=lambda: get_new_videos(key))
+            return monitor
+
+        sources = [
+            {"platform": "douyin", "source_key": "source-1", "sec_uid": "uid-1", "check_interval_minutes": 5},
+            {"platform": "douyin", "source_key": "source-2", "sec_uid": "uid-2", "check_interval_minutes": 5},
+        ]
+        worker = Mock()
+        worker.name = "Profile 1"
+        worker._source_label.side_effect = lambda s: s["source_key"]
+        worker._create_monitor.side_effect = create_monitor
+        worker.get_pending_videos.return_value = []
+
+        with (
+            patch.object(self.runtime, "_load_profile", return_value={"id": "1"}),
+            patch.object(runtime_module, "get_tracking_sources", return_value=sources),
+            patch("application.workflows.profile_worker.ProfileWorker", return_value=worker),
+            patch.object(stop_event, "wait", side_effect=lambda timeout=None: stop_event.is_set()),
+        ):
+            self.runtime._monitor_loop("1", stop_event)
+
+        self.assertEqual(scanned_sources, ["source-1", "source-2"])
+
 
 if __name__ == "__main__":
     unittest.main()

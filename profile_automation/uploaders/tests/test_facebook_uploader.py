@@ -111,6 +111,59 @@ class FacebookUploaderTests(unittest.TestCase):
         self.assertEqual(confirmation.call_count, 2)
         sleep.assert_called_once_with(2)
 
+    def test_publish_confirmation_accepts_processing_toast(self):
+        page = Mock()
+        # Text matching returns nothing
+        page.get_by_text.return_value.count.return_value = 0
+        page.url = "https://www.facebook.com/profile.php?id=123"
+
+        toast = Mock()
+        toast.inner_text.return_value = "Bài viết của bạn đang được xử lý. Chúng tôi sẽ thông báo khi có thể xem bài viết."
+        alerts = Mock()
+        alerts.count.return_value = 1
+        alerts.nth.return_value = toast
+
+        composer_dialog = Mock()
+        composer_dialog.count.return_value = 1
+        composer_dialog.first.is_visible.return_value = True
+
+        def locator_mock(selector):
+            if "alert" in selector:
+                return alerts
+            if "dialog" in selector:
+                return composer_dialog
+            return Mock(count=Mock(return_value=0))
+
+        page.locator.side_effect = locator_mock
+
+        signal = _facebook_publish_confirmation_signal(page)
+        self.assertIn("toast=", signal)
+        self.assertIn("Bài viết của bạn đang được xử lý", signal)
+
+    def test_publish_confirmation_accepts_closed_composer_dialog(self):
+        page = Mock()
+        page.get_by_text.return_value.count.return_value = 0
+        page.url = "https://www.facebook.com/profile.php?id=123"
+
+        alerts = Mock(count=Mock(return_value=0))
+        composer_dialog = Mock(count=Mock(return_value=0))
+        main_indicators = Mock(count=Mock(return_value=1))
+        main_indicators.first.is_visible.return_value = True
+
+        def locator_mock(selector):
+            if "alert" in selector:
+                return alerts
+            if "dialog" in selector:
+                return composer_dialog
+            if "Ảnh/video" in selector:
+                return main_indicators
+            return Mock(count=Mock(return_value=0))
+
+        page.locator.side_effect = locator_mock
+
+        signal = _facebook_publish_confirmation_signal(page)
+        self.assertEqual(signal, 'dialog_closed="composer dismissed"')
+
 
 if __name__ == "__main__":
     unittest.main()

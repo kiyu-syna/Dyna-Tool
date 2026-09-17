@@ -1,4 +1,4 @@
-import { ChevronLeft, Crown, LayoutDashboard, Send, Settings } from "lucide-react";
+import { ChevronLeft, LayoutDashboard, Send, Settings } from "lucide-react";
 import { useMemo } from "react";
 import appMark from "../assets/dyna-mark.png";
 import facebookIcon from "../assets/facebook-icon.png";
@@ -77,14 +77,6 @@ export default function Sidebar({
         >
           <Settings size={18} />
           <span>{l("Cài đặt", "Settings", "设置")}</span>
-        </button>
-        <button
-          className={`sidebar-footer-nav ${page === "premium" ? "active" : ""}`}
-          onClick={() => onPage("premium")}
-          title={collapsed ? l("Nâng cấp", "Upgrade", "升级") : undefined}
-        >
-          <Crown size={18} />
-          <span>{l("Nâng cấp", "Upgrade", "升级")}</span>
         </button>
         <div className="sidebar-support">
           <strong>{l("Hỗ trợ & Góp ý", "Support & Feedback", "支持与反馈")}</strong>

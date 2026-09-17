@@ -23,11 +23,6 @@
 .sidebar-footer-nav span { font-size: 15px; }
 .sidebar-footer { flex: 0 0 auto; padding: 8px 9px 14px; border-top: 1px solid var(--border); background: var(--sidebar); }
 .sidebar-footer-nav { width: 100%; margin-bottom: 5px; }
-.account-compact { min-width: 0; display: grid; grid-template-areas: "avatar copy logout" "upgrade upgrade upgrade"; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; column-gap: 8px; row-gap: 7px; margin-bottom: 4px; padding: 7px 3px 9px; border-bottom: 1px solid var(--border); }
-.account-compact > span { grid-area: avatar; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 13px; font-weight: 700; }
-.account-copy { grid-area: copy; min-width: 0; display: grid; gap: 3px; }.account-copy strong { overflow: hidden; text-overflow: ellipsis; font-size: 12px; white-space: nowrap; }.account-copy small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }.account-copy small b { color: var(--border-strong); font-weight: 500; }.account-copy em { color: var(--accent); font-style: normal; font-weight: 700; }
-.account-compact > .icon-button { grid-area: logout; justify-self: end; width: 30px; height: 30px; }
-.account-upgrade { grid-area: upgrade; width: 100%; min-height: 29px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 9px; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--border)); border-radius: 5px; background: var(--accent-soft); color: var(--accent); cursor: pointer; font-size: 11px; font-weight: 700; white-space: nowrap; }.account-upgrade:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 20%, var(--surface)); }
 .sidebar-support { display: grid; gap: 8px; padding: 7px 3px 10px; border-bottom: 1px solid var(--border); }
 .sidebar-support > strong { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .sidebar-support-actions { display: flex; align-items: center; justify-content: center; gap: 12px; }
@@ -42,15 +37,11 @@
 .version { padding: 10px 12px 0; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .version i, .backend-state i { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex: 0 0 auto; }
 .sidebar-collapsed .brand { padding: 0 16px; }
-.sidebar-collapsed .brand div, .sidebar-collapsed .nav-group h2, .sidebar-collapsed .nav-item-copy, .sidebar-collapsed .sidebar-footer-nav > span, .sidebar-collapsed .collapse-button > span, .sidebar-collapsed .version, .sidebar-collapsed .account-copy, .sidebar-collapsed .account-upgrade > span, .sidebar-collapsed .sidebar-support > strong { width: 0 !important; max-width: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; visibility: hidden !important; opacity: 0 !important; display: none !important; }
+.sidebar-collapsed .brand div, .sidebar-collapsed .nav-group h2, .sidebar-collapsed .nav-item-copy, .sidebar-collapsed .sidebar-footer-nav > span, .sidebar-collapsed .collapse-button > span, .sidebar-collapsed .version, .sidebar-collapsed .sidebar-support > strong { width: 0 !important; max-width: 0 !important; height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; visibility: hidden !important; opacity: 0 !important; display: none !important; }
 .sidebar-collapsed .sidebar { overflow: hidden; }
 .sidebar-collapsed .sidebar nav button, .sidebar-collapsed .sidebar-footer-nav, .sidebar-collapsed .collapse-button { width: 46px; min-width: 46px; justify-content: center; align-self: center; margin-right: auto; margin-left: auto; padding: 0; overflow: hidden; }
 .sidebar-collapsed .sidebar nav button svg, .sidebar-collapsed .sidebar-footer-nav svg, .sidebar-collapsed .collapse-button svg { margin: 0; flex: 0 0 18px; }
 .sidebar-collapsed .sidebar nav { gap: 8px; }
-.sidebar-collapsed .account-compact { display: grid; grid-template-columns: 40px; grid-template-areas: "avatar" "upgrade"; justify-content: center; justify-items: center; row-gap: 9px; }
-.sidebar-collapsed .account-compact > button { display: none; }
-.sidebar-collapsed .account-compact > .account-upgrade { width: 40px; min-width: 40px; height: 40px; min-height: 40px; display: inline-flex; grid-area: upgrade; padding: 0; border-radius: 7px; }
-.sidebar-collapsed .account-compact > .account-upgrade svg { width: 18px; height: 18px; }
 .sidebar-collapsed .sidebar-support { justify-items: center; padding: 8px 0 10px; }
 .sidebar-collapsed .sidebar-support-actions { display: grid; gap: 8px; }
 .sidebar-collapsed .collapse-button svg { transform: rotate(180deg); }

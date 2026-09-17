@@ -174,12 +174,21 @@ class DouyinProfileMonitor:
                     except Exception as exc:
                         if is_gemlogin_connection_error(exc, self.profile_config):
                             raise
-                        logger.warning(
-                            "[Profile %s] Douyin trả dữ liệu không đọc được (HTTP %s): %s",
-                            self.profile_id,
-                            status,
-                            exc,
-                        )
+                        err_str = str(exc)
+                        if "No resource with given identifier found" in err_str or "Target closed" in err_str:
+                            logger.debug(
+                                "[Profile %s] Bỏ qua gói tin tạm của trình duyệt (HTTP %s): %s",
+                                self.profile_id,
+                                status,
+                                exc,
+                            )
+                        else:
+                            logger.warning(
+                                "[Profile %s] Douyin trả dữ liệu không đọc được (HTTP %s): %s",
+                                self.profile_id,
+                                status,
+                                exc,
+                            )
                         if rejected_response_deadline is None:
                             rejected_response_deadline = (
                                 time.monotonic()
@@ -284,16 +293,136 @@ class DouyinProfileMonitor:
                 break
         return parsed_videos
 
+    def _scan_profile_page(
+        self,
+        page,
+        profile_url: str,
+        pages_to_fetch: int,
+        timeout_per_page: float,
+    ) -> tuple[list[DouyinVideo], int, int]:
+        all_videos: list[DouyinVideo] = []
+        raw_aweme_count = 0
+        successful_pages = 0
+        console.print(
+            f"[cyan]🔍 [Profile {self.profile_id}] Mở profile: {profile_url}[/]"
+        )
+
+        page_count = 0
+        while True:
+            page_count += 1
+            navigation_attempts = (
+                self.FIRST_PAGE_NAVIGATION_ATTEMPTS
+                if page_count == 1
+                else 1
+            )
+            captured = None
+            for navigation_attempt in range(1, navigation_attempts + 1):
+                captured = self._capture_page(
+                    page,
+                    profile_url,
+                    page_count,
+                    timeout_per_page,
+                    reload_page=navigation_attempt > 1,
+                )
+                if captured is not None:
+                    break
+                if 403 not in self._last_capture_http_statuses:
+                    break
+                if navigation_attempt < navigation_attempts:
+                    logger.warning(
+                        "[Profile %s] Douyin từ chối truy cập (HTTP 403), "
+                        "đang tải lại trang (lần %s/%s).",
+                        self.profile_id,
+                        navigation_attempt,
+                        navigation_attempts,
+                    )
+            if captured is None:
+                break
+            response, data = captured
+            aweme_list = data.get("aweme_list", [])
+            successful_pages += 1
+            raw_aweme_count += len(aweme_list)
+            if data.get("status_code") != 0 or not aweme_list:
+                logger.warning(
+                    "[Profile %s] Douyin không trả về video nào.",
+                    self.profile_id,
+                )
+                break
+
+            known_ids = {video.aweme_id for video in all_videos}
+            parsed = self._parse_page(
+                aweme_list,
+                known_ids,
+                MAX_AWEME_IDS_PER_SCAN - len(all_videos),
+            )
+            all_videos.extend(parsed)
+            print_response_analysis(
+                self.profile_id,
+                page_count,
+                response.url,
+                data,
+                parsed,
+                len(all_videos),
+            )
+            if len(all_videos) >= MAX_AWEME_IDS_PER_SCAN:
+                break
+            if not data.get("has_more", 0):
+                break
+            if pages_to_fetch > 0 and page_count >= pages_to_fetch:
+                break
+        return all_videos, raw_aweme_count, successful_pages
+
     def fetch_latest_videos(
         self,
         pages_to_fetch: int = 1,
         timeout_per_page: float = 20.0,
+        page=None,
     ) -> list[DouyinVideo]:
         self.last_scan_succeeded = False
         all_videos: list[DouyinVideo] = []
         raw_aweme_count = 0
         successful_pages = 0
         profile_url = f"https://www.douyin.com/user/{self.sec_uid}"
+
+        if page is not None:
+            try:
+                all_videos, raw_aweme_count, successful_pages = self._scan_profile_page(
+                    page,
+                    profile_url,
+                    pages_to_fetch,
+                    timeout_per_page,
+                )
+            except Exception as exc:
+                logger.exception(
+                    "[Profile %s] Lỗi khi lấy danh sách video Douyin: %s",
+                    self.profile_id,
+                    exc,
+                )
+                if is_gemlogin_connection_error(exc, self.profile_config):
+                    raise
+            finally:
+                self.last_scan_succeeded = successful_pages > 0
+                if successful_pages:
+                    logger.info(
+                        "[Profile %s] QUÉT DOUYIN THÀNH CÔNG: nhận %s mục | "
+                        "lấy %s video hợp lệ | không đưa vào danh sách %s | trang %s.",
+                        self.profile_id,
+                        raw_aweme_count,
+                        len(all_videos),
+                        max(0, raw_aweme_count - len(all_videos)),
+                        successful_pages,
+                    )
+                else:
+                    logger.warning(
+                        "[Profile %s] QUÉT DOUYIN KHÔNG THÀNH CÔNG: "
+                        "không lấy được trang dữ liệu hợp lệ.",
+                        self.profile_id,
+                    )
+            console.print(
+                f"[green]   → Lấy được {len(all_videos)} video từ kênh nguồn[/]"
+            )
+            return all_videos[:MAX_AWEME_IDS_PER_SCAN]
+
         with connected_gemlogin_profile(
             self.gemlogin_profile_id,
             self.api_url,
@@ -311,76 +440,16 @@ class DouyinProfileMonitor:
                 )
                 return []
             context = browser.contexts[0]
-            page = create_background_page(browser, context)
-            page_cleanup.callback(_close_page_quietly, page)
-            console.print(
-                f"[cyan]🔍 [Profile {self.profile_id}] Mở profile: {profile_url}[/]"
-            )
+            created_page = create_background_page(browser, context)
+            page_cleanup.callback(_close_page_quietly, created_page)
 
             try:
-                page_count = 0
-                while True:
-                    page_count += 1
-                    navigation_attempts = (
-                        self.FIRST_PAGE_NAVIGATION_ATTEMPTS
-                        if page_count == 1
-                        else 1
-                    )
-                    captured = None
-                    for navigation_attempt in range(1, navigation_attempts + 1):
-                        captured = self._capture_page(
-                            page,
-                            profile_url,
-                            page_count,
-                            timeout_per_page,
-                            reload_page=navigation_attempt > 1,
-                        )
-                        if captured is not None:
-                            break
-                        if 403 not in self._last_capture_http_statuses:
-                            break
-                        if navigation_attempt < navigation_attempts:
-                            logger.warning(
-                                "[Profile %s] Douyin từ chối truy cập (HTTP 403), "
-                                "đang tải lại trang (lần %s/%s).",
-                                self.profile_id,
-                                navigation_attempt,
-                                navigation_attempts,
-                            )
-                    if captured is None:
-                        break
-                    response, data = captured
-                    aweme_list = data.get("aweme_list", [])
-                    successful_pages += 1
-                    raw_aweme_count += len(aweme_list)
-                    if data.get("status_code") != 0 or not aweme_list:
-                        logger.warning(
-                            "[Profile %s] Douyin không trả về video nào.",
-                            self.profile_id,
-                        )
-                        break
-
-                    known_ids = {video.aweme_id for video in all_videos}
-                    parsed = self._parse_page(
-                        aweme_list,
-                        known_ids,
-                        MAX_AWEME_IDS_PER_SCAN - len(all_videos),
-                    )
-                    all_videos.extend(parsed)
-                    print_response_analysis(
-                        self.profile_id,
-                        page_count,
-                        response.url,
-                        data,
-                        parsed,
-                        len(all_videos),
-                    )
-                    if len(all_videos) >= MAX_AWEME_IDS_PER_SCAN:
-                        break
-                    if not data.get("has_more", 0):
-                        break
-                    if pages_to_fetch > 0 and page_count >= pages_to_fetch:
-                        break
+                all_videos, raw_aweme_count, successful_pages = self._scan_profile_page(
+                    created_page,
+                    profile_url,
+                    pages_to_fetch,
+                    timeout_per_page,
+                )
             except Exception as exc:
                 logger.exception(
                     "[Profile %s] Lỗi khi lấy danh sách video Douyin: %s",
@@ -388,7 +457,7 @@ class DouyinProfileMonitor:
                     exc,
                 )
             finally:
-                _close_page_quietly(page)
+                _close_page_quietly(created_page)
                 self.last_scan_succeeded = successful_pages > 0
                 if successful_pages:
                     logger.info(
@@ -413,13 +482,20 @@ class DouyinProfileMonitor:
         )
         return all_videos[:MAX_AWEME_IDS_PER_SCAN]
 
-    def get_new_videos(self) -> list[DouyinVideo]:
+    def get_new_videos(self, page=None) -> list[DouyinVideo]:
         is_first_run = not self.state.path.exists()
+        fetch_kwargs = {"pages_to_fetch": 3}
+        if page is not None:
+            fetch_kwargs["page"] = page
+
         if is_first_run:
             console.print(
                 f"[yellow]⚠️ [Profile {self.profile_id}] Đang tạo mốc ban đầu...[/]"
             )
-            all_videos = self.fetch_latest_videos(pages_to_fetch=3)
+            try:
+                all_videos = self.fetch_latest_videos(**fetch_kwargs)
+            except TypeError:
+                all_videos = self.fetch_latest_videos(pages_to_fetch=3)
             for video in all_videos:
                 self.state.mark_seen(video.aweme_id, video.create_time)
             logger.info(
@@ -430,7 +506,11 @@ class DouyinProfileMonitor:
             )
             return []
 
-        videos = self.fetch_latest_videos(pages_to_fetch=1)
+        fetch_kwargs["pages_to_fetch"] = 1
+        try:
+            videos = self.fetch_latest_videos(**fetch_kwargs)
+        except TypeError:
+            videos = self.fetch_latest_videos(pages_to_fetch=1)
         already_seen_count = 0
         below_likes_count = 0
         over_duration_count = 0
@@ -467,8 +547,16 @@ class DouyinProfileMonitor:
     def build_start_baseline(
         self,
         latest_count: int | None = None,
+        page=None,
     ) -> list[DouyinVideo] | None:
-        videos = self.fetch_latest_videos(pages_to_fetch=1)
+        try:
+            videos = (
+                self.fetch_latest_videos(pages_to_fetch=1, page=page)
+                if page is not None
+                else self.fetch_latest_videos(pages_to_fetch=1)
+            )
+        except TypeError:
+            videos = self.fetch_latest_videos(pages_to_fetch=1)
         if not self.last_scan_succeeded:
             return None
         newest_videos = sorted(

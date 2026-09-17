@@ -275,19 +275,108 @@ class TikTokProfileMonitor:
         data = json.loads(text)
         return data if isinstance(data, dict) else {}
 
+    def _scan_profile_page(
+        self,
+        page,
+        profile_url: str,
+        pages_to_fetch: int,
+        timeout_per_page: float,
+    ) -> tuple[List[TikTokVideo], int]:
+        all_videos: List[TikTokVideo] = []
+        known_ids = set()
+        successful_pages = 0
+        console.print(
+            f"[cyan]🔍 [Profile {self.profile_id}] Đang mở profile TikTok: {profile_url}[/]"
+        )
+
+        page_count = 0
+        while True:
+            page_count += 1
+            try:
+                with page.expect_response(
+                    self._matches_post_response,
+                    timeout=int(timeout_per_page * 1000),
+                ) as response_info:
+                    if page_count == 1:
+                        page.goto(profile_url, wait_until="commit", timeout=15000)
+                    else:
+                        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+
+                response = response_info.value
+                data = self._response_json(response)
+            except Exception as exc:
+                if is_browser_connection_error(exc, self.profile_config):
+                    raise
+                logger.warning(
+                    "[Profile %s] Không lấy được danh sách video ở trang %s: %s",
+                    self.profile_id,
+                    page_count,
+                    exc,
+                )
+                break
+
+            status = data.get("statusCode", data.get("status_code"))
+            items = data.get("itemList") or []
+            if status != 0 or not isinstance(items, list) or not items:
+                logger.warning(
+                    "[Profile %s] item_list không hợp lệ hoặc không có item (status=%s).",
+                    self.profile_id,
+                    status,
+                )
+                break
+
+            successful_pages += 1
+
+            pinned_count = sum(1 for item in items if _is_pinned_item(item))
+            photo_count = sum(1 for item in items if _is_photo_item(item))
+            parsed = parse_tiktok_item_list(data, limit=0)
+            for video in parsed:
+                if video.aweme_id in known_ids:
+                    continue
+                known_ids.add(video.aweme_id)
+                all_videos.append(video)
+                if len(all_videos) >= MAX_ITEM_IDS_PER_SCAN:
+                    break
+
+            logger.info(
+                "[Profile %s] TikTok trang %s: %s mục, bỏ %s video ghim, bỏ %s bài ảnh, lấy %s video.",
+                self.profile_id,
+                page_count,
+                len(items),
+                pinned_count,
+                photo_count,
+                len(all_videos),
+            )
+
+            if len(all_videos) >= MAX_ITEM_IDS_PER_SCAN:
+                break
+            if not data.get("hasMore"):
+                break
+            if pages_to_fetch > 0 and page_count >= pages_to_fetch:
+                break
+        return all_videos, successful_pages
+
     def fetch_latest_videos(
         self,
         pages_to_fetch: int = 1,
         timeout_per_page: float = 20.0,
+        page=None,
     ) -> List[TikTokVideo]:
         self.last_scan_succeeded = False
         if not self.unique_id:
             raise ValueError("Thiếu TikTok unique_id để mở trang profile nguồn.")
 
-        all_videos: List[TikTokVideo] = []
-        known_ids = set()
-        successful_pages = 0
         profile_url = f"https://www.tiktok.com/@{quote(self.unique_id, safe='._-')}"
+
+        if page is not None:
+            all_videos, successful_pages = self._scan_profile_page(
+                page,
+                profile_url,
+                pages_to_fetch,
+                timeout_per_page,
+            )
+            self.last_scan_succeeded = successful_pages > 0
+            return all_videos[:MAX_ITEM_IDS_PER_SCAN]
 
         with connected_browser_profile(
             self.gemlogin_profile_id,
@@ -301,89 +390,34 @@ class TikTokProfileMonitor:
                 return []
 
             context = browser.contexts[0]
-            page = create_background_page(browser, context)
-            page_cleanup.callback(_close_page_quietly, page)
-            configure_lightweight_scan_page(page)
-            console.print(
-                f"[cyan]🔍 [Profile {self.profile_id}] Đang mở profile TikTok: {profile_url}[/]"
-            )
+            created_page = create_background_page(browser, context)
+            page_cleanup.callback(_close_page_quietly, created_page)
+            configure_lightweight_scan_page(created_page)
 
             try:
-                page_count = 0
-                while True:
-                    page_count += 1
-                    try:
-                        with page.expect_response(
-                            self._matches_post_response,
-                            timeout=int(timeout_per_page * 1000),
-                        ) as response_info:
-                            if page_count == 1:
-                                page.goto(profile_url, wait_until="commit", timeout=15000)
-                            else:
-                                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-
-                        response = response_info.value
-                        data = self._response_json(response)
-                    except Exception as exc:
-                        if is_browser_connection_error(exc, self.profile_config):
-                            raise
-                        logger.warning(
-                            "[Profile %s] Không lấy được danh sách video ở trang %s: %s",
-                            self.profile_id,
-                            page_count,
-                            exc,
-                        )
-                        break
-
-                    status = data.get("statusCode", data.get("status_code"))
-                    items = data.get("itemList") or []
-                    if status != 0 or not isinstance(items, list) or not items:
-                        logger.warning(
-                            "[Profile %s] item_list không hợp lệ hoặc không có item (status=%s).",
-                            self.profile_id,
-                            status,
-                        )
-                        break
-
-                    successful_pages += 1
-
-                    pinned_count = sum(1 for item in items if _is_pinned_item(item))
-                    photo_count = sum(1 for item in items if _is_photo_item(item))
-                    parsed = parse_tiktok_item_list(data, limit=0)
-                    for video in parsed:
-                        if video.aweme_id in known_ids:
-                            continue
-                        known_ids.add(video.aweme_id)
-                        all_videos.append(video)
-                        if len(all_videos) >= MAX_ITEM_IDS_PER_SCAN:
-                            break
-
-                    logger.info(
-                        "[Profile %s] TikTok trang %s: %s mục, bỏ %s video ghim, bỏ %s bài ảnh, lấy %s video.",
-                        self.profile_id,
-                        page_count,
-                        len(items),
-                        pinned_count,
-                        photo_count,
-                        len(all_videos),
-                    )
-
-                    if len(all_videos) >= MAX_ITEM_IDS_PER_SCAN:
-                        break
-                    if not data.get("hasMore"):
-                        break
-                    if pages_to_fetch > 0 and page_count >= pages_to_fetch:
-                        break
+                all_videos, successful_pages = self._scan_profile_page(
+                    created_page,
+                    profile_url,
+                    pages_to_fetch,
+                    timeout_per_page,
+                )
             finally:
-                _close_page_quietly(page)
+                _close_page_quietly(created_page)
 
         self.last_scan_succeeded = successful_pages > 0
         return all_videos[:MAX_ITEM_IDS_PER_SCAN]
 
-    def get_new_videos(self) -> List[TikTokVideo]:
+    def get_new_videos(self, page=None) -> List[TikTokVideo]:
         is_first_run = not self.state.path.exists()
+        fetch_kwargs = {"pages_to_fetch": 3}
+        if page is not None:
+            fetch_kwargs["page"] = page
+
         if is_first_run:
-            videos = self.fetch_latest_videos(pages_to_fetch=3)
+            try:
+                videos = self.fetch_latest_videos(**fetch_kwargs)
+            except TypeError:
+                videos = self.fetch_latest_videos(pages_to_fetch=3)
             for video in videos:
                 self.state.mark_seen(video.aweme_id, video.create_time)
             console.print(
@@ -392,7 +426,12 @@ class TikTokProfileMonitor:
             )
             return []
 
-        videos = self.fetch_latest_videos(pages_to_fetch=1)
+        fetch_kwargs["pages_to_fetch"] = 1
+        try:
+            videos = self.fetch_latest_videos(**fetch_kwargs)
+        except TypeError:
+            videos = self.fetch_latest_videos(pages_to_fetch=1)
+
         new_videos = []
         for video in videos:
             if not self.state.is_new_video(video.aweme_id, video.create_time):
@@ -409,8 +448,17 @@ class TikTokProfileMonitor:
     def build_start_baseline(
         self,
         latest_count: Optional[int] = None,
+        page=None,
     ) -> Optional[List[TikTokVideo]]:
-        videos = self.fetch_latest_videos(pages_to_fetch=1)
+        try:
+            videos = (
+                self.fetch_latest_videos(pages_to_fetch=1, page=page)
+                if page is not None
+                else self.fetch_latest_videos(pages_to_fetch=1)
+            )
+        except TypeError:
+            videos = self.fetch_latest_videos(pages_to_fetch=1)
+
         if not self.last_scan_succeeded:
             return None
 

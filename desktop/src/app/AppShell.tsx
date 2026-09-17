@@ -1,8 +1,7 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import BrowserPage from "../features/browser/BrowserPage";
 import { TerminalLogs } from "../features/log-viewer/TerminalLogsWindow";
 import OverviewPage from "../features/overview/OverviewPage";
-import PremiumPage from "../features/premium/PremiumPage";
 import ProfilesPage from "../features/profiles/ProfilesPage";
 import PublishCenterPage from "../features/publishing/PublishCenterPage";
 import SettingsPage from "../features/settings/SettingsPage";
@@ -12,8 +11,6 @@ import Sidebar from "./Sidebar";
 import type { PageKey, Theme } from "./types";
 import WeChatDialog from "./WeChatDialog";
 import WindowTitleBar from "./WindowTitleBar";
-
-const AssistantWidget = lazy(() => import("../features/assistant/AssistantWidget"));
 
 interface AppShellProps {
   theme: Theme;
@@ -52,7 +49,6 @@ export default function AppShell({
         nextPage === "profiles" ||
         nextPage === "browser" ||
         nextPage === "logs" ||
-        nextPage === "premium" ||
         nextPage === "settings"
       ) {
         navigate(nextPage);
@@ -81,7 +77,6 @@ export default function AppShell({
             {visitedPages.has("profiles") && <div hidden={page !== "profiles"}><ProfilesPage /></div>}
             {visitedPages.has("browser") && <div hidden={page !== "browser"}><BrowserPage /></div>}
             {visitedPages.has("logs") && <div hidden={page !== "logs"}><TerminalLogs embedded /></div>}
-            {visitedPages.has("premium") && <div hidden={page !== "premium"}><PremiumPage /></div>}
             {visitedPages.has("settings") && (
               <div hidden={page !== "settings"}>
                 <SettingsPage theme={theme} language={language} onTheme={onTheme} onLanguage={onLanguage} />
@@ -90,9 +85,6 @@ export default function AppShell({
           </div>
         </main>
       </div>
-      <Suspense fallback={null}>
-        <AssistantWidget />
-      </Suspense>
       {wechatQrOpen && <WeChatDialog onClose={() => setWechatQrOpen(false)} />}
     </>
   );

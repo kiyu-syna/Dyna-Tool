@@ -12,13 +12,8 @@ class TelegramRelayTests(unittest.TestCase):
     def setUp(self):
         telegram_service._ERROR_NOTIFICATION_TIMES.clear()
 
-    @patch.object(telegram_service.auth_service, "get_current_user")
-    def test_headers_use_authenticated_dyna_token(self, get_current_user):
-        get_current_user.return_value = {"token": "access-token"}
-        self.assertEqual(
-            telegram_service._headers(),
-            {"Authorization": "Bearer access-token"},
-        )
+    def test_local_telegram_relay_uses_no_identity_headers(self):
+        self.assertEqual(telegram_service._headers(), {})
 
     @patch.object(telegram_service, "_request")
     def test_new_video_notification_relays_cancelable_job(self, request):

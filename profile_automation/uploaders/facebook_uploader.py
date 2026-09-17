@@ -29,6 +29,27 @@ FACEBOOK_PUBLISH_SUCCESS_TEXTS = (
     "Thước phim của bạn đang được đăng",
     "Đã đăng thước phim",
     "Xem thước phim",
+    "Bài viết của bạn đang được xử lý",
+    "Chúng tôi sẽ thông báo khi có thể xem bài viết",
+    "Your post is being processed",
+    "We'll notify you when it's ready to view",
+    "Bài viết của bạn đã được đăng",
+    "Đã đăng bài viết",
+    "Your post was published",
+    "Post published",
+    "Video của bạn đang được xử lý",
+    "Your video is being processed",
+    "Đang xử lý bài viết",
+    "Thước phim của bạn đang được xử lý",
+    "Your reel is being processed",
+    "Thước phim của bạn đã được đăng",
+    "Đã tải bài viết lên",
+    "Đã tải video lên",
+    "Bài viết của bạn đã được chia sẻ",
+    "Your post was shared",
+    "Đã chia sẻ bài viết",
+    "Đã chia sẻ lên bảng feed",
+    "Shared to Feed",
 )
 
 
@@ -147,6 +168,45 @@ def _facebook_publish_confirmation_signal(page: Page) -> str:
         current_url = ""
     if "/reel/" in current_url.casefold():
         return f'url="{current_url}"'
+
+    try:
+        alerts = page.locator('div[role="alert"], div[data-visualcompletion="ignore-dynamic"]')
+        for index in range(min(alerts.count(), 8)):
+            alert_text = alerts.nth(index).inner_text(timeout=200).strip()
+            if any(
+                kw in alert_text.casefold()
+                for kw in (
+                    "đang được xử lý",
+                    "being processed",
+                    "đã đăng",
+                    "was published",
+                    "published",
+                    "đã chia sẻ",
+                    "was shared",
+                    "thông báo khi có thể xem",
+                    "ready to view",
+                )
+            ):
+                return f'toast="{alert_text[:60]}"'
+    except Exception:
+        pass
+
+    try:
+        composer_dialog = page.locator(
+            'div[role="dialog"]:has([aria-label="Đăng"]), '
+            'div[role="dialog"]:has([aria-label="Post"]), '
+            'div[role="dialog"]:has([aria-label="Publish"])'
+        )
+        if composer_dialog.count() == 0 or not composer_dialog.first.is_visible():
+            main_indicators = page.locator(
+                '[aria-label="Ảnh/video"], [aria-label="Photo/video"], '
+                '[aria-label="Tạo bài viết"], [aria-label="Create post"]'
+            )
+            if main_indicators.count() > 0 and main_indicators.first.is_visible():
+                return 'dialog_closed="composer dismissed"'
+    except Exception:
+        pass
+
     return ""
 
 
@@ -371,7 +431,7 @@ class FacebookUploader(BaseUploader):
                 dismissed_later_prompt = _click_visible_text_button(
                     page,
                     ("Lúc khác", "Not now", "Maybe later"),
-                    timeout_ms=10000,
+                    timeout_ms=1500,
                     required=False,
                 )
                 if dismissed_later_prompt:

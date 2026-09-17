@@ -10,7 +10,10 @@ from application.publishing.upload_pipeline import (
     all_enabled_uploads_succeeded,
     enabled_platform_names,
 )
-from application.tracking.sources import tracking_source_label
+from application.tracking.sources import (
+    get_tracking_sources,
+    tracking_source_label,
+)
 from application.workflows.video_job_store import TERMINAL_STATUSES, VideoJobStore
 from core.utils import logger
 from profile_automation.pipeline.downloads.captions import (
@@ -93,9 +96,33 @@ class ProfileWorker:
             profile_config=self.profile,
         )
 
-    @staticmethod
-    def _source_label(source: dict) -> str:
-        return tracking_source_label(source)
+    def _source_label(
+        self_or_source,
+        source: dict | None = None,
+        index: int | None = None,
+        total: int | None = None,
+    ) -> str:
+        if isinstance(self_or_source, dict):
+            actual_source = self_or_source
+            worker_instance = None
+            if isinstance(source, int):
+                total = index
+                index = source
+        else:
+            actual_source = source or {}
+            worker_instance = self_or_source
+
+        if (index is None or total is None) and worker_instance is not None:
+            profile = getattr(worker_instance, "profile", None)
+            if isinstance(profile, dict):
+                sources = get_tracking_sources(profile, include_disabled=True)
+                total = len(sources)
+                source_key = actual_source.get("source_key")
+                for idx, item in enumerate(sources, start=1):
+                    if item.get("source_key") == source_key:
+                        index = idx
+                        break
+        return tracking_source_label(actual_source, index=index, total=total)
 
     def get_pending_videos(self, source: dict) -> list:
         return self.job_store.list_pending_videos(

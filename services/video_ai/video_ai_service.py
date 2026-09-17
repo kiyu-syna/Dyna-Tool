@@ -1324,10 +1324,12 @@ class VideoAiService:
         subtitles: list[dict[str, Any]],
         blur: dict[str, Any] | None = None,
         style: dict[str, Any] | None = None,
+        dubbing: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         normalized_subtitles = _normalized_subtitles(subtitles)
         normalized_blur = _normalized_blur(blur)
         normalized_style = _normalized_style(style)
+        normalized_dubbing = _normalized_dubbing(dubbing) if dubbing is not None else None
 
         def update(project: dict[str, Any]) -> None:
             self._ensure_idle(project)
@@ -1343,6 +1345,12 @@ class VideoAiService:
                 "blur": normalized_blur,
                 "style": normalized_style,
             }
+            if normalized_dubbing is not None:
+                current_dubbing = _normalized_dubbing(project.get("dubbing_options"))
+                for k, v in normalized_dubbing.items():
+                    if v is not None:
+                        current_dubbing[k] = v
+                project["dubbing_options"] = current_dubbing
             project["stage"] = "Đã tự lưu chỉnh sửa"
             project["error"] = ""
 
@@ -1455,7 +1463,7 @@ class VideoAiService:
         style: str = "tu_nhien",
         rate: int = 0,
         volume: int = 100,
-        original_volume: int = 18,
+        original_volume: int | None = None,
     ) -> dict[str, Any]:
         requested = _normalized_dubbing(
             {
@@ -1465,7 +1473,7 @@ class VideoAiService:
                 "style": style,
                 "rate": rate,
                 "volume": volume,
-                "original_volume": original_volume,
+                "original_volume": original_volume if original_volume is not None else 18,
             }
         )
         dependency = "vieneu" if requested["provider"] == "vieneu" else "edge_tts"
@@ -1485,6 +1493,8 @@ class VideoAiService:
             if not lines:
                 raise VideoAiError("Chưa có phụ đề dịch để tạo giọng lồng tiếng.")
             previous = _normalized_dubbing(project.get("dubbing_options"))
+            if original_volume is None and "original_volume" in previous:
+                requested["original_volume"] = previous["original_volume"]
             requested["audio_path"] = previous["audio_path"]
             requested["generated_at"] = previous["generated_at"]
             requested["line_count"] = previous["line_count"]
@@ -1541,10 +1551,12 @@ class VideoAiService:
                     raise VideoAiError(
                         "Chưa có track lồng tiếng. Hãy bấm Tạo lồng tiếng trước khi xuất."
                     )
-            current_dubbing["enabled"] = requested_dubbing["enabled"]
-            current_dubbing["volume"] = requested_dubbing["volume"]
-            current_dubbing["original_volume"] = requested_dubbing["original_volume"]
-            project["dubbing_options"] = current_dubbing
+            if dubbing is not None:
+                current_dubbing["enabled"] = requested_dubbing["enabled"]
+                current_dubbing["volume"] = requested_dubbing["volume"]
+                if "original_volume" in dubbing and dubbing["original_volume"] is not None:
+                    current_dubbing["original_volume"] = requested_dubbing["original_volume"]
+                project["dubbing_options"] = current_dubbing
             project["status"] = "rendering"
             project["stage"] = "Đang chuẩn bị xuất video"
             project["progress"] = 1
@@ -2154,11 +2166,13 @@ class VideoAiService:
             "-i",
             str(source),
         ]
+        original_volume = dubbing.get("original_volume", 100) / 100.0
+        has_audio = bool(media.get("has_audio"))
+        has_audio_out = False
         if use_dubbing and dubbed_path is not None:
             command.extend(["-i", str(dubbed_path)])
             dubbed_volume = dubbing["volume"] / 100.0
-            if bool(media.get("has_audio")):
-                original_volume = dubbing["original_volume"] / 100.0
+            if has_audio:
                 filter_graph += (
                     f";[0:a]volume={original_volume:.3f}[original_audio];"
                     f"[1:a]volume={dubbed_volume:.3f}[dubbed_audio];"
@@ -2167,13 +2181,17 @@ class VideoAiService:
                 )
             else:
                 filter_graph += f";[1:a]volume={dubbed_volume:.3f}[aout]"
+            has_audio_out = True
+        elif has_audio:
+            filter_graph += f";[0:a]volume={original_volume:.3f}[aout]"
+            has_audio_out = True
         command.extend([
             "-filter_complex",
             filter_graph,
             "-map",
             "[vout]",
         ])
-        if use_dubbing:
+        if has_audio_out:
             command.extend(["-map", "[aout]"])
         else:
             command.extend(["-map", "0:a?"])

@@ -5,7 +5,6 @@ export type PageKey =
   | "profiles"
   | "browser"
   | "logs"
-  | "premium"
   | "settings";
 
 export type Theme = "system" | "light" | "dark";

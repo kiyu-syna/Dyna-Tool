@@ -43,6 +43,18 @@ YOUTUBE_PUBLISH_SUCCESS_TEXTS = (
     "Đã xuất bản video",
     "Video đã được xuất bản",
     "Đã xuất bản",
+    "Video của bạn đang được xử lý",
+    "Your video is being processed",
+    "Đang xử lý video",
+    "Processing video",
+    "Đã tải video lên",
+    "Video đã tải lên",
+    "Your video has been uploaded",
+    "Đã tải lên",
+    "Upload complete",
+    "Đã kiểm tra xong",
+    "Checks complete",
+    "Video đã tải lên xong",
 )
 
 
@@ -122,6 +134,24 @@ def _youtube_publish_confirmation_signal(page) -> str:
                     return f'text="{text}"'
         except Exception:
             continue
+    try:
+        post_publish_dialog = page.locator(
+            "ytcp-post-publish-dialog:visible, "
+            "ytcp-dialog.ytcp-post-publish-dialog:visible, "
+            "ytcp-dialog:has(#dialog-title:has-text('xuất bản')):visible, "
+            "ytcp-dialog:has(#dialog-title:has-text('published')):visible, "
+            "ytcp-dialog:has(#dialog-title:has-text('đăng')):visible"
+        )
+        if post_publish_dialog.count() > 0 and post_publish_dialog.first.is_visible():
+            return "dialog=ytcp-post-publish-dialog"
+    except Exception:
+        pass
+    try:
+        uploads_dialog = page.locator("ytcp-uploads-dialog:visible")
+        if uploads_dialog.count() == 0:
+            return "dialog_closed"
+    except Exception:
+        pass
     try:
         current_url = str(page.url or "")
     except Exception:

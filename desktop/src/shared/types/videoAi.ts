@@ -170,4 +170,5 @@ export type VideoAiEditorSaveRequest = {
   subtitles: VideoAiSubtitle[];
   blur: VideoAiBlur;
   style: VideoAiStyle;
+  dubbing?: VideoAiDubbing;
 };

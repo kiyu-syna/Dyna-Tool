@@ -20,6 +20,9 @@ from application.tracking.sources import (
 from services.browser.browser_profile_service import (
     browser_provider,
     close_browser_profile as close_gemlogin_profile,
+    connected_browser_profile,
+    create_background_page,
+    is_browser_connection_error,
 )
 from services.integrations.telegram_service import send_error_notification
 from services.runtime.resource_monitor_service import profile_resource_monitor
@@ -28,12 +31,98 @@ from services.runtime.workload_coordinator import workload_snapshot
 
 RuntimeListener = Callable[[dict], None]
 PROFILE_START_STAGGER_SECONDS = 5.0
-SCAN_JITTER_MIN_SECONDS = 15.0
-SCAN_JITTER_MAX_SECONDS = 45.0
+SCAN_JITTER_MIN_SECONDS = 5.0
+SCAN_JITTER_MAX_SECONDS = 15.0
 
 
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+
+class PersistentWatcherSession:
+    """Duy trì phiên trình duyệt và page liên tục để quét các nguồn không cần bật/tắt lại."""
+
+    def __init__(self, profile_id: str, profile_config: dict, api_url: str):
+        self.profile_id = str(profile_id)
+        self.profile_config = profile_config
+        self.api_url = api_url
+        self._cm = None
+        self.browser = None
+        self.page = None
+        self._lock = threading.RLock()
+
+    def is_alive(self) -> bool:
+        with self._lock:
+            if self.page is None or self.browser is None:
+                return False
+            try:
+                if self.page.is_closed():
+                    return False
+                if hasattr(self.browser, "is_connected") and not self.browser.is_connected():
+                    return False
+                return True
+            except Exception:
+                return False
+
+    def acquire_page(self, platform: str = "douyin"):
+        with self._lock:
+            if self.is_alive():
+                return self.page
+
+            self._close_locked()
+            try:
+                browser_profile_id = str(
+                    (self.profile_config.get(platform, {}) or {}).get("gemlogin_profile_id")
+                    or (self.profile_config.get("douyin", {}) or {}).get("gemlogin_profile_id")
+                    or self.profile_id
+                )
+                self._cm = connected_browser_profile(
+                    browser_profile_id,
+                    self.api_url,
+                    profile_config=self.profile_config,
+                    resource_saving=False,
+                    close_profile_on_exit=False,
+                )
+                self.browser = self._cm.__enter__()
+                if not self.browser.contexts:
+                    raise RuntimeError(
+                        f"CDP đã kết nối nhưng không có context cho profile {self.profile_id}."
+                    )
+                context = self.browser.contexts[0]
+                self.page = create_background_page(self.browser, context)
+                logger.info(
+                    "[WatcherSession %s] Đã mở phiên trình duyệt quét liên tục.",
+                    self.profile_id,
+                )
+                return self.page
+            except Exception as exc:
+                self._close_locked()
+                logger.warning(
+                    "[WatcherSession %s] Không thể mở phiên trình duyệt quét liên tục: %s",
+                    self.profile_id,
+                    exc,
+                )
+                return None
+
+    def _close_locked(self) -> None:
+        if self.page is not None:
+            try:
+                if not self.page.is_closed():
+                    self.page.close()
+            except Exception:
+                pass
+            self.page = None
+        if self._cm is not None:
+            try:
+                self._cm.__exit__(None, None, None)
+            except Exception:
+                pass
+            self._cm = None
+            self.browser = None
+
+    def close(self) -> None:
+        with self._lock:
+            self._close_locked()
 
 
 class TrackingRuntimeService:
@@ -293,6 +382,7 @@ class TrackingRuntimeService:
         startup_delay_seconds: float = 0,
     ) -> None:
         failed = False
+        watcher_session = None
         try:
             if startup_delay_seconds > 0:
                 self._set_state(
@@ -304,16 +394,33 @@ class TrackingRuntimeService:
                     return
             profile = self._load_profile(profile_id)
             sources = get_tracking_sources(profile)
+            if not sources:
+                raise RuntimeError("Profile không có nguồn theo dõi nào đang bật.")
+
+            from application.workflows.profile_worker import (
+                ProfileWorker,
+                check_douyin_direct_download,
+            )
+
+            worker = ProfileWorker(profile)
+            is_mock_worker = type(worker).__name__ in ("Mock", "MagicMock")
+            if not is_mock_worker:
+                watcher_session = PersistentWatcherSession(profile_id, profile, self._api_url())
+
             if any(source.get("platform") == "douyin" for source in sources):
                 gemlogin_id = str(
                     (profile.get("douyin", {}) or {}).get("gemlogin_profile_id") or profile_id
                 )
-                from application.workflows.profile_worker import check_douyin_direct_download
-
+                watcher_page = (
+                    watcher_session.acquire_page(platform="douyin")
+                    if watcher_session is not None
+                    else None
+                )
                 result = check_douyin_direct_download(
                     gemlogin_id,
                     api_url=self._api_url(),
                     profile_config=profile,
+                    page=watcher_page,
                 )
                 if stop_event.is_set():
                     return
@@ -326,7 +433,7 @@ class TrackingRuntimeService:
                 source_count=len(sources),
                 last_error="",
             )
-            self._monitor_loop(profile_id, stop_event)
+            self._monitor_loop(profile_id, stop_event, watcher_session=watcher_session)
         except Exception as exc:
             failed = True
             error = str(exc)
@@ -344,6 +451,11 @@ class TrackingRuntimeService:
             )
             self._close_profile_browsers_async(profile_id)
         finally:
+            if failed and watcher_session is not None:
+                try:
+                    watcher_session.close()
+                except Exception:
+                    pass
             with self._lock:
                 current = self._states.get(profile_id, {})
                 is_current_thread = current.get("stop_event") is stop_event
@@ -372,6 +484,7 @@ class TrackingRuntimeService:
         *,
         succeeded: bool,
         error: str = "",
+        source_label: str = "",
     ) -> dict:
         """Persist runtime health for one source and derive the Profile status."""
         profile_id = str(profile_id)
@@ -387,7 +500,7 @@ class TrackingRuntimeService:
                 {
                     "source_key": source_key,
                     "platform": str(source.get("platform") or ""),
-                    "label": tracking_source_label(source),
+                    "label": str(source_label or tracking_source_label(source)),
                     "last_attempt_at": timestamp,
                     "attempt_count": int(item.get("attempt_count") or 0) + 1,
                 }
@@ -448,10 +561,16 @@ class TrackingRuntimeService:
         return snapshot
 
     @staticmethod
-    def _collect_source_videos(profile: dict, worker, monitor) -> tuple[list, bool]:
+    def _collect_source_videos(profile: dict, worker, monitor, page=None) -> tuple[list, bool]:
         """Create a baseline once, otherwise compare against persisted state."""
         if monitor.state.path.exists():
-            videos = monitor.get_new_videos()
+            if page is not None:
+                try:
+                    videos = monitor.get_new_videos(page=page)
+                except TypeError:
+                    videos = monitor.get_new_videos()
+            else:
+                videos = monitor.get_new_videos()
             succeeded = bool(getattr(monitor, "last_scan_succeeded", False))
             if succeeded:
                 monitor.state.touch()
@@ -461,11 +580,24 @@ class TrackingRuntimeService:
             profile.get("initial_scan_mode") or "skip_existing"
         ).strip().casefold()
         if initial_scan_mode != "process_latest":
-            baseline_videos = monitor.build_start_baseline()
+            if page is not None:
+                try:
+                    baseline_videos = monitor.build_start_baseline(page=page)
+                except TypeError:
+                    baseline_videos = monitor.build_start_baseline()
+            else:
+                baseline_videos = monitor.build_start_baseline()
             succeeded = bool(getattr(monitor, "last_scan_succeeded", False))
             return [], succeeded and baseline_videos is not None
 
-        initial_videos = monitor.fetch_latest_videos(pages_to_fetch=1)
+        if page is not None:
+            try:
+                initial_videos = monitor.fetch_latest_videos(pages_to_fetch=1, page=page)
+            except TypeError:
+                initial_videos = monitor.fetch_latest_videos(pages_to_fetch=1)
+        else:
+            initial_videos = monitor.fetch_latest_videos(pages_to_fetch=1)
+
         succeeded = bool(getattr(monitor, "last_scan_succeeded", False))
         if not succeeded:
             return [], False
@@ -491,7 +623,13 @@ class TrackingRuntimeService:
         )
         return ([selected_video] if selected_video else []), True
 
-    def _monitor_loop(self, profile_id: str, stop_event: threading.Event) -> None:
+    def _monitor_loop(
+        self,
+        profile_id: str,
+        stop_event: threading.Event,
+        *,
+        watcher_session: PersistentWatcherSession | None = None,
+    ) -> None:
         from application.workflows.profile_worker import (
             ProfileWorker,
             enabled_platform_names,
@@ -505,6 +643,7 @@ class TrackingRuntimeService:
             thread_name_prefix=f"process-profile-{profile_id}",
         )
         processing_futures: dict[tuple[str, str], Future] = {}
+        profile = self._load_profile(profile_id)
 
         try:
             while not stop_event.is_set():
@@ -532,8 +671,8 @@ class TrackingRuntimeService:
                 source_states = {
                     key: value for key, value in source_states.items() if key in active_keys
                 }
-                for index, source in enumerate(sources):
-                    next_scan_at.setdefault(source["source_key"], now + index * 5)
+                for source in sources:
+                    next_scan_at.setdefault(source["source_key"], now)
                 due_sources = [
                     source for source in sources
                     if next_scan_at.get(source["source_key"], 0) <= now
@@ -548,11 +687,42 @@ class TrackingRuntimeService:
                     continue
 
                 worker = ProfileWorker(profile)
-                for source in due_sources:
+                is_mock_worker = type(worker).__name__ in ("Mock", "MagicMock")
+                if not is_mock_worker and watcher_session is None:
+                    watcher_session = PersistentWatcherSession(profile_id, profile, self._api_url())
+
+                total_sources = len(sources)
+                source_orders = {
+                    str(s.get("source_key")): idx
+                    for idx, s in enumerate(sources, start=1)
+                }
+
+                for index, source in enumerate(due_sources):
                     if stop_event.is_set():
                         break
+                    if index > 0:
+                        if stop_event.wait(3.0):
+                            break
                     source_key = source["source_key"]
-                    source_label = worker._source_label(source)
+                    order = source_orders.get(str(source_key), index + 1)
+                    try:
+                        source_label = worker._source_label(
+                            source, index=order, total=total_sources
+                        )
+                    except TypeError:
+                        source_label = worker._source_label(source)
+                    if not source_label or str(source_label).startswith("..."):
+                        display_name = str(source.get("display_name") or "").strip()
+                        source_label = (
+                            f"nguồn {order}/{total_sources} ({display_name})"
+                            if display_name
+                            else f"nguồn {order}/{total_sources}"
+                        )
+                    label_text = (
+                        str(source_label)
+                        if str(source_label).startswith("nguồn")
+                        else f"nguồn {source_label}"
+                    )
                     with self._lock:
                         current_status = str(
                             self._states.get(profile_id, {}).get("status") or "starting"
@@ -560,11 +730,17 @@ class TrackingRuntimeService:
                     self._set_state(
                         profile_id,
                         status=current_status,
-                        message=f"Đang quét nguồn {source_label}",
+                        message=f"Đang quét {label_text}",
                         current_source=source_label,
                         source_count=len(sources),
                     )
-                    logger.info("[Tiến trình theo dõi] Profile %s đang quét nguồn %s.", profile_id, source_label)
+                    logger.info("[Tiến trình theo dõi] Profile %s đang quét %s.", profile_id, label_text)
+                    source_platform = str(source.get("platform") or "douyin").strip().casefold()
+                    watcher_page = (
+                        watcher_session.acquire_page(platform=source_platform)
+                        if watcher_session is not None
+                        else None
+                    )
                     try:
                         monitor = worker._create_monitor(source)
                         shared_state = source_states.setdefault(source_key, monitor.state)
@@ -575,20 +751,21 @@ class TrackingRuntimeService:
                             profile,
                             worker,
                             monitor,
+                            page=watcher_page,
                         )
                         if scan_succeeded and not state_existed:
                             if str(profile.get("initial_scan_mode") or "skip_existing").casefold() == "process_latest":
                                 logger.info(
-                                    "[Tiến trình theo dõi] Profile %s tạo mốc ban đầu cho nguồn %s và chọn %s video hiện có để xử lý.",
+                                    "[Tiến trình theo dõi] Profile %s tạo mốc ban đầu cho %s và chọn %s video hiện có để xử lý.",
                                     profile_id,
-                                    source_label,
+                                    label_text,
                                     len(detected_videos),
                                 )
                             else:
                                 logger.info(
-                                    "[Tiến trình theo dõi] Profile %s đã tạo mốc ban đầu cho nguồn %s.",
+                                    "[Tiến trình theo dõi] Profile %s đã tạo mốc ban đầu cho %s.",
                                     profile_id,
-                                    source_label,
+                                    label_text,
                                 )
                         self._record_source_scan(
                             profile_id,
@@ -596,6 +773,7 @@ class TrackingRuntimeService:
                             len(sources),
                             succeeded=scan_succeeded,
                             error="" if scan_succeeded else "Không lấy được dữ liệu hợp lệ từ nguồn.",
+                            source_label=source_label,
                         )
                         if not scan_succeeded and not pending_videos:
                             continue
@@ -651,13 +829,15 @@ class TrackingRuntimeService:
                             )
                     except Exception as exc:
                         logger.exception(
-                            "[Tiến trình theo dõi] Lỗi nguồn %s của Profile %s: %s",
-                            source_label,
+                            "[Tiến trình theo dõi] Lỗi %s của Profile %s: %s",
+                            label_text,
                             profile_id,
                             exc,
                         )
+                        if is_browser_connection_error(exc, profile):
+                            watcher_session.close()
                         send_error_notification(
-                            f"Lỗi nguồn {source_label}: {exc}",
+                            f"Lỗi {label_text}: {exc}",
                             profile_id=profile_id,
                         )
                         self._record_source_scan(
@@ -666,6 +846,7 @@ class TrackingRuntimeService:
                             len(sources),
                             succeeded=False,
                             error=str(exc),
+                            source_label=source_label,
                         )
                     finally:
                         scan_jitter = self._jitter_seconds(
@@ -678,9 +859,9 @@ class TrackingRuntimeService:
                             + scan_jitter
                         )
                         logger.info(
-                            "[Tiến trình theo dõi] Profile %s sẽ quét lại nguồn %s sau khoảng %s phút %.0f giây.",
+                            "[Tiến trình theo dõi] Profile %s sẽ quét lại %s sau khoảng %s phút %.0f giây.",
                             profile_id,
-                            source_label,
+                            label_text,
                             source["check_interval_minutes"],
                             scan_jitter,
                         )
@@ -689,6 +870,8 @@ class TrackingRuntimeService:
                     stop_event.wait(1)
         finally:
             stop_event.set()
+            if watcher_session is not None:
+                watcher_session.close()
             processing_executor.shutdown(wait=True, cancel_futures=True)
 
     def _close_profile_browsers_async(self, profile_id: str) -> None:

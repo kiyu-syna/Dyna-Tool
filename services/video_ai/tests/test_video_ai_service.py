@@ -658,3 +658,34 @@ class VideoAiProjectTests(unittest.TestCase):
 
         self.assertEqual(current["status"], "completed", current.get("error"))
         self.assertGreater(dubbed_output.stat().st_size, 1024)
+
+    def test_original_volume_zero_is_preserved_across_save_and_render(self):
+        project = self.service.create_project(str(self.source))
+        self.service.save_subtitles(
+            project["id"],
+            [{"id": "1", "start": 0, "end": 2, "text": "Hi", "translated_text": "Chào"}],
+        )
+        # 1. Save editor state with original_volume = 0
+        saved = self.service.save_editor_state(
+            project["id"],
+            subtitles=[{"id": "1", "start": 0, "end": 2, "text": "Hi", "translated_text": "Chào"}],
+            dubbing={"enabled": False, "original_volume": 0},
+        )
+        self.assertEqual(saved["dubbing_options"]["original_volume"], 0)
+
+        # 2. Re-fetch project to ensure disk persistence
+        fetched = self.service.get_project(project["id"])
+        self.assertEqual(fetched["dubbing_options"]["original_volume"], 0)
+
+        # 3. Start render without dubbing parameter (should NOT reset original_volume to 18)
+        output_file = Path(self.temp.name) / "test_out.mp4"
+        with patch.object(self.service, "_spawn"):
+            started = self.service.start_render(
+                project["id"],
+                track="translated",
+                dubbing=None,
+                output_path=str(output_file),
+            )
+        self.assertEqual(started["dubbing_options"]["original_volume"], 0)
+        re_fetched = self.service.get_project(project["id"])
+        self.assertEqual(re_fetched["dubbing_options"]["original_volume"], 0)

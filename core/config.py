@@ -23,7 +23,6 @@ SETTINGS_FILE = os.path.join(BASE_DIR, "config", "settings.json")
 def load_settings():
     default_settings = {
         "API_URL": "http://127.0.0.1:1010",
-        "PAYMENT_API_URL": "http://localhost:8000",
         "MAX_CONCURRENT_DOWNLOADS": 2,
         "MAX_CONCURRENT_FFMPEG": 1,
         "MAX_CONCURRENT_UPLOADS": 2,

@@ -75,6 +75,7 @@ type EditorDraft = {
   subtitles: VideoAiSubtitle[];
   blur: VideoAiBlur;
   style: VideoAiStyle;
+  dubbing?: VideoAiDubbing;
 };
 
 const DEFAULT_STYLE: VideoAiStyle = {
@@ -163,8 +164,9 @@ function editorSnapshot(
   subtitles: VideoAiSubtitle[],
   blur: VideoAiBlur,
   style: VideoAiStyle,
+  dubbing?: VideoAiDubbing,
 ) {
-  return JSON.stringify({ subtitles, blur, style });
+  return JSON.stringify({ subtitles, blur, style, dubbing });
 }
 
 function editorDraftKey(projectId: string) {
@@ -268,7 +270,7 @@ export default function VideoAiPage() {
     }
     const serverBlur = project.render_options?.blur || DEFAULT_BLUR;
     const serverStyle = project.render_options?.style || DEFAULT_STYLE;
-    const serverSnapshot = editorSnapshot(project.subtitles, serverBlur, serverStyle);
+    const serverSnapshot = editorSnapshot(project.subtitles, serverBlur, serverStyle, project.dubbing_options);
     const draft = readEditorDraft(project.id);
     const serverUpdatedAt = Date.parse(project.updated_at || "") || 0;
     const useDraft = Boolean(
@@ -282,7 +284,7 @@ export default function VideoAiPage() {
     setModelName(project.model_name || "small");
     setBlur(useDraft && draft ? draft.blur : serverBlur);
     setStyle(useDraft && draft ? draft.style : serverStyle);
-    setDubbing(project.dubbing_options || DEFAULT_DUBBING);
+    setDubbing(useDraft && draft && draft.dubbing ? draft.dubbing : (project.dubbing_options || DEFAULT_DUBBING));
     if (useDraft && draft) {
       setProject({ ...project, subtitles: draft.subtitles });
       setAutosaveState("saving");
@@ -300,7 +302,10 @@ export default function VideoAiPage() {
 
   useEffect(() => {
     if (project?.dubbing_options?.generated_at) {
-      setDubbing(project.dubbing_options);
+      setDubbing((current) => ({
+        ...project.dubbing_options!,
+        original_volume: current.original_volume ?? project.dubbing_options!.original_volume,
+      }));
     }
   }, [project?.dubbing_options?.generated_at]);
 
@@ -336,10 +341,11 @@ export default function VideoAiPage() {
       project.subtitles,
       detectedBlur,
       detectedStyle,
+      dubbing,
     );
     removeEditorDraft(project.id);
     setAutosaveState("saved");
-  }, [project?.subtitle_detection?.detected_at]);
+  }, [dubbing, project?.subtitle_detection?.detected_at]);
 
   useEffect(() => {
     const stage = videoStageRef.current;
@@ -421,8 +427,8 @@ export default function VideoAiPage() {
     ),
   );
   const currentEditorSnapshot = useMemo(
-    () => editorSnapshot(project?.subtitles || [], blur, style),
-    [blur, project?.subtitles, style],
+    () => editorSnapshot(project?.subtitles || [], blur, style, dubbing),
+    [blur, dubbing, project?.subtitles, style],
   );
   useEffect(() => {
     currentEditorSnapshotRef.current = currentEditorSnapshot;
@@ -503,6 +509,7 @@ export default function VideoAiPage() {
       subtitles: project.subtitles,
       blur,
       style,
+      dubbing,
     };
     writeEditorDraft({
       projectId,
@@ -532,6 +539,7 @@ export default function VideoAiPage() {
     blur,
     busy,
     currentEditorSnapshot,
+    dubbing,
     editorReadyProjectId,
     project,
     saveEditorState,
@@ -623,7 +631,7 @@ export default function VideoAiPage() {
   async function saveEditorNow(): Promise<boolean> {
     if (!project || busy) return false;
     const snapshot = currentEditorSnapshotRef.current;
-    const payload = { subtitles: project.subtitles, blur, style };
+    const payload = { subtitles: project.subtitles, blur, style, dubbing };
     writeEditorDraft({
       projectId: project.id,
       updatedAt: Date.now(),

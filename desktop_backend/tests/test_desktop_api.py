@@ -1122,59 +1122,6 @@ class DesktopApiTests(unittest.TestCase):
         self.assertEqual(response.json()["stopped"], ["2"])
         self.runtime.shutdown.assert_called_once_with()
 
-    @patch.object(desktop_api.auth_service, "get_current_user")
-    @patch.object(desktop_api.auth_service, "is_logged_in")
-    def test_auth_status_never_exposes_session_token(self, is_logged_in, get_current_user):
-        is_logged_in.return_value = True
-        get_current_user.return_value = {
-            "username": "tester",
-            "display_name": "Test User",
-            "token": "secret-token",
-        }
-
-        response = self.client.get(
-            "/api/auth/status?verify=false",
-            headers=self.headers,
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["authenticated"])
-        self.assertEqual(response.json()["user"]["username"], "tester")
-        self.assertNotIn("token", response.json()["user"])
-
-    @patch.object(desktop_api.auth_service, "login")
-    def test_login_delegates_without_exposing_token(self, login):
-        login.return_value = {"username": "tester", "token": "secret-token"}
-
-        response = self.client.post(
-            "/api/auth/login",
-            headers=self.headers,
-            json={"username": "tester", "password": "password"},
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["user"], {"username": "tester"})
-        login.assert_called_once_with("tester", "password")
-
-    @patch.object(desktop_api.auth_service, "logout")
-    def test_logout_stops_runtime_and_clears_session(self, logout):
-        response = self.client.post("/api/auth/logout", headers=self.headers)
-
-        self.assertEqual(response.status_code, 200)
-        self.runtime.shutdown.assert_called_once_with()
-        logout.assert_called_once_with()
-
-    @patch.object(desktop_api.license_service, "create_order")
-    def test_invalid_license_plan_does_not_create_order(self, create_order):
-        response = self.client.post(
-            "/api/license/orders",
-            headers=self.headers,
-            json={"days": 10},
-        )
-
-        self.assertEqual(response.status_code, 400)
-        create_order.assert_not_called()
-
     def test_test_upload_requires_explicit_confirmation(self):
         response = self.client.post(
             "/api/runtime/profiles/2/test-upload",

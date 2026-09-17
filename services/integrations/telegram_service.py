@@ -1,12 +1,9 @@
-"""Desktop relay for the server-owned shared Telegram bot.
-
-No Telegram token is read, stored, or used on the desktop.  This module only
-uses the authenticated Dyna API and therefore remains safe in packaged apps.
-"""
+"""Desktop relay for the local Telegram notification service."""
 
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 import time
 from datetime import datetime
@@ -14,7 +11,6 @@ from typing import Any
 
 import requests
 
-from services.account import auth_service, license_service
 from services.browser.gemlogin_browser_service import classify_automation_error
 
 ERROR_NOTIFICATION_DEDUPE_SECONDS = 10 * 60
@@ -22,18 +18,22 @@ _ERROR_NOTIFICATION_TIMES: dict[tuple[str, str, str], float] = {}
 logger = logging.getLogger(__name__)
 
 
-def _headers() -> dict[str, str] | None:
-    user = auth_service.get_current_user()
-    token = str((user or {}).get("token") or "").strip()
-    return {"Authorization": f"Bearer {token}"} if token else None
+def _headers() -> dict[str, str]:
+    return {}
+
+
+def _api_base_url() -> str:
+    return os.environ.get("DYNA_TELEGRAM_API_URL", "http://127.0.0.1:8000").strip().rstrip("/")
 
 
 def _request(method: str, path: str, *, body: dict[str, Any] | None = None, timeout: float = 12) -> dict[str, Any] | None:
-    headers = _headers()
-    if not headers:
-        return None
     try:
-        response = requests.request(method, f"{license_service.get_api_base_url()}{path}", headers=headers, json=body, timeout=timeout)
+        response = requests.request(
+            method,
+            f"{_api_base_url()}{path}",
+            json=body,
+            timeout=timeout,
+        )
         if response.status_code >= 400:
             logger.warning("Máy chủ Telegram từ chối yêu cầu %s (HTTP %s).", path, response.status_code)
             return None
@@ -50,15 +50,11 @@ def _request_file(
     image_path: str,
     timeout: float = 30,
 ) -> dict[str, Any] | None:
-    headers = _headers()
-    if not headers:
-        return None
     screenshot = Path(image_path)
     try:
         with screenshot.open("rb") as handle:
             response = requests.post(
-                f"{license_service.get_api_base_url()}{path}",
-                headers=headers,
+                f"{_api_base_url()}{path}",
                 data={"text": text[:1024]},
                 files={"image": (screenshot.name, handle, "image/png")},
                 timeout=timeout,
@@ -234,7 +230,8 @@ def send_error_notification(error_message: str, profile_id: str | None = None, v
     category = classify_automation_error(error_message)
     key = (str(profile_id or ""), str(video_id or ""), category)
     now = time.monotonic()
-    if now - _ERROR_NOTIFICATION_TIMES.get(key, 0) < ERROR_NOTIFICATION_DEDUPE_SECONDS:
+    last_sent = _ERROR_NOTIFICATION_TIMES.get(key)
+    if last_sent is not None and (now - last_sent) < ERROR_NOTIFICATION_DEDUPE_SECONDS:
         return
     _ERROR_NOTIFICATION_TIMES[key] = now
     detail = "\n".join(part for part in [f"Hồ sơ: {profile_id}" if profile_id else "", f"Video: {video_id}" if video_id else "", f"Lỗi: {error_message}", f"Thời gian: {_timestamp()}"] if part)

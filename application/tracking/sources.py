@@ -143,8 +143,20 @@ def serialize_tracking_sources(
     return serialized
 
 
-def tracking_source_label(source: dict) -> str:
+def tracking_source_label(
+    source: dict,
+    index: int | None = None,
+    total: int | None = None,
+) -> str:
     display_name = str(source.get("display_name") or "").strip()
+    if index is not None:
+        count_part = (
+            f"nguồn {index}/{total}"
+            if total is not None and total > 0
+            else f"nguồn {index}"
+        )
+        return f"{count_part} ({display_name})" if display_name else count_part
+
     if display_name:
         return display_name
     if source.get("platform") == "tiktok":

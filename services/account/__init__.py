@@ -1,1 +1,0 @@
-"""Authentication and licensing services."""

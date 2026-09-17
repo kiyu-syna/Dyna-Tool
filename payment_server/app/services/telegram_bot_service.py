@@ -1,8 +1,4 @@
-"""Server-owned shared Telegram bot for Dyna.
-
-The bot token lives exclusively in the payment-server environment. Desktop
-clients use their existing Dyna session token and never receive or save it.
-"""
+"""Local Telegram bot used by Dyna for notifications and operator input."""
 
 from __future__ import annotations
 
@@ -16,23 +12,10 @@ import httpx
 
 from app.config import get_settings
 from app.database.mongodb import get_db
-from app.services.ai_gateway_service import (
-    AiGatewayBadRequestError,
-    AiGatewayConfigurationError,
-    AiGatewayRateLimitError,
-    AiGatewayUnavailableError,
-    get_ai_gateway,
-)
-from app.services.license_service import get_license_status
-from app.services.telegram_remote_action_service import (
-    action_label,
-    get_telegram_remote_action_service,
-)
+from app.services.telegram_remote_action_service import get_telegram_remote_action_service
 
 logger = logging.getLogger(__name__)
 UTC = timezone.utc
-AI_HISTORY_LIMIT = 12
-AI_MESSAGE_LIMIT = 6_000
 TELEGRAM_MESSAGE_LIMIT = 3_900
 
 
@@ -45,9 +28,6 @@ class TelegramBotService:
         self._task: asyncio.Task | None = None
         self._stopping = False
         self._offset = 0
-        # Short-lived context only. AI conversation content is not persisted in
-        # MongoDB and naturally clears when the server restarts.
-        self._ai_histories: dict[str, list[dict[str, str]]] = {}
 
     @property
     def configured(self) -> bool:
@@ -107,6 +87,8 @@ class TelegramBotService:
 
     async def connection_status(self, username: str) -> dict[str, Any]:
         link = await get_db().telegram_links.find_one({"username": username})
+        if not link and username == "local":
+            link = await get_db().telegram_links.find_one({})
         settings = get_settings()
         return {
             "configured": self.configured,
@@ -128,10 +110,17 @@ class TelegramBotService:
         return {"code": code, "expires_at": expires_at, "bot_username": get_settings().TELEGRAM_BOT_USERNAME.strip().lstrip("@")}
 
     async def unlink(self, username: str) -> None:
-        await get_db().telegram_links.delete_one({"username": username})
+        db = get_db()
+        link = await db.telegram_links.find_one({"username": username})
+        if not link and username == "local":
+            link = await db.telegram_links.find_one({})
+        if link:
+            await db.telegram_links.delete_one({"_id": link["_id"]})
 
     async def send_notification(self, username: str, text: str, cancel_job: dict[str, str] | None = None) -> bool:
         link = await get_db().telegram_links.find_one({"username": username})
+        if not link and username == "local":
+            link = await get_db().telegram_links.find_one({})
         if not link or not self.configured:
             return False
         payload: dict[str, Any] = {"chat_id": link["chat_id"], "text": text[:4000], "disable_web_page_preview": True}
@@ -152,6 +141,8 @@ class TelegramBotService:
         filename: str = "diagnostic.png",
     ) -> bool:
         link = await get_db().telegram_links.find_one({"username": username})
+        if not link and username == "local":
+            link = await get_db().telegram_links.find_one({})
         if not link or not self.configured:
             return False
         await self._api_multipart(
@@ -163,6 +154,8 @@ class TelegramBotService:
 
     async def create_caption_request(self, username: str, payload: dict[str, Any]) -> dict[str, Any]:
         link = await get_db().telegram_links.find_one({"username": username})
+        if not link and username == "local":
+            link = await get_db().telegram_links.find_one({})
         if not link:
             return {"available": False, "reason": "Telegram chưa được liên kết"}
         request_id = secrets.token_urlsafe(18)
@@ -241,7 +234,7 @@ class TelegramBotService:
 
     async def _send_text(self, chat_id: str, text: str) -> None:
         """Reply safely without exceeding Telegram's message length limit."""
-        content = text.strip() or "Dyna AI chưa có phản hồi."
+        content = text.strip() or "Dyna chưa có nội dung phản hồi."
         for start in range(0, len(content), TELEGRAM_MESSAGE_LIMIT):
             await self._api("sendMessage", {
                 "chat_id": chat_id,
@@ -251,108 +244,13 @@ class TelegramBotService:
 
     async def _linked_username(self, chat_id: str) -> str:
         link = await get_db().telegram_links.find_one({"chat_id": chat_id})
-        return str((link or {}).get("username") or "").strip().lower()
-
-    async def _handle_ai_message(self, chat_id: str, prompt: str) -> None:
-        """Serve Dyna AI in Telegram for an already linked Dyna account.
-
-        Telegram can approve only a small safe action set. The server never
-        executes those actions itself: an authenticated, online Dyna desktop
-        claims and performs the one-time request.
-        """
-        username = await self._linked_username(chat_id)
-        if not username:
-            await self._send_text(
-                chat_id,
-                "Hãy liên kết Telegram trong Dyna > Cài đặt trước khi dùng Dyna AI.",
-            )
-            return
-        if not prompt:
-            await self._send_text(
-                chat_id,
-                "Dùng: /ai <câu hỏi>\nVí dụ: /ai Tại sao hồ sơ TikTok chưa sẵn sàng?",
-            )
-            return
-
-        settings = get_settings()
-        if settings.AI_REQUIRE_ACTIVE_LICENSE:
-            license_status = await get_license_status(username)
-            if not license_status.get("is_active"):
-                await self._send_text(
-                    chat_id,
-                    "Trợ lý AI yêu cầu gói Dyna Premium còn hiệu lực.",
-                )
-                return
-
-        try:
-            await self._api("sendChatAction", {"chat_id": chat_id, "action": "typing"})
-        except Exception:
-            # The typing indicator is optional; an API hiccup must not prevent
-            # the actual AI response from being generated.
-            logger.debug("Unable to send Telegram typing indicator", exc_info=True)
-        history = self._ai_histories.get(username, [])
-        messages = [*history, {"role": "user", "content": prompt[:AI_MESSAGE_LIMIT]}]
-        try:
-            result = await get_ai_gateway().chat(
-                username=username,
-                messages=messages,
-                context={"channel": "telegram", "telegram": "linked"},
-            )
-        except AiGatewayRateLimitError as exc:
-            await self._send_text(chat_id, f"Dyna AI đang nhận quá nhiều yêu cầu. Vui lòng thử lại sau {exc.retry_after} giây.")
-            return
-        except AiGatewayBadRequestError:
-            await self._send_text(chat_id, "Yêu cầu chưa hợp lệ. Hãy viết lại câu hỏi ngắn gọn hơn.")
-            return
-        except AiGatewayConfigurationError:
-            logger.warning("Dyna AI is not configured for Telegram user %s", username)
-            await self._send_text(chat_id, "Dyna AI chưa được cấu hình trên máy chủ.")
-            return
-        except AiGatewayUnavailableError:
-            logger.warning("Dyna AI is temporarily unavailable for Telegram user %s", username)
-            await self._send_text(chat_id, "Dyna AI đang tạm thời không khả dụng. Vui lòng thử lại sau.")
-            return
-        except Exception:
-            logger.exception("Unexpected Dyna AI Telegram error for user %s", username)
-            await self._send_text(chat_id, "Không thể lấy phản hồi từ Dyna AI. Vui lòng thử lại sau.")
-            return
-
-        assistant_reply = str(result.get("reply") or "Dyna AI chưa có phản hồi.").strip()
-        reply = assistant_reply
-        self._ai_histories[username] = [
-            *messages,
-            {"role": "assistant", "content": assistant_reply},
-        ][-AI_HISTORY_LIMIT:]
-        await self._send_text(chat_id, reply)
-        proposal = await get_telegram_remote_action_service().create(
-            username,
-            chat_id,
-            list(result.get("actions") or []),
-        )
-        if proposal:
-            labels = "\n".join(f"• {action_label(action)}" for action in proposal["actions"])
-            await self._api("sendMessage", {
-                "chat_id": chat_id,
-                "text": (
-                    "Đề xuất thao tác trong Dyna:\n"
-                    f"{labels}\n\n"
-                    "Xác nhận trong 5 phút. Dyna desktop phải đang mở và đăng nhập để thực hiện."
-                ),
-                "reply_markup": {"inline_keyboard": [[
-                    {"text": "Xác nhận", "callback_data": f"ai:{proposal['request_id']}:confirm"},
-                    {"text": "Hủy", "callback_data": f"ai:{proposal['request_id']}:cancel"},
-                ]]},
-            })
+        return "local" if link else ""
 
     async def _handle_message(self, message: dict[str, Any]) -> None:
         text = str(message.get("text") or message.get("caption") or "").strip()
         chat = message.get("chat") or {}
         chat_id = str(chat.get("id") or "")
         if not chat_id:
-            return
-        command, _, command_argument = text.partition(" ")
-        if command.lower().split("@", 1)[0] == "/ai":
-            await self._handle_ai_message(chat_id, command_argument.strip())
             return
         if text.startswith("/start"):
             parts = text.split(maxsplit=1)
@@ -365,10 +263,7 @@ class TelegramBotService:
             if not row:
                 await self._api("sendMessage", {"chat_id": chat_id, "text": "Mã liên kết không hợp lệ hoặc đã hết hạn. Hãy tạo mã mới trong Dyna."})
                 return
-            # A Telegram chat can be linked to only one Dyna account.  When a
-            # user has moved to a new account, remove the old mapping first so
-            # the unique chat_id index does not discard the /start update with
-            # an unhelpful E11000 error.
+            # Một cuộc trò chuyện Telegram chỉ liên kết với một bản Dyna cục bộ.
             existing_link = await db.telegram_links.find_one({"chat_id": chat_id})
             if existing_link and str(existing_link.get("username") or "").casefold() != str(row["username"] or "").casefold():
                 await db.telegram_links.delete_one({"chat_id": chat_id})
@@ -479,7 +374,7 @@ class TelegramBotService:
                 answer = "Đã xác nhận. Dyna desktop sẽ thực hiện khi đang trực tuyến."
                 await self._send_text(
                     chat_id,
-                    "Đã xác nhận thao tác. Dyna sẽ thực hiện ngay khi ứng dụng desktop đang mở và đăng nhập.",
+                    "Đã xác nhận thao tác. Dyna sẽ thực hiện ngay khi ứng dụng desktop đang mở.",
                 )
             else:
                 answer = "Lệnh đã hết hạn hoặc đã được xử lý."

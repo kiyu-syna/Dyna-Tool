@@ -22,12 +22,11 @@ describe("App startup", () => {
     requestMock.mockResolvedValue({ settings: {} } as never);
   });
 
-  it("opens the workspace without requesting an account session", async () => {
+  it("opens the workspace", async () => {
     render(<App />);
 
     expect(screen.getByText("Dyna workspace")).toBeInTheDocument();
     await waitFor(() => expect(requestMock).toHaveBeenCalledWith("/api/settings"));
-    expect(requestMock).not.toHaveBeenCalledWith("/api/auth/status");
   });
 
   it("keeps the workspace open when optional settings fail", async () => {

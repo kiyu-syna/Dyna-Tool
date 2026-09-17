@@ -21,7 +21,7 @@ def run_profile_diagnostics(profile_id: str | None = None) -> dict[str, Any]:
         from services.integrations.telegram_service import telegram_connection_status
         telegram = telegram_connection_status()
         telegram_ready = bool(telegram.get("configured") and telegram.get("linked"))
-        telegram_message = "Đã liên kết với bot chung của Dyna." if telegram_ready else "Chưa liên kết Telegram với tài khoản Dyna."
+        telegram_message = "Đã liên kết với bot chung của Dyna." if telegram_ready else "Telegram chưa được cấu hình."
     except Exception:
         pass
     try:

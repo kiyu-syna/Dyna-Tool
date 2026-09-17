@@ -6,8 +6,9 @@ import main
 
 class RuntimeBootstrapTests(unittest.TestCase):
     @patch("main.subprocess.Popen")
-    @patch("main.os.path.exists", return_value=True)
-    def test_default_desktop_launcher_uses_built_electron_app(self, _exists, popen):
+    @patch("main.os.path.isfile", return_value=True)
+    @patch("main.shutil.which", return_value="npm.cmd")
+    def test_default_desktop_launcher_uses_npm_dev(self, _which, _isfile, popen):
         process = Mock()
         process.wait.return_value = 0
         popen.return_value = process
@@ -16,19 +17,32 @@ class RuntimeBootstrapTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         command = popen.call_args.args[0]
+        self.assertEqual(command, ["npm.cmd", "run", "dev"])
+
+    @patch("main.subprocess.Popen")
+    @patch("main.os.path.exists", return_value=True)
+    def test_electron_fallback_uses_built_electron_app(self, _exists, popen):
+        process = Mock()
+        process.wait.return_value = 0
+        popen.return_value = process
+
+        exit_code = main.launch_electron_fallback()
+
+        self.assertEqual(exit_code, 0)
+        command = popen.call_args.args[0]
         self.assertTrue(command[0].endswith("electron.exe"))
         self.assertTrue(command[1].endswith("desktop"))
         self.assertEqual(popen.call_args.kwargs["cwd"], command[1])
 
     @patch("main.os.path.exists", return_value=False)
-    def test_desktop_launcher_reports_missing_electron(self, _exists):
+    def test_electron_fallback_reports_missing_electron(self, _exists):
         with self.assertRaisesRegex(RuntimeError, "Chưa cài Electron"):
-            main.launch_desktop_app()
+            main.launch_electron_fallback()
 
     @patch("main.os.path.exists", side_effect=[True, False])
-    def test_desktop_launcher_reports_missing_frontend_build(self, _exists):
+    def test_electron_fallback_reports_missing_frontend_build(self, _exists):
         with self.assertRaisesRegex(RuntimeError, "chưa được build"):
-            main.launch_desktop_app()
+            main.launch_electron_fallback()
 
 
 if __name__ == "__main__":

@@ -166,6 +166,7 @@ def register_routes(app, context, protected) -> None:
                     subtitles=[item.model_dump() for item in payload.subtitles],
                     blur=payload.blur.model_dump(),
                     style=payload.style.model_dump(),
+                    dubbing=payload.dubbing.model_dump() if payload.dubbing else None,
                 )
             }
         except VideoAiError as exc:
@@ -238,7 +239,7 @@ def register_routes(app, context, protected) -> None:
                     style=payload.style,
                     rate=payload.rate,
                     volume=payload.volume,
-                    original_volume=payload.original_volume,
+                    original_volume=18 if payload.original_volume is None else payload.original_volume,
                 )
             }
         except VideoAiError as exc:
@@ -257,7 +258,7 @@ def register_routes(app, context, protected) -> None:
                     track=payload.track,
                     blur=payload.blur.model_dump(),
                     style=payload.style.model_dump(),
-                    dubbing=payload.dubbing.model_dump(),
+                    dubbing=payload.dubbing.model_dump() if payload.dubbing else None,
                     output_path=payload.output_path,
                 )
             }

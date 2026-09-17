@@ -123,12 +123,12 @@ class TelegramCaptionServiceTests(unittest.IsolatedAsyncioTestCase):
         self.db.telegram_caption_requests.find_one.assert_not_awaited()
         self.db.telegram_caption_requests.update_one.assert_not_awaited()
 
-    async def test_start_relinks_chat_from_previous_account(self):
+    async def test_start_relinks_chat_from_previous_local_installation(self):
         self.db.telegram_link_codes.find_one.return_value = {
-            "username": "new-account",
+            "username": "local",
         }
         self.db.telegram_links.find_one.return_value = {
-            "username": "old-account",
+            "username": "legacy-local",
             "chat_id": "12345",
         }
         self.db.telegram_links.delete_one = AsyncMock()

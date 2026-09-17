@@ -26,8 +26,6 @@ from pydantic import BaseModel, Field
 
 import core.config as config
 from core.runtime_paths import logs_dir
-import services.account.auth_service as auth_service
-import services.account.license_service as license_service
 from application.tracking.sources import (
     get_tracking_sources,
     tracking_source_label,
@@ -65,20 +63,11 @@ from application.workflows.telegram_remote_action_worker import TelegramRemoteAc
 APP_VERSION = "0.1.0"
 DYNA_EXTENSION_ID = "ibdfeimkglcmdejppabkaidpippniiob"
 DYNA_EXTENSION_ORIGIN = f"chrome-extension://{DYNA_EXTENSION_ID}"
-LICENSE_PLANS = [
-    {"days": 7, "label": "7 ngày", "price": 99000, "per_day": "~14k/ngày"},
-    {"days": 14, "label": "14 ngày", "price": 169000, "per_day": "~12k/ngày"},
-    {"days": 30, "label": "30 ngày", "price": 249000, "per_day": "~8k/ngày", "tag": "Phổ biến"},
-    {"days": 60, "label": "60 ngày", "price": 449000, "per_day": "~7.5k/ngày"},
-    {"days": 90, "label": "90 ngày", "price": 599000, "per_day": "~6.7k/ngày"},
-    {"days": 365, "label": "1 năm", "price": 1799000, "per_day": "~4.9k/ngày", "tag": "Tiết kiệm 41%"},
-]
 PROFILE_DIR = Path(config.BASE_DIR) / "profile_automation" / "profiles"
 LOG_FILE = logs_dir() / "system.log"
 SETTINGS_FILE = Path(config.SETTINGS_FILE)
 SETTINGS_KEYS = {
     "API_URL",
-    "PAYMENT_API_URL",
     "MAX_CONCURRENT_DOWNLOADS",
     "MAX_CONCURRENT_FFMPEG",
     "MAX_CONCURRENT_UPLOADS",
@@ -210,8 +199,12 @@ def _apply_job_source_display_names(rows: list[dict[str, Any]]) -> None:
     source_maps: dict[str, dict[str, str]] = {}
     for profile_id, profile in profiles.items():
         labels: dict[str, str] = {}
-        for source in get_tracking_sources(profile, include_disabled=True):
-            display_name = tracking_source_label(source)
+        sources = get_tracking_sources(profile, include_disabled=True)
+        total_sources = len(sources)
+        for idx, source in enumerate(sources, start=1):
+            display_name = tracking_source_label(
+                source, index=idx, total=total_sources
+            )
             labels[str(source.get("source_key") or "")] = display_name
             labels[str(source.get("sec_uid") or source.get("unique_id") or "")] = display_name
         source_maps[str(profile_id)] = labels
@@ -287,17 +280,7 @@ def create_app(
 
     extension_protected = [Depends(authorize_extension)]
 
-    def public_user(user: dict[str, Any] | None) -> dict[str, Any] | None:
-        if not user:
-            return None
-        return {
-            key: user.get(key)
-            for key in ("username", "phone", "display_name")
-            if user.get(key) not in (None, "")
-        }
-
     from desktop_backend.routers import (
-        account,
         assistant,
         browser,
         extension,
@@ -328,13 +311,6 @@ def create_app(
         _profile_summary=_profile_summary,
     )
     browser.register_routes(app, context, protected, hooks=hooks)
-    account.register_routes(
-        app,
-        context,
-        protected,
-        LICENSE_PLANS=LICENSE_PLANS,
-        public_user=public_user,
-    )
     runtime.register_routes(
         app,
         context,

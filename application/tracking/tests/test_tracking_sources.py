@@ -75,5 +75,37 @@ class TrackingSourcesTests(unittest.TestCase):
         )
 
 
+    def test_tracking_source_label_with_index_and_total(self):
+        source_without_name = {
+            "platform": "douyin",
+            "sec_uid": "MS4wLjABAAAA1234567890",
+        }
+        source_with_name = {
+            "platform": "douyin",
+            "display_name": "Kênh thể hình",
+            "sec_uid": "MS4wLjABAAAA1234567890",
+        }
+        self.assertEqual(
+            tracking_source_label(source_without_name, index=1, total=10),
+            "nguồn 1/10",
+        )
+        self.assertEqual(
+            tracking_source_label(source_with_name, index=1, total=10),
+            "nguồn 1/10 (Kênh thể hình)",
+        )
+        self.assertEqual(
+            tracking_source_label(source_without_name, index=3),
+            "nguồn 3",
+        )
+        self.assertEqual(
+            tracking_source_label(source_without_name),
+            "...1234567890",
+        )
+        self.assertEqual(
+            tracking_source_label(source_with_name),
+            "Kênh thể hình",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

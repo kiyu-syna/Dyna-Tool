@@ -39,21 +39,6 @@ class LocalProfileCheckPayload(BaseModel):
     repair_stale_locks: bool = True
 
 
-class LoginPayload(BaseModel):
-    username: str = Field(min_length=1)
-    password: str = Field(min_length=1)
-
-
-class RegisterPayload(BaseModel):
-    phone: str = Field(min_length=1)
-    username: str = Field(min_length=1)
-    password: str = Field(min_length=6)
-
-
-class CreateOrderPayload(BaseModel):
-    days: int
-
-
 class TestUploadPayload(BaseModel):
     confirmed: bool = False
 
@@ -215,6 +200,7 @@ class VideoAiEditorSavePayload(BaseModel):
     subtitles: list[VideoAiSubtitlePayload] = Field(default_factory=list, max_length=5000)
     blur: VideoAiBlurPayload = Field(default_factory=VideoAiBlurPayload)
     style: VideoAiStylePayload = Field(default_factory=VideoAiStylePayload)
+    dubbing: "VideoAiDubbingPayload | None" = None
 
 
 class VideoAiDubbingPayload(BaseModel):
@@ -224,7 +210,7 @@ class VideoAiDubbingPayload(BaseModel):
     style: str = Field(default="tu_nhien", pattern=r"^(tu_nhien|tin_tuc|doc_truyen)$")
     rate: int = Field(default=0, ge=-50, le=50)
     volume: int = Field(default=100, ge=0, le=200)
-    original_volume: int = Field(default=18, ge=0, le=100)
+    original_volume: int | None = Field(default=None, ge=0, le=100)
 
 
 class VideoAiTtsPreparePayload(BaseModel):
@@ -242,5 +228,5 @@ class VideoAiRenderPayload(BaseModel):
     track: str = Field(default="translated", pattern=r"^(source|translated)$")
     blur: VideoAiBlurPayload = Field(default_factory=VideoAiBlurPayload)
     style: VideoAiStylePayload = Field(default_factory=VideoAiStylePayload)
-    dubbing: VideoAiDubbingPayload = Field(default_factory=VideoAiDubbingPayload)
+    dubbing: "VideoAiDubbingPayload | None" = None
     output_path: str = Field(default="", max_length=4096)

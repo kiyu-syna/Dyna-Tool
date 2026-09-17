@@ -288,9 +288,57 @@ def check_douyin_direct_download(
     api_url: str = config.API_URL,
     timeout_seconds: int = 15,
     profile_config: Optional[dict] = None,
+    *,
+    page: Optional[object] = None,
 ) -> dict:
     """Check GemLogin/CDP and report extension health as optional metadata."""
-    page = None
+    if page is not None:
+        try:
+            configure_lightweight_scan_page(page)
+            if not getattr(page, "url", "").startswith("https://www.douyin.com"):
+                page.goto("https://www.douyin.com/", wait_until="domcontentloaded", timeout=60000)
+            health = page.evaluate(
+                """() => {
+                    const bridge = window.__AixDouyinAutomation;
+                    if (!bridge || typeof bridge.health !== 'function') return null;
+                    try { return bridge.health(); }
+                    catch (_) { return null; }
+                }""",
+            )
+            version = str(health.get("version") or "") if isinstance(health, dict) else ""
+            extension_ready = bool(
+                isinstance(health, dict)
+                and health.get("status") == "ready"
+                and version == DOUYIN_BRIDGE_VERSION
+            )
+            if extension_ready:
+                message = (
+                    f"Tải trực tiếp sẵn sàng; extension dự phòng v{version} đang hoạt động."
+                )
+            elif version:
+                message = (
+                    f"Tải trực tiếp sẵn sàng; extension dự phòng v{version} khác phiên bản "
+                    f"{DOUYIN_BRIDGE_VERSION} nhưng không bắt buộc."
+                )
+            else:
+                message = "Tải trực tiếp sẵn sàng; không cần cài extension."
+            return {
+                "ok": True,
+                "version": version,
+                "mode": "direct_with_extension_fallback" if extension_ready else "direct_only",
+                "extension_ready": extension_ready,
+                "message": message,
+            }
+        except Exception as exc:
+            return {
+                "ok": False,
+                "version": "",
+                "mode": "unavailable",
+                "extension_ready": False,
+                "message": f"Không thể kết nối profile trình duyệt để tải trực tiếp. Chi tiết: {exc}",
+            }
+
+    managed_page = None
     try:
         with connected_gemlogin_profile(
             gemlogin_profile_id,
@@ -300,11 +348,11 @@ def check_douyin_direct_download(
             if not browser.contexts:
                 raise RuntimeError("GemLogin không có browser context.")
 
-            page = create_background_page(browser, browser.contexts[0])
-            page_cleanup.callback(_close_page_quietly, page)
-            configure_lightweight_scan_page(page)
-            page.goto("https://www.douyin.com/", wait_until="domcontentloaded", timeout=60000)
-            health = page.evaluate(
+            managed_page = create_background_page(browser, browser.contexts[0])
+            page_cleanup.callback(_close_page_quietly, managed_page)
+            configure_lightweight_scan_page(managed_page)
+            managed_page.goto("https://www.douyin.com/", wait_until="domcontentloaded", timeout=60000)
+            health = managed_page.evaluate(
                 """() => {
                     const bridge = window.__AixDouyinAutomation;
                     if (!bridge || typeof bridge.health !== 'function') return null;
@@ -345,7 +393,7 @@ def check_douyin_direct_download(
             "message": f"Không thể kết nối profile trình duyệt để tải trực tiếp. Chi tiết: {exc}",
         }
     finally:
-        _close_page_quietly(page)
+        _close_page_quietly(managed_page)
 
 
 def _download_douyin_url(

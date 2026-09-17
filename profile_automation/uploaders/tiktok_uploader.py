@@ -33,6 +33,23 @@ PUBLISH_SUCCESS_TEXTS = (
     "Đã tải video lên",
     "Tải video khác lên",
     "Quản lý bài đăng",
+    "Your video has been published",
+    "Video đã được đăng",
+    "Video has been published",
+    "Post another video",
+    "Đăng video khác",
+    "View profile",
+    "Xem hồ sơ",
+    "Manage your posts",
+    "Quản lý bài viết",
+    "Video của bạn đang được xử lý",
+    "Your video is being processed",
+    "Video đã tải lên",
+    "Uploaded",
+    "Published",
+    "Đã xuất bản",
+    "Đã đăng",
+    "Bài viết của bạn đang được xử lý",
 )
 
 
@@ -59,9 +76,32 @@ def _publish_confirmation_signal(page) -> str:
         current_url = ""
     if any(
         marker in current_url.casefold()
-        for marker in ("/tiktokstudio/content", "/creator-center/content")
-    ):
+        for marker in (
+            "/tiktokstudio/content",
+            "/creator-center/content",
+            "/tiktokstudio/posts",
+            "/creator-center/posts",
+            "/creator_center",
+        )
+    ) or (current_url and "/upload" not in current_url.casefold() and "tiktokstudio" in current_url.casefold()):
         return f'url="{current_url}"'
+
+    try:
+        toasts = page.locator('div[class*="toast"]:visible, div[role="alert"]:visible')
+        for index in range(min(toasts.count(), 5)):
+            txt = toasts.nth(index).inner_text(timeout=200).strip()
+            if any(k in txt.casefold() for k in ("đã đăng", "published", "uploaded", "đang được", "processing", "thành công", "success", "quản lý", "manage")):
+                return f'toast="{txt[:60]}"'
+    except Exception:
+        pass
+
+    try:
+        modal = page.locator('div[role="dialog"]:has-text("Manage"), div[role="dialog"]:has-text("Quản lý"), div[role="dialog"]:has-text("Upload"), div[role="dialog"]:has-text("Tải lên")')
+        if modal.count() > 0 and modal.first.is_visible():
+            return "modal_completed"
+    except Exception:
+        pass
+
     return ""
 
 

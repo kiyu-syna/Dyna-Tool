@@ -1,6 +1,5 @@
 export type AppSettings = {
   API_URL?: string;
-  PAYMENT_API_URL?: string;
   MAX_CONCURRENT_DOWNLOADS?: number;
   MAX_CONCURRENT_FFMPEG?: number;
   MAX_CONCURRENT_UPLOADS?: number;

@@ -151,18 +151,6 @@ export default function SettingsPage({
         </div>
       </section>
       <section className="form-section">
-        <h3>{l("Máy chủ Dyna (chỉ hiển thị với admin)", "Dyna server (admin only)", "Dyna 服务器（仅管理员）")}</h3>
-        <div className="form-grid">
-          <label>
-            <span>Payment API URL</span>
-            <input
-              value={settings.PAYMENT_API_URL || ""}
-              onChange={(event) => update({ PAYMENT_API_URL: event.target.value })}
-            />
-          </label>
-        </div>
-      </section>
-      <section className="form-section">
         <h3>{l("Liên kết Telegram", "Link Telegram", "关联 Telegram")}</h3>
         {!telegram?.configured ? (
           <p className="danger-text">

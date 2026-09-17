@@ -205,42 +205,12 @@ class AiAssistantServiceTests(unittest.TestCase):
         self.assertNotIn("1|||你好", retry_messages[0]["content"])
         self.assertEqual(retry_context["line_count"], 1)
 
-    @patch("services.assistant.ai_assistant_service.requests.post")
-    @patch("services.assistant.ai_assistant_service.auth_service.get_current_user")
-    def test_proposal_is_normalized_bound_to_user_and_single_use(self, get_user, post):
-        get_user.return_value = {
-            "username": "tester",
-            "token": "private-session-token",
-        }
-        response = Mock()
-        response.status_code = 200
-        response.headers = {}
-        response.json.return_value = {
-            "reply": "Mình đề xuất chạy hồ sơ.",
-            "provider": "groq",
-            "model": "test-model",
-            "actions": [
-                {"type": "delete_profile", "args": {"profile_id": "1"}},
-                {"type": "start_profile", "args": {"profile_id": "not-a-number"}},
-                {"type": "start_profile", "args": {"profile_id": "2", "extra": "ignored"}},
-            ],
-        }
-        post.return_value = response
+    def test_server_chat_is_disabled_without_commercial_account_system(self):
         service = AiAssistantService()
 
-        result = service.chat([{"role": "user", "content": "Chạy hồ sơ 2"}], {"profiles": []})
-
-        self.assertEqual(result["actions"], [{"type": "start_profile", "args": {"profile_id": "2"}}])
-        self.assertTrue(result["proposal_token"])
-        outbound = post.call_args.kwargs
-        self.assertNotIn("private-session-token", str(outbound["json"]))
-        self.assertEqual(
-            service.consume_proposal(result["proposal_token"]),
-            [{"type": "start_profile", "args": {"profile_id": "2"}}],
-        )
         with self.assertRaises(AiAssistantError) as caught:
-            service.consume_proposal(result["proposal_token"])
-        self.assertEqual(caught.exception.status_code, 409)
+            service.chat([{"role": "user", "content": "Chạy hồ sơ 2"}], {"profiles": []})
+        self.assertEqual(caught.exception.status_code, 410)
 
 
 if __name__ == "__main__":
