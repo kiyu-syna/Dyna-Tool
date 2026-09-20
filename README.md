@@ -16,7 +16,7 @@
 
 Built with a lightning-fast **Tauri v2 (Rust + WebView2 + React)** front-end and an asynchronous **Python** backend orchestration engine.
 
-[Features](#-key-features) • [Installation](#-installation--setup) • [Quick Start](#-quick-start) • [247-background-operation](#-247-background-operation) • [Project-structure](#-project-structure) • [Architecture](#-architecture)
+[Features](#-key-features) • [Installation](#-installation--setup) • [Quick Start](#-quick-start) • [247-background-operation](#-247-background-operation) • [Project Structure](#-project-structure)
 
 ---
 
@@ -32,10 +32,6 @@ Built with a lightning-fast **Tauri v2 (Rust + WebView2 + React)** front-end and
 - **📥 Video Ingestion & Processing Pipeline**
   - Automated tracking, vertical video parsing, and automated media transformation.
   - Video format standardization, caption burning, and FFmpeg transcoding pipelines.
-
-- **🎙️ AI Dubbing & Speech Intelligence**
-  - Offline neural text-to-speech dubbing via [VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) (ONNX Runtime, CPU-optimized).
-  - High-performance transcription powered by Faster-Whisper.
 
 - **🪟 Ultra-Lightweight Desktop Shell (Tauri v2)**
   - Native Windows desktop application with negligible RAM footprint (~60MB idle vs. 300MB+ in Electron).
@@ -74,7 +70,7 @@ Dyna Tool/
 - **Operating System:** Windows 10 (64-bit) or Windows 11
 - **Python:** Version 3.11 or higher
 - **Node.js:** Node.js 20+ and npm
-- **C++ Build Tools:** Visual Studio 2022/2026 C++ Build Tools (required only when compiling Tauri from source)
+- **C++ Build Tools:** Visual Studio C++ Build Tools (required only when compiling Tauri from source)
 - **Browser:** Google Chrome or Chromium installed on the host machine
 
 ---
@@ -101,8 +97,6 @@ cd Dyna-Tool
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements-video-ai.txt
 ```
 
 #### Step 3: Install Desktop Dependencies & Build Assets
@@ -198,11 +192,9 @@ npm run test
 
 - **[Tauri](https://tauri.app/)** - High-performance desktop application framework.
 - **[Playwright](https://playwright.dev/)** - Reliable end-to-end browser automation.
-- **[VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS)** - Offline Vietnamese Text-to-Speech synthesis developed by Phạm Nguyễn Ngọc Bảo (Apache-2.0 License).
-- **[Faster-Whisper](https://github.com/SYSTRAN/faster-whisper)** - Fast Speech-to-Text transcription with CTranslate2.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) (or your preferred license). See the LICENSE file for details.
+This project is licensed under the [MIT License](LICENSE). See the LICENSE file for details.
