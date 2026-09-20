@@ -9,6 +9,7 @@ from profile_automation.uploaders.youtube_uploader import (
     _record_page_error_before_close,
     _select_public_visibility,
     _wait_for_youtube_publish_confirmation,
+    _youtube_file_chooser,
     _youtube_publish_confirmation_signal,
     _youtube_upload_textbox,
 )
@@ -89,18 +90,34 @@ class YouTubeUploaderTests(unittest.TestCase):
         self.assertEqual(confirmation.call_count, 2)
         sleep.assert_called_once_with(2)
 
-    def test_upload_textbox_is_scoped_to_the_visible_upload_dialog(self):
+    def test_upload_textbox_targets_the_visible_enabled_editor(self):
         page = Mock()
         matches = Mock()
         expected = Mock()
-        matches.last = expected
+        matches.first = expected
         page.locator.return_value = matches
 
         result = _youtube_upload_textbox(page, required=True)
 
         self.assertIs(result, expected)
         page.locator.assert_called_once_with(
-            'ytcp-uploads-dialog:visible div#textbox[contenteditable="true"][aria-required="true"]'
+            'div#textbox[role="textbox"][contenteditable="true"]'
+            '[aria-required="true"][aria-disabled="false"]:visible'
+        )
+
+    def test_file_chooser_is_scoped_to_an_enabled_upload_button(self):
+        page = Mock()
+        matches = Mock()
+        expected = Mock()
+        matches.first = expected
+        page.locator.return_value = matches
+
+        result = _youtube_file_chooser(page)
+
+        self.assertIs(result, expected)
+        page.locator.assert_called_once_with(
+            'button[aria-label="Chọn tệp"][aria-disabled="false"], '
+            'button[aria-label="Select files"][aria-disabled="false"]'
         )
 
     @patch("profile_automation.uploaders.youtube_uploader.record_browser_diagnostic")

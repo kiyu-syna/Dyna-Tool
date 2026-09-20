@@ -7,7 +7,7 @@
   "main": "electron/main.cjs",
   "scripts": {
     "dev": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 dev",
-    "dev:electron": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5173 && electron . --dev\"",
+    "dev:electron": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on tcp:5174 && electron . --dev\"",
     "dev:web": "vite --host 127.0.0.1",
     "dev:tauri": "powershell -ExecutionPolicy Bypass -File scripts/run-tauri.ps1 dev",
     "build": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json --noEmit && vite build",

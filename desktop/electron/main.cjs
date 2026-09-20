@@ -269,7 +269,7 @@ function createWindow() {
 
   mainWindow.once("ready-to-show", () => mainWindow.show());
   if (isDevelopment) {
-    mainWindow.loadURL("http://127.0.0.1:5173");
+    mainWindow.loadURL("http://127.0.0.1:5174");
   } else {
     mainWindow.loadFile(path.join(__dirname, "..", "dist", "index.html"));
   }
@@ -343,7 +343,7 @@ function createLogWindow() {
     void logWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
   });
   if (isDevelopment) {
-    logWindow.loadURL("http://127.0.0.1:5173/logs.html");
+    logWindow.loadURL("http://127.0.0.1:5174/logs.html");
   } else {
     logWindow.loadFile(path.join(__dirname, "..", "dist", "logs.html"));
   }

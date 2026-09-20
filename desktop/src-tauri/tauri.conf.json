@@ -5,7 +5,7 @@
   "identifier": "com.dynatool.desktop",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://127.0.0.1:5173",
+    "devUrl": "http://127.0.0.1:5174",
     "beforeDevCommand": "npm run dev:web",
     "beforeBuildCommand": "npm run build"
   },
@@ -31,7 +31,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis"],
+    "targets": [
+      "nsis"
+    ],
     "resources": {
       "../build/backend/DynaBackend/": "backend/",
       "../build/playwright-driver/": "playwright-driver/"

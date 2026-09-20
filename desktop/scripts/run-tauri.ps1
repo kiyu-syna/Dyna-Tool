@@ -76,12 +76,15 @@ if ($Mode -eq "dev" -and -not (Test-TelegramServer)) {
   Write-Host "Telegram Server đã sẵn sàng trên http://127.0.0.1:8000"
 }
 
+$desktopDir = Split-Path -Parent $PSScriptRoot
+Push-Location $desktopDir
 try {
   & npx.cmd tauri $Mode @TauriArgs
   if ($LASTEXITCODE -ne 0) {
     throw "Tauri $Mode thất bại với mã $LASTEXITCODE."
   }
 } finally {
+  Pop-Location
   if ($telegramProcess -and -not $telegramProcess.HasExited) {
     Stop-Process -Id $telegramProcess.Id -Force -ErrorAction SilentlyContinue
   }

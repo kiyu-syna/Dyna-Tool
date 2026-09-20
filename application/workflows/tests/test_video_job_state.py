@@ -179,9 +179,9 @@ class VideoJobStoreTests(unittest.TestCase):
         self.assertFalse(self.store.claim("1", self.video.aweme_id))
 
         recreated = self.store.ensure_job("1", self.video, self.profile, "source-a", "Nguồn A")
-        self.assertTrue(recreated["dismissed_at"])
-        self.assertEqual(self.store.list_jobs(), [])
-        self.assertEqual(len(self.store.list_jobs(include_dismissed=True)), 1)
+        self.assertFalse(recreated["dismissed_at"])
+        self.assertEqual(recreated["status"], "detected")
+        self.assertEqual(len(self.store.list_jobs()), 1)
 
     def test_active_job_cannot_be_dismissed(self):
         self.store.ensure_job("1", self.video, self.profile)

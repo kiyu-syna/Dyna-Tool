@@ -796,6 +796,13 @@ class TrackingRuntimeService:
                             new_videos = [newest]
 
                         for video in new_videos:
+                            # Persist the job before notifying Telegram.  The
+                            # notification is only useful if the desktop queue
+                            # already contains the same video; sending it first
+                            # can leave a misleading "new video" alert when
+                            # registration fails or the job is immediately
+                            # dismissed by stale state.
+                            worker.register_video(video, source)
                             send_new_video_notification(
                                 profile_id,
                                 worker.name,
@@ -806,7 +813,6 @@ class TrackingRuntimeService:
                                     source.get("platform", "douyin"),
                                 ),
                             )
-                            worker.register_video(video, source)
 
                         for video in pending_videos + new_videos:
                             if stop_event.is_set():

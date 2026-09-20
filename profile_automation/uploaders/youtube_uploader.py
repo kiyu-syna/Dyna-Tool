@@ -56,6 +56,10 @@ YOUTUBE_PUBLISH_SUCCESS_TEXTS = (
     "Checks complete",
     "Video đã tải lên xong",
 )
+YOUTUBE_FILE_CHOOSER_SELECTOR = (
+    'button[aria-label="Chọn tệp"][aria-disabled="false"], '
+    'button[aria-label="Select files"][aria-disabled="false"]'
+)
 
 
 def _classify_youtube_check_status(labels) -> str:
@@ -118,11 +122,23 @@ def _record_page_error_before_close(
 
 
 def _youtube_upload_textbox(page, *, required: bool):
+    """Find an enabled field in the currently visible Studio upload form.
+
+    Recent Studio builds keep the editor fields but no longer reliably expose
+    their dialog host as ``ytcp-uploads-dialog:visible``.  Scope to the live
+    contenteditable field instead; title and description remain disambiguated
+    by their required state.
+    """
     required_value = "true" if required else "false"
     return page.locator(
-        "ytcp-uploads-dialog:visible "
-        f'div#textbox[contenteditable="true"][aria-required="{required_value}"]'
-    ).last
+        f'div#textbox[role="textbox"][contenteditable="true"]'
+        f'[aria-required="{required_value}"][aria-disabled="false"]:visible'
+    ).first
+
+
+def _youtube_file_chooser(page):
+    """Return the actionable upload button from the Studio shell."""
+    return page.locator(YOUTUBE_FILE_CHOOSER_SELECTOR).first
 
 
 def _youtube_publish_confirmation_signal(page) -> str:
@@ -440,13 +456,12 @@ class YouTubeUploader(BaseUploader):
                     page.emulate_media(color_scheme="light", reduced_motion="reduce")
                 except Exception as exc:
                     logger.debug("Không thể cố định giao diện YouTube Studio: %s", exc)
-                page.goto(upload_url, wait_until="domcontentloaded", timeout=60000)
-                progress(4, "YouTube Studio đã tải xong.")
-
-                select_button = page.locator(
-                    'button[aria-label="Chọn tệp"][aria-disabled="false"], '
-                    'button[aria-label="Select files"][aria-disabled="false"]'
-                ).first
+                # Studio là single-page app: DOMContentLoaded có thể chờ lâu
+                # dù nút chọn tệp đã dùng được. Đợi đúng điều kiện cần upload.
+                page.goto(upload_url, wait_until="commit", timeout=60000)
+                select_button = _youtube_file_chooser(page)
+                select_button.wait_for(state="visible", timeout=60000)
+                progress(4, "YouTube Studio đã sẵn sàng chọn tệp.")
 
                 def trigger_youtube_file_chooser():
                     select_button.wait_for(state="visible", timeout=60000)

@@ -245,6 +245,21 @@ class VideoJobStore:
                 if source_platform:
                     job["source_platform"] = source_platform
 
+                # A scanner can legitimately discover the same video again after
+                # the user reset/cleared the queue (for example when its seen
+                # marker is recreated).  Dismissed jobs are hidden from the API
+                # and treated as terminal by the worker, so simply updating the
+                # metadata here would make the new detection look queued while
+                # it can never be processed.  Treat that re-detection as a new
+                # job while retaining any reusable media/caption metadata.
+                if job.get("dismissed_at"):
+                    job["dismissed_at"] = ""
+                    job["status"] = "detected"
+                    job["last_error"] = ""
+                    job["active"] = False
+                    job["owner_pid"] = 0
+                    job["owner_instance_id"] = ""
+
             job["enabled_platforms"] = enabled_platforms
             platforms = job.setdefault("platforms", {})
             for platform in PLATFORMS:

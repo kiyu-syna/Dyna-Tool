@@ -11,7 +11,11 @@ use std::{
     },
     time::Duration,
 };
-use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Emitter, Manager, WebviewUrl, WebviewWindowBuilder,
+};
 
 #[derive(Clone)]
 struct BackendState {
@@ -132,27 +136,49 @@ fn backend_command(app: &tauri::AppHandle, token: &str) -> Result<Command, Strin
         .path()
         .resource_dir()
         .map_err(|error| error.to_string())?;
-    let executable = resource_dir.join("backend").join("DynaBackend.exe");
-    if !executable.exists() {
-        return Err(format!(
-            "Không tìm thấy backend đóng gói: {}",
-            executable.display()
-        ));
-    }
-    let data_dir = app
-        .path()
-        .app_data_dir()
-        .map_err(|error| error.to_string())?;
+    let root = project_root();
+    let candidates = [
+        resource_dir.join("backend").join("DynaBackend.exe"),
+        resource_dir.join("DynaBackend.exe"),
+        root.join("desktop")
+            .join("build")
+            .join("backend")
+            .join("DynaBackend")
+            .join("DynaBackend.exe"),
+    ];
+    let executable = candidates
+        .into_iter()
+        .find(|path| path.exists())
+        .ok_or_else(|| {
+            format!(
+                "Không tìm thấy backend đóng gói trong: {}",
+                resource_dir.display()
+            )
+        })?;
+
+    let pw_candidates = [
+        resource_dir.join("playwright-driver"),
+        root.join("desktop").join("build").join("playwright-driver"),
+    ];
+    let pw_dir = pw_candidates
+        .into_iter()
+        .find(|path| path.exists())
+        .unwrap_or_else(|| resource_dir.join("playwright-driver"));
+
+    let data_dir = std::env::var_os("DYNA_DATA_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            app.path()
+                .app_data_dir()
+                .unwrap_or_else(|_| PathBuf::from("."))
+        });
     std::fs::create_dir_all(&data_dir).map_err(|error| error.to_string())?;
     let mut command = Command::new(executable);
     command
         .current_dir(&data_dir)
         .args(["--port", &port, "--token", token])
         .env("DYNA_DATA_DIR", &data_dir)
-        .env(
-            "DYNA_PLAYWRIGHT_DRIVER_DIR",
-            resource_dir.join("playwright-driver"),
-        );
+        .env("DYNA_PLAYWRIGHT_DRIVER_DIR", pw_dir);
     Ok(command)
 }
 
@@ -500,7 +526,7 @@ fn open_log_window(app: tauri::AppHandle) -> Result<(), String> {
     }
     let url = if cfg!(debug_assertions) {
         WebviewUrl::External(
-            "http://127.0.0.1:5173/logs.html"
+            "http://127.0.0.1:5174/logs.html"
                 .parse()
                 .map_err(|error| format!("URL cửa sổ logs không hợp lệ: {error}"))?,
         )
@@ -622,7 +648,68 @@ pub fn run() {
             local_tts_preview_url,
             open_log_window
         ])
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if window.label() == "main" {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
+            }
+        })
         .setup(move |app| {
+            let show_i = MenuItem::with_id(app, "show", "Hiện Dyna Tool", true, None::<&str>)?;
+            let hide_i = MenuItem::with_id(app, "hide", "Ẩn giao diện", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(app, "quit", "Thoát hoàn toàn", true, None::<&str>)?;
+            let tray_menu = Menu::with_items(app, &[&show_i, &hide_i, &quit_i])?;
+
+            let mut tray_builder = TrayIconBuilder::new()
+                .menu(&tray_menu)
+                .show_menu_on_left_click(false)
+                .tooltip("Dyna Tool")
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.unminimize();
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "hide" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.hide();
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            if window.is_visible().unwrap_or(false) {
+                                let _ = window.hide();
+                            } else {
+                                let _ = window.unminimize();
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    }
+                });
+
+            if let Some(icon) = app.default_window_icon() {
+                tray_builder = tray_builder.icon(icon.clone());
+            }
+
+            let _ = tray_builder.build(app)?;
+
             if let Err(error) = start_backend(app.handle().clone(), state.clone()) {
                 let _ = app.emit(
                     "dyna:backend-status",
